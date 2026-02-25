@@ -1,0 +1,32 @@
+import enum
+import uuid
+from datetime import datetime, timezone
+
+from sqlmodel import Field, SQLModel
+
+
+class SyncRunStatus(str, enum.Enum):
+    running = "running"
+    success = "success"
+    failed = "failed"
+
+
+class SyncRun(SQLModel, table=True):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    source: str = Field(index=True)
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    finished_at: datetime | None = Field(default=None)
+    status: SyncRunStatus
+
+    fetched_count: int = Field(default=0)
+    mapped_count: int = Field(default=0)
+    unique_count: int = Field(default=0)
+    deduped_by_external_id: int = Field(default=0)
+    deduped_by_apply_url: int = Field(default=0)
+    inserted_count: int = Field(default=0)
+    updated_count: int = Field(default=0)
+    closed_count: int = Field(default=0)
+    failed_count: int = Field(default=0)
+
+    error_summary: str | None = Field(default=None)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
