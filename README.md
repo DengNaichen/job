@@ -168,13 +168,19 @@ Current snapshot as of 2026-02-28: public ATS ingestion is live for Greenhouse, 
 ### Phase 4: Additional Data Sources
 
 - [x] Lever (P1)
-- [ ] JobSpy integration (P1)
-- [ ] Workday (requires special handling) (P1)
+- [x] Eightfold (Microsoft, NVIDIA) (P1)
+- [x] Apple Careers API (P2)
+- [x] Uber Careers API (P2)
+- [x] TikTok Careers API (P2)
+- [ ] Workday (requires API-based special handling) (P1)
 - [x] Ashby (P2)
 - [x] SmartRecruiters (P2)
+
+- [ ] Amazon Jobs API (P2, current API hard-caps search results at 10,000)
 - [ ] ~~Jobo API (P2, paid)~~
 - [ ] Recruitee (P3)
 - [ ] Workable (P3)
+- [ ] JobSpy (P3)
 
 ### Phase 5: API & Monitoring
 

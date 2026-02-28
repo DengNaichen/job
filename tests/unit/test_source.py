@@ -55,6 +55,12 @@ class TestPlatformType:
         assert PlatformType.LEVER.value == "lever"
         assert PlatformType.WORKDAY.value == "workday"
         assert PlatformType.GITHUB.value == "github"
+        assert PlatformType.ASHBY.value == "ashby"
+        assert PlatformType.SMARTRECRUITERS.value == "smartrecruiters"
+        assert PlatformType.EIGHTFOLD.value == "eightfold"
+        assert PlatformType.APPLE.value == "apple"
+        assert PlatformType.UBER.value == "uber"
+        assert PlatformType.TIKTOK.value == "tiktok"
 
     def test_platform_type_from_string(self):
         """Test creating PlatformType from string."""
@@ -64,6 +70,12 @@ class TestPlatformType:
         assert PlatformType("lever") == PlatformType.LEVER
         assert PlatformType("workday") == PlatformType.WORKDAY
         assert PlatformType("github") == PlatformType.GITHUB
+        assert PlatformType("ashby") == PlatformType.ASHBY
+        assert PlatformType("smartrecruiters") == PlatformType.SMARTRECRUITERS
+        assert PlatformType("eightfold") == PlatformType.EIGHTFOLD
+        assert PlatformType("apple") == PlatformType.APPLE
+        assert PlatformType("uber") == PlatformType.UBER
+        assert PlatformType("tiktok") == PlatformType.TIKTOK
 
     def test_platform_type_invalid_raises_error(self):
         """Test that invalid platform type raises ValueError."""
@@ -159,6 +171,30 @@ class TestSourceCreateValidation:
         assert data.name == "Stripe"
         assert data.platform == "greenhouse"
         assert data.identifier == "stripe"
+
+    def test_source_create_accepts_eightfold_platform(self):
+        """Test SourceCreate schema accepts eightfold."""
+        from app.schemas.source import SourceCreate
+
+        data = SourceCreate(
+            name="Microsoft",
+            platform="eightfold",
+            identifier="microsoft",
+        )
+
+        assert data.platform.value == "eightfold"
+
+    def test_source_create_accepts_apple_platform(self):
+        """Test SourceCreate schema accepts apple."""
+        from app.schemas.source import SourceCreate
+
+        data = SourceCreate(
+            name="Apple",
+            platform="apple",
+            identifier="apple",
+        )
+
+        assert data.platform.value == "apple"
 
     def test_source_create_strips_name_whitespace(self):
         """Test that name whitespace is stripped."""
