@@ -1,8 +1,9 @@
 from fastapi import APIRouter
 
-from app.api.v1 import jobs, sources
+from app.api.v1 import jobs, matching, sources
 
 api_router = APIRouter()
 
 api_router.include_router(jobs.router)
+api_router.include_router(matching.router)
 api_router.include_router(sources.router)

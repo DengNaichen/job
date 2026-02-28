@@ -1,0 +1,3 @@
+-- Local Supabase seed placeholder.
+-- Schema creation for this repo still comes from SQLModel metadata.create_all
+-- plus Alembic stamp, not from Supabase SQL migrations.

@@ -19,6 +19,13 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5434/job_db"
 
+    # Blob storage
+    storage_provider: str = "none"
+    supabase_storage_base_url: str | None = None
+    supabase_storage_bucket: str | None = None
+    supabase_storage_service_key: str | None = None
+    storage_timeout_seconds: float = 20.0
+
     # Embeddings
     gemini_api_key: str | None = None
     embedding_provider: str = "gemini"  # openai, gemini, ollama, openrouter, deepseek

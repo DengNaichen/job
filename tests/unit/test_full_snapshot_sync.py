@@ -10,6 +10,7 @@ from app.ingest.fetchers.base import BaseFetcher
 from app.ingest.mappers.base import BaseMapper
 from app.models import Job, JobStatus, PlatformType, Source
 from app.schemas.job import JobCreate
+from app.services.blob_storage import JobBlobManager
 from app.services.full_snapshot_sync import FullSnapshotSyncService
 
 
@@ -50,6 +51,31 @@ class _FakeMapper(BaseMapper):
         )
 
 
+class _InMemoryBlobStorage:
+    def __init__(self):
+        self.objects: dict[str, bytes] = {}
+
+    @property
+    def is_enabled(self) -> bool:
+        return True
+
+    async def upload_if_missing(
+        self,
+        *,
+        key: str,
+        data: bytes,
+        content_type: str,
+        content_encoding: str = "gzip",
+    ) -> bool:
+        _ = (content_type, content_encoding)
+        already_exists = key in self.objects
+        self.objects.setdefault(key, data)
+        return not already_exists
+
+    async def download(self, *, key: str) -> bytes:
+        return self.objects[key]
+
+
 def _source() -> Source:
     return Source(
         name="Airbnb",
@@ -76,9 +102,16 @@ async def _all_jobs(session: AsyncSession) -> list[Job]:
     return list(rows.all())
 
 
+def _service(session: AsyncSession) -> FullSnapshotSyncService:
+    return FullSnapshotSyncService(
+        session,
+        blob_manager=JobBlobManager(_InMemoryBlobStorage()),
+    )
+
+
 @pytest.mark.asyncio
 async def test_full_snapshot_sync_first_import_inserts_all_rows(session: AsyncSession) -> None:
-    service = FullSnapshotSyncService(session)
+    service = _service(session)
     result = await service.sync_source(
         source=_source(),
         fetcher=_FakeFetcher(_jobs(["A", "B", "C"])),
@@ -96,13 +129,15 @@ async def test_full_snapshot_sync_first_import_inserts_all_rows(session: AsyncSe
     assert [row.external_job_id for row in rows] == ["A", "B", "C"]
     assert all(row.source == "greenhouse:airbnb" for row in rows)
     assert all(row.status == JobStatus.open for row in rows)
+    assert all(row.description_html_key for row in rows)
+    assert all(row.raw_payload_key for row in rows)
 
 
 @pytest.mark.asyncio
 async def test_full_snapshot_sync_second_full_import_updates_without_duplicates(
     session: AsyncSession,
 ) -> None:
-    service = FullSnapshotSyncService(session)
+    service = _service(session)
     first_jobs = _jobs(["A", "B", "C"])
     await service.sync_source(
         source=_source(),
@@ -127,7 +162,7 @@ async def test_full_snapshot_sync_second_full_import_updates_without_duplicates(
 
 @pytest.mark.asyncio
 async def test_full_snapshot_sync_closes_jobs_missing_from_next_snapshot(session: AsyncSession) -> None:
-    service = FullSnapshotSyncService(session)
+    service = _service(session)
     await service.sync_source(
         source=_source(),
         fetcher=_FakeFetcher(_jobs(["A", "B", "C"])),
@@ -151,7 +186,7 @@ async def test_full_snapshot_sync_closes_jobs_missing_from_next_snapshot(session
 
 @pytest.mark.asyncio
 async def test_full_snapshot_sync_reopens_closed_job_when_it_reappears(session: AsyncSession) -> None:
-    service = FullSnapshotSyncService(session)
+    service = _service(session)
     await service.sync_source(
         source=_source(),
         fetcher=_FakeFetcher(_jobs(["A", "B", "C"])),
@@ -182,7 +217,7 @@ async def test_full_snapshot_sync_reopens_closed_job_when_it_reappears(session: 
 async def test_full_snapshot_sync_dedupes_duplicate_external_job_ids_within_snapshot(
     session: AsyncSession,
 ) -> None:
-    service = FullSnapshotSyncService(session)
+    service = _service(session)
     raw_jobs = _jobs(["A", "B"])
     raw_jobs.insert(
         1,
@@ -214,7 +249,7 @@ async def test_full_snapshot_sync_dedupes_duplicate_external_job_ids_within_snap
 async def test_full_snapshot_sync_fetch_failure_rolls_back_without_closing_jobs(
     session: AsyncSession,
 ) -> None:
-    service = FullSnapshotSyncService(session)
+    service = _service(session)
     await service.sync_source(
         source=_source(),
         fetcher=_FakeFetcher(_jobs(["A", "B", "C"])),
@@ -238,7 +273,7 @@ async def test_full_snapshot_sync_fetch_failure_rolls_back_without_closing_jobs(
 async def test_full_snapshot_sync_mapper_failure_rolls_back_without_closing_jobs(
     session: AsyncSession,
 ) -> None:
-    service = FullSnapshotSyncService(session)
+    service = _service(session)
     await service.sync_source(
         source=_source(),
         fetcher=_FakeFetcher(_jobs(["A", "B", "C"])),
@@ -260,7 +295,7 @@ async def test_full_snapshot_sync_mapper_failure_rolls_back_without_closing_jobs
 
 @pytest.mark.asyncio
 async def test_full_snapshot_sync_dry_run_does_not_persist_or_close_jobs(session: AsyncSession) -> None:
-    service = FullSnapshotSyncService(session)
+    service = _service(session)
     result = await service.sync_source(
         source=_source(),
         fetcher=_FakeFetcher(_jobs(["A", "B", "C"])),

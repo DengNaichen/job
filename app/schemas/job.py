@@ -42,10 +42,14 @@ class JobRead(JobBase):
     content_fingerprint: str | None
     dedupe_group_id: str | None
     description_html: str | None
+    description_html_key: str | None
+    description_html_hash: str | None
     description_plain: str | None
     published_at: datetime | None
     source_updated_at: datetime | None
     raw_payload: dict[str, Any]
+    raw_payload_key: str | None
+    raw_payload_hash: str | None
     sponsorship_not_available: str
     job_domain_raw: str | None
     job_domain_normalized: str

@@ -14,6 +14,103 @@ Job aggregation microservice.
 Default local DB connection:
 `postgresql+asyncpg://postgres:postgres@localhost:5434/job_db`
 
+## Local Supabase (CLI)
+
+This repo now includes a local Supabase project under
+[supabase/config.toml](/Users/nd/Developer/job/supabase/config.toml) with a
+private `job-blobs` bucket for blob storage.
+
+1. Start the local stack:
+   `npx supabase start`
+2. Run app commands against local Supabase without replacing your main `.env`:
+   `./scripts/with_local_supabase_env.sh <command>`
+3. Bootstrap this repo's schema into the local Supabase DB:
+   `./scripts/bootstrap_local_supabase_schema.sh`
+
+Current local Supabase ports for this repo:
+
+- API: `http://127.0.0.1:55321`
+- DB: `postgresql+asyncpg://postgres:postgres@127.0.0.1:55322/postgres`
+- Studio: `http://127.0.0.1:55323`
+- Mailpit: `http://127.0.0.1:55324`
+
+Local blob storage overrides live in `.env.supabase.local`, which is gitignored.
+The helper script loads `.env` first, then overrides DB and Storage settings
+with the local Supabase values.
+
+This repo does not yet use Supabase SQL migrations as the source of truth for
+fresh databases. After a local `supabase db reset`, rerun
+`./scripts/bootstrap_local_supabase_schema.sh`.
+
+## Job Blob Offload
+
+To reduce PostgreSQL table size and TOAST pressure, `job.description_html` and
+`job.raw_payload` now have external blob pointers in the `job` table:
+
+- `description_html_key`
+- `description_html_hash`
+- `raw_payload_key`
+- `raw_payload_hash`
+
+Current phase keeps these fields in PostgreSQL:
+
+- `description_plain`
+- `structured_jd`
+- all filter/sort columns already used by matching and search
+
+Current phase keeps the legacy `description_html` and `raw_payload` columns in
+place for compatibility. New writes upload gzip-compressed blobs to Supabase
+Storage first and only then write the DB pointer fields. That ordering means:
+
+- the database should never point at a missing blob
+- a failed DB transaction can leave orphaned storage objects, which is acceptable
+  for this phase and easier to repair later
+
+Stable object keys are content-addressed:
+
+- `job-html/{sha256}.html.gz`
+- `job-raw/{sha256}.json.gz`
+
+### Blob Storage Config
+
+Add these environment variables when enabling blob storage:
+
+- `STORAGE_PROVIDER=supabase`
+- `SUPABASE_STORAGE_BASE_URL=https://<project-ref>.supabase.co/storage/v1`
+- `SUPABASE_STORAGE_BUCKET=<bucket-name>`
+- `SUPABASE_STORAGE_SERVICE_KEY=<service-role-key>`
+
+If blob storage is not configured, the app can still start, but write paths and
+backfill scripts that need blob storage will fail with an explicit runtime
+error.
+
+### Backfill Existing Jobs
+
+After applying the schema migration, backfill existing rows:
+
+```bash
+PYTHONPATH=. .venv/bin/python scripts/migrate_job_blobs_to_storage.py --batch-size 100
+```
+
+Useful modes:
+
+- `--dry-run`
+- `--html-only`
+- `--raw-only`
+
+The backfill uploads missing blobs and writes the new key/hash columns, but it
+does not clear the legacy `description_html` or `raw_payload` columns yet.
+
+### Phase 2 Cleanup
+
+Once reads have been fully moved to storage-backed helpers and the backfill has
+completed, phase 2 can clear legacy column bodies in batches:
+
+1. backfill all missing blob pointers
+2. verify spot samples by reading from storage
+3. set `description_html = NULL` and/or `raw_payload = '{}'` for migrated rows
+4. monitor storage reads before considering column removal in a later migration
+
 ## Embedding Setup (LiteLLM Generic, 1024)
 
 1. Ensure PostgreSQL runs with pgvector:
@@ -51,15 +148,16 @@ Current snapshot as of 2026-02-28: public ATS ingestion is live for Greenhouse, 
 
 - [x] JobRepository base CRUD + structured_jd persistence helpers (P1)
 - [x] JobRepository dedup queries (P1)
+- [x] Offload `description_html` / `raw_payload` blobs to Supabase Storage with DB key/hash pointers (P1)
 - [ ] SyncRunRepository (P1)
-- [ ] URL normalization tool (P1)
-- [ ] Content fingerprint generation (simhash/minhash) (P1)
-- [ ] DedupService implementation (P1)
 - [x] Same-source dedup (external_id) (P1)
 - [x] Full snapshot reconcile for same-source ATS imports (Greenhouse / Ashby / Lever / SmartRecruiters; missing jobs close immediately after successful full sync) (P1)
-- [ ] Cross-source dedup (apply_url, fingerprint) (P1)
-- [ ] Update SyncRun dedup stats (P1)
-- [ ] Index optimization (apply_url, fingerprint) (P2)
+- [ ] Update SyncRun dedup stats (P2)
+- [ ] URL normalization tool (P2)
+- [ ] Content fingerprint generation (simhash/minhash) (P2)
+- [ ] DedupService implementation (P2)
+- [ ] Cross-source dedup (apply_url, fingerprint) (P2)
+- [ ] Index optimization (apply_url, fingerprint) (P3)
 
 ### Phase 3: Scheduling & Retry (pgBoss)
 
@@ -83,8 +181,8 @@ Current snapshot as of 2026-02-28: public ATS ingestion is live for Greenhouse, 
 - [x] Health check (P1)
 - [x] Source CRUD API endpoints (P1)
 - [x] Job CRUD API endpoints (P1)
-- [ ] Matching / recommendation API (P1)
-- [ ] Logging & monitoring (P2)
+- [x] Matching / recommendation API (P1)
+- [x] Logging & monitoring (P2)
 
 ### Phase 6: Matching & Ranking (Offline / Experimental)
 

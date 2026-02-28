@@ -1,11 +1,18 @@
 node_modules
 # Keep environment variables out of version control
 .env
+.env.supabase.local
 
 /generated/prisma
 notebooks/
 artifacts/
 scripts/__pycache__/
+
+# Generated ATS audit and verification reports
+reports/*_missing_identifiers.csv
+reports/*_verification_report.csv
+reports/final_source_import_candidates.csv
+reports/cross_platform_overlap_resolution.csv
 
 # Python
 __pycache__/
