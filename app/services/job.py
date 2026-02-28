@@ -11,6 +11,7 @@ from app.schemas.structured_jd import (
     build_structured_jd_projection,
     build_structured_jd_storage_payload,
 )
+from app.services.blob_storage import JobBlobManager, JobBlobPointers
 
 
 class JobError(Exception):
@@ -43,8 +44,13 @@ class JobStructuredJDMappingError(JobError):
 class JobService:
     """Service for Job business logic."""
 
-    def __init__(self, repository: JobRepository):
+    def __init__(
+        self,
+        repository: JobRepository,
+        blob_manager: JobBlobManager | None = None,
+    ):
         self.repository = repository
+        self.blob_manager = blob_manager or JobBlobManager()
 
     async def list_jobs(
         self,
@@ -69,6 +75,7 @@ class JobService:
     async def create_job(self, job_in: JobCreate) -> Job:
         """Create a new job."""
         job = Job(**job_in.model_dump())
+        await self.blob_manager.sync_job_blobs(job)
         return await self.repository.create(job)
 
     async def update_job(self, job_id: str, job_in: JobUpdate) -> Job:
@@ -77,10 +84,16 @@ class JobService:
         if not job:
             raise JobNotFoundError()
 
+        existing_pointers = JobBlobPointers.from_job(job)
         update_data = job_in.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(job, key, value)
         job.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        await self.blob_manager.sync_job_blobs(
+            job,
+            existing_pointers=existing_pointers,
+            explicit_fields=set(update_data),
+        )
 
         return await self.repository.update(job)
 

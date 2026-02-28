@@ -38,6 +38,23 @@ class TestCreateSource:
         assert "id" in data["data"]
         assert "created_at" in data["data"]
 
+    def test_create_source_eightfold_success(self, client: TestClient):
+        """Test successful eightfold source creation."""
+        response = client.post(
+            "/api/v1/sources",
+            json={
+                "name": "Microsoft",
+                "platform": "eightfold",
+                "identifier": "microsoft",
+            },
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["success"] is True
+        assert data["data"]["platform"] == "eightfold"
+        assert data["data"]["identifier"] == "microsoft"
+
     def test_create_source_with_all_fields(self, client: TestClient):
         """Test creating source with all optional fields."""
         response = client.post(
@@ -212,7 +229,18 @@ class TestCreateSource:
 
     def test_create_source_validates_platform_values(self, client: TestClient):
         """Test that only valid platform values are accepted."""
-        valid_platforms = ["greenhouse", "lever", "workday", "github", "ashby", "smartrecruiters"]
+        valid_platforms = [
+            "greenhouse",
+            "lever",
+            "workday",
+            "github",
+            "ashby",
+            "smartrecruiters",
+            "eightfold",
+            "apple",
+            "uber",
+            "tiktok",
+        ]
 
         for platform in valid_platforms:
             response = client.post(

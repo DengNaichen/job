@@ -10,6 +10,7 @@ from app.ingest.fetchers.base import BaseFetcher
 from app.ingest.mappers.base import BaseMapper
 from app.models import Job, JobStatus, Source, build_source_key
 from app.repositories.job import JobRepository
+from app.services.blob_storage import JobBlobManager, JobBlobPointers
 
 
 def _to_naive_utc(value: datetime | None) -> datetime | None:
@@ -52,9 +53,14 @@ class FullSnapshotSyncError(Exception):
 class FullSnapshotSyncService:
     """Same-source full snapshot reconcile service."""
 
-    def __init__(self, session: AsyncSession):
+    def __init__(
+        self,
+        session: AsyncSession,
+        blob_manager: JobBlobManager | None = None,
+    ):
         self.session = session
         self.job_repository = JobRepository(session)
+        self.blob_manager = blob_manager or JobBlobManager()
 
     async def sync_source(
         self,
@@ -103,11 +109,18 @@ class FullSnapshotSyncService:
             for payload in unique_payloads:
                 existing = existing_map.get(str(payload["external_job_id"]))
                 if existing is None:
-                    staged_jobs.append(self._build_new_job(payload, sync_started_at))
+                    job = self._build_new_job(payload, sync_started_at)
+                    await self.blob_manager.sync_job_blobs(job)
+                    staged_jobs.append(job)
                     stats.inserted_count += 1
                     continue
 
+                existing_pointers = JobBlobPointers.from_job(existing)
                 self._update_existing_job(existing, payload, sync_started_at)
+                await self.blob_manager.sync_job_blobs(
+                    existing,
+                    existing_pointers=existing_pointers,
+                )
                 staged_jobs.append(existing)
                 stats.updated_count += 1
 

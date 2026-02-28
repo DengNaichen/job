@@ -24,6 +24,10 @@ class PlatformType(str, enum.Enum):
     GITHUB = "github"
     ASHBY = "ashby"
     SMARTRECRUITERS = "smartrecruiters"
+    EIGHTFOLD = "eightfold"
+    APPLE = "apple"
+    UBER = "uber"
+    TIKTOK = "tiktok"
 
 
 def normalize_name(name: str) -> str:
