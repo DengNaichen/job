@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if command -v uv >/dev/null 2>&1; then
+  exec uv "$@"
+fi
+
+if [[ -x "${HOME}/.local/bin/uv" ]]; then
+  exec "${HOME}/.local/bin/uv" "$@"
+fi
+
+if [[ -x "${HOME}/.cargo/bin/uv" ]]; then
+  exec "${HOME}/.cargo/bin/uv" "$@"
+fi
+
+echo "uv not found. Install uv first: https://docs.astral.sh/uv/getting-started/installation/" >&2
+exit 127

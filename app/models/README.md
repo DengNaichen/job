@@ -18,7 +18,7 @@ Job posting table with multi-source aggregation and intelligent deduplication.
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | UUID | Primary key |
-| `source` | str | Data source identifier (e.g. `ashby`, `greenhouse`, `lever`) |
+| `source` | str | Same-source identity key (e.g. `greenhouse:airbnb`, `greenhouse:stripe`) |
 | `external_job_id` | str | Job ID from external system |
 | `title` | str | Job title |
 | `apply_url` | str | Application URL |
@@ -29,7 +29,7 @@ The system supports multi-level deduplication:
 
 | Field | Purpose |
 |-------|---------|
-| `source` + `external_job_id` | Unique identifier within same data source |
+| `source` + `external_job_id` | Unique identifier within one concrete source snapshot stream |
 | `normalized_apply_url` | Cross-source URL deduplication |
 | `content_fingerprint` | Content hash for detecting job content changes |
 | `dedupe_group_id` | Custom deduplication group for advanced dedup logic |
@@ -39,7 +39,7 @@ The system supports multi-level deduplication:
 | Field | Description |
 |-------|-------------|
 | `status` | Job status: `open` or `closed` |
-| `last_seen_at` | Last time seen in data source |
+| `last_seen_at` | Last time seen in a successful full snapshot sync |
 | `source_updated_at` | Update time in data source |
 
 ### Content Storage
@@ -104,8 +104,9 @@ Deduplication breakdown:
 
 1. **Preserve Raw Data** - `raw_payload` field saves complete API response for future analysis
 2. **Complete Timestamps** - `ingested_at`, `last_seen_at`, `source_updated_at` support full timeline tracking
-3. **Multi-layer Deduplication** - Supports various dedup strategies: within source, cross-source, content-level
-4. **Observability** - `SyncRun` provides detailed sync statistics for monitoring and troubleshooting
+3. **Same-Source Reconcile First** - `source` is a concrete `platform:identifier` key, so full snapshot sync can safely upsert and immediately close missing jobs
+4. **Layered Deduplication** - Same-source dedup is the current foundation; cross-source URL/content dedup remains a later phase
+5. **Observability** - `SyncRun` provides detailed sync statistics for monitoring and troubleshooting
 
 ## Enum Types
 

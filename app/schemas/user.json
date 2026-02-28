@@ -1,0 +1,167 @@
+{
+  "email": "Boya.Shi.2024@marshall.usc.edu",
+  "phone": "(+1) 747-2994606",
+  "awards": [],
+  "skills": [
+    "Python",
+    "R",
+    "SPSS",
+    "PowerBI",
+    "Tableau",
+    "SQL",
+    "NoSQL",
+    "JMP",
+    "Photoshop",
+    "Premiere Pro",
+    "Audition",
+    "@Risk",
+    "Microsoft Office",
+    "SEO",
+    "CRM",
+    "Firebase",
+    "Statistical Computing",
+    "Data Visualization",
+    "Statistical Modeling",
+    "Digital Marketing",
+    "Excel",
+    "Quantitative Investing",
+    "Pricing Strategies",
+    "Business Innovation",
+    "Econometrics",
+    "Artificial Intelligence",
+    "Data Analytics",
+    "Business Intelligence",
+    "Agile Development",
+    "Product Management",
+    "Market Analysis",
+    "User Research",
+    "Financial Valuation",
+    "Due Diligence",
+    "M&A Advisory"
+  ],
+  "summary": "Business Analytics graduate student with experience in data analytics, business intelligence, and operations. Background in M&A advisory, business analysis, and product development with expertise in statistical modeling, SQL, and data visualization. Proven track record in founding and scaling organizations, leading product launches, and driving strategic initiatives.",
+  "fullName": "Ariel Boya Shi",
+  "location": "Los Angeles, CA",
+  "projects": [],
+  "websites": [
+    "https://www.linkedin.com/in/arielboyashi/"
+  ],
+  "education": [
+    {
+      "gpa": "3.77/4.0",
+      "degree": "M.S.",
+      "honors": "scholarship awardee, dean's list",
+      "school": "University of Southern California",
+      "endDate": "2025-05",
+      "startDate": "2023-08",
+      "fieldOfStudy": "Business Analytics",
+      "expectedGraduation": "2025-05"
+    },
+    {
+      "gpa": "3.82/4.0",
+      "degree": "B.A.",
+      "honors": "honors degree with full scholarship",
+      "school": "University of Amsterdam",
+      "endDate": "2023-07",
+      "startDate": "2020-08",
+      "fieldOfStudy": "Liberal Arts and Sciences (Economics and Information Management)",
+      "expectedGraduation": null
+    }
+  ],
+  "interests": [
+    "Backpacking across Europe",
+    "Creating travel vlogs and blogs",
+    "Competitive volleyball",
+    "Content creation"
+  ],
+  "languages": [
+    "English"
+  ],
+  "workHistory": [
+    {
+      "title": "Chief Operating Officer",
+      "bullets": [
+        "Led the end-to-end development of WeKruit, an AI-driven multi-agent consulting interview prep platform that simulates human-like live case interviews and provides detailed, unbiased evaluations and trainings.",
+        "Defined the product roadmap, and overseen the agile development process, launching the MVP within six weeks.",
+        "Led user research and market analysis; partnered with engineers to execute rapid, data-informed product iterations.",
+        "Initiated monetization through both B2C subscriptions and B2B partnerships, securing early revenue and validating product-market fit.",
+        "Represented WeKruit at pitch competitions and VC meetings to attract fundings."
+      ],
+      "company": "WeKruit",
+      "endDate": null,
+      "location": "Los Angeles, U.S.",
+      "startDate": "2025-01",
+      "description": "Leading operations for AI-driven consulting interview prep SaaS startup",
+      "achievements": [
+        "Launched MVP within six weeks",
+        "Secured early revenue through B2C and B2B monetization strategies"
+      ]
+    },
+    {
+      "title": "Data Analytics and Business Intelligence Intern",
+      "bullets": [
+        "Analyzed six years of UN budget allocations and human resources KPI data using SQL, evaluating process efficiencies including onboarding and separation service design, created management dashboards with PowerBI.",
+        "Employed statistical modeling and data visualization on complex datasets with 20,000 rows and over 50 scales to derive actionable insights, contributing to strategic decision-making and operational efficiency improvements."
+      ],
+      "company": "United Nations",
+      "endDate": "2024-10",
+      "location": "New York City, U.S.",
+      "startDate": "2024-06",
+      "description": "Analyzed UN budget allocations and HR KPIs to improve operational efficiency",
+      "achievements": [
+        "Analyzed 6 years of budget data and created management dashboards",
+        "Processed complex datasets with 20,000 rows and 50+ scales"
+      ]
+    },
+    {
+      "title": "Mergers and Acquisitions Advisory Trainee",
+      "bullets": [
+        "Facilitated communication between client executives, legal teams, sell-side advisory team, and acquisition target.",
+        "Performed due diligence on a local delivery company through 10+ expert interviews, financial valuation, operational efficiency, synergy and risk analysis to calculate the company's value and competitive advantages.",
+        "Coordinated the completion of an M&A contract, aiming for sustainable revenue growth and a 7% increase in market share over five years.",
+        "Engaged in executive Q&A sessions to present and discuss findings."
+      ],
+      "company": "Deloitte Central Europe",
+      "endDate": "2022-07",
+      "location": "Budapest, Hungary",
+      "startDate": "2022-07",
+      "description": "Conducted M&A due diligence and valuation analysis for acquisition targets",
+      "achievements": [
+        "Conducted 10+ expert interviews for due diligence",
+        "Contributed to M&A contract targeting 7% market share increase over five years"
+      ]
+    },
+    {
+      "title": "Business Analysis and Company Compliance Intern",
+      "bullets": [
+        "Analyzed and visualized over 120,000 data rows on sales through CRM and ERP system using Excel and Tableau, produced 10+ comprehensive industry reports and market analyses to inform strategic pivots for the brand.",
+        "Designed and executed digital marketing promotions to boost customer engagement, utilizing targeted online campaigns and analytics to drive traffic and increase online-to-offline conversion rates.",
+        "Implemented a successful partnership that transformed close-to-expiration inventory into surprised sales, reducing food waste by approximately 3,600kg per month, and leveraging pick-ups to drive in-store customer conversion.",
+        "Expanded pick-up point network by outreaching 30+ local businesses as partners, resulting in 11% sales growth."
+      ],
+      "company": "JD.com",
+      "endDate": "2022-05",
+      "location": "Amstelveen, Netherlands",
+      "startDate": "2022-02",
+      "description": "Analyzed sales data and executed digital marketing campaigns for overseas expansion strategy",
+      "achievements": [
+        "Analyzed 120,000+ data rows and produced 10+ industry reports",
+        "Reduced food waste by 3,600kg per month through strategic partnership",
+        "Achieved 11% sales growth through pick-up point network expansion"
+      ]
+    }
+  ],
+  "volunteerWork": [
+    {
+      "role": "Founder & Chair",
+      "endDate": "2020-08",
+      "startDate": "2017-09",
+      "description": "Founded a non-profit organization focused on the social integration of autistic children. Established partnerships with 21 institutions and managed 80+ active volunteers. Led integrated marketing campaigns, designed and executed 20+ interviews, organized 17 public lectures and campus events, and inspired over 150K people through awareness and support initiatives.",
+      "organization": "FromStar"
+    }
+  ],
+  "certifications": [],
+  "parseConfidence": 0.98,
+  "workAuthorization": null,
+  "totalYearsExperience": 3
+}
