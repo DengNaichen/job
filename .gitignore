@@ -3,3 +3,16 @@ node_modules
 .env
 
 /generated/prisma
+notebooks/
+artifacts/
+scripts/__pycache__/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+alembic/__pycache__/
+app/__pycache__/
+tests/__pycache__/

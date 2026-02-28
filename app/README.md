@@ -60,13 +60,13 @@ app/
 
 ```bash
 # 安装依赖
-uv sync
+./scripts/uv sync
 
 # 配置环境变量
 cp .env.example .env
 
 # 启动服务
-uv run uvicorn app.main:app --reload
+./scripts/uv run uvicorn app.main:app --reload
 
 # 访问文档
 open http://localhost:8000/docs
@@ -76,10 +76,10 @@ open http://localhost:8000/docs
 
 ```bash
 # 生成迁移
-uv run alembic revision --autogenerate -m "init"
+./scripts/uv run alembic revision --autogenerate -m "init"
 
 # 执行迁移
-uv run alembic upgrade head
+./scripts/uv run alembic upgrade head
 ```
 
 ## API 端点
