@@ -159,11 +159,14 @@ Current snapshot as of 2026-02-28: public ATS ingestion is live for Greenhouse, 
 - [ ] Cross-source dedup (apply_url, fingerprint) (P2)
 - [ ] Index optimization (apply_url, fingerprint) (P3)
 
-### Phase 3: Scheduling & Retry (pgBoss)
+### Phase 3: Scheduling & Retry (cron + SyncRun + Tenacity)
 
-- [ ] SyncService orchestration (P1)
-- [ ] Scheduled tasks (pgBoss cron) (P1)
-- [ ] Error handling & retry (P2)
+Keep FastAPI API-only. Run scheduling and retries in a separate Python process.
+
+- [ ] SyncService orchestration on top of `FullSnapshotSyncService` + `SyncRun` (P1)
+- [ ] Scheduled ingest runner for local `cron` / platform cron (P1)
+- [ ] Source-level locking / overlap guard (P1)
+- [ ] Error handling & retry with `tenacity` (P2)
 
 ### Phase 4: Additional Data Sources
 

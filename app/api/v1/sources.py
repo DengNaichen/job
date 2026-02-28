@@ -11,6 +11,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.database import get_session
 from app.models import PlatformType, Source
 from app.repositories.source import SourceRepository
+from app.repositories.sync_run import SyncRunRepository
 from app.schemas.source import (
     SourceCreate,
     SourceRead,
@@ -36,7 +37,8 @@ router = APIRouter(prefix="/sources", tags=["sources"])
 def get_source_service(session: AsyncSession = Depends(get_session)) -> SourceService:
     """Dependency injection for SourceService."""
     repository = SourceRepository(session)
-    return SourceService(repository)
+    sync_run_repository = SyncRunRepository(session)
+    return SourceService(repository, sync_run_repository)
 
 
 @router.post(

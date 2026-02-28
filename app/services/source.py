@@ -8,8 +8,9 @@ Provides business logic for Source operations including:
 
 from datetime import datetime, timezone
 
-from app.models import Source, PlatformType, normalize_name
+from app.models import Source, PlatformType, build_source_key, normalize_name
 from app.repositories.source import SourceRepository
+from app.repositories.sync_run import SyncRunRepository
 from app.schemas.source import SourceCreate, SourceUpdate
 
 
@@ -66,8 +67,13 @@ class HasReferencesError(SourceError):
 class SourceService:
     """Service for Source business logic."""
 
-    def __init__(self, repository: SourceRepository):
+    def __init__(
+        self,
+        repository: SourceRepository,
+        sync_run_repository: SyncRunRepository | None = None,
+    ):
         self.repository = repository
+        self.sync_run_repository = sync_run_repository
 
     async def create_source(self, source_in: SourceCreate) -> Source:
         """
@@ -231,7 +237,9 @@ class SourceService:
         if not source:
             raise SourceNotFoundError()
 
-        # TODO: Check for associated SyncRun records when implemented
-        # For now, allow deletion
+        if self.sync_run_repository is not None:
+            source_key = build_source_key(source.platform, source.identifier)
+            if await self.sync_run_repository.has_any_for_source(source=source_key):
+                raise HasReferencesError()
 
         await self.repository.delete(source)

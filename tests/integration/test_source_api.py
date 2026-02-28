@@ -9,9 +9,15 @@ Tests for MVP User Story 1 (T016):
   - Failure: blank identifier
 """
 
+import asyncio
+
 import pytest
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
+from sqlmodel.ext.asyncio.session import AsyncSession
+
+from app.core.database import engine
+from app.models import SyncRun, SyncRunStatus, build_source_key
 
 
 class TestCreateSource:
@@ -349,3 +355,55 @@ class TestSourceAPIResponseFormat:
         # Custom business errors have "success" and "error" fields
         # Either format is acceptable for validation errors
         assert "detail" in data or ("success" in data and data["success"] is False)
+
+
+class TestDeleteSource:
+    """Integration tests for DELETE /api/v1/sources."""
+
+    def test_delete_source_success(self, client: TestClient):
+        response = client.post(
+            "/api/v1/sources",
+            json={
+                "name": "Delete Me",
+                "platform": "greenhouse",
+                "identifier": "delete-me",
+            },
+        )
+        source_id = response.json()["data"]["id"]
+
+        delete_response = client.delete(f"/api/v1/sources/{source_id}")
+
+        assert delete_response.status_code == 200
+        payload = delete_response.json()
+        assert payload["success"] is True
+
+    def test_delete_source_with_sync_runs_fails(self, client: TestClient):
+        response = client.post(
+            "/api/v1/sources",
+            json={
+                "name": "Protected Source",
+                "platform": "greenhouse",
+                "identifier": "protected-source",
+            },
+        )
+        payload = response.json()["data"]
+        source_id = payload["id"]
+
+        async def seed_sync_run() -> None:
+            async with AsyncSession(engine) as session:
+                session.add(
+                    SyncRun(
+                        source=build_source_key("greenhouse", "protected-source"),
+                        status=SyncRunStatus.success,
+                    )
+                )
+                await session.commit()
+
+        asyncio.run(seed_sync_run())
+
+        delete_response = client.delete(f"/api/v1/sources/{source_id}")
+
+        assert delete_response.status_code == 409
+        error_payload = delete_response.json()
+        assert error_payload["success"] is False
+        assert error_payload["error"]["code"] == "HAS_REFERENCES"
