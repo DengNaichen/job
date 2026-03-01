@@ -441,7 +441,7 @@ class TestSourceServiceDelete:
         from app.models import PlatformType, Source
         from app.repositories.source import SourceRepository
         from app.repositories.sync_run import SyncRunRepository
-        from app.services.source import SourceService
+        from app.services.application.source import SourceService
 
         source_repo = SourceRepository(session)
         sync_run_repo = SyncRunRepository(session)
@@ -464,7 +464,7 @@ class TestSourceServiceDelete:
         from app.models import PlatformType, Source, build_source_key
         from app.repositories.source import SourceRepository
         from app.repositories.sync_run import SyncRunRepository
-        from app.services.source import HasReferencesError, SourceService
+        from app.services.application.source import HasReferencesError, SourceService
 
         source_repo = SourceRepository(session)
         sync_run_repo = SyncRunRepository(session)

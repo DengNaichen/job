@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from app.api.v1.matching import get_match_service
 from app.main import app
 from app.schemas.match import MatchResponse
-from app.services.match_service import MatchQueryError
+from app.services.application.match_service import MatchQueryError
 
 
 def _build_response() -> MatchResponse:

@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from app.models import PlatformType, Source
-from app.services.full_snapshot_sync import SourceSyncResult, SourceSyncStats
+from app.services.application.full_snapshot_sync import SourceSyncResult, SourceSyncStats
 
 
 def _load_import_module():

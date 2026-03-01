@@ -23,7 +23,7 @@ from app.schemas.source import (
     SourceUpdate,
     DeleteResponse,
 )
-from app.services.source import (
+from app.services.application.source import (
     SourceService,
     DuplicateNameError,
     DuplicateIdentifierError,

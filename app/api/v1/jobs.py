@@ -5,7 +5,7 @@ from app.core.database import get_session
 from app.models import Job, JobStatus
 from app.repositories.job import JobRepository
 from app.schemas.job import JobCreate, JobRead, JobUpdate
-from app.services.job import JobNotFoundError, JobService
+from app.services.application.job import JobNotFoundError, JobService
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 

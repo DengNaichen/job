@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 
 from app.schemas.match import CandidateProfile, MatchRequest
-from app.services.match_service import (
+from app.services.application.match_service import (
     CandidateProfileValidationError,
     MatchExperimentService,
     MatchServiceError,

@@ -9,8 +9,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import PlatformType, Source, SyncRun, SyncRunStatus, build_source_key
 from app.repositories.sync_run import SyncRunRepository
-from app.services.full_snapshot_sync import SourceSyncResult, SourceSyncStats
-from app.services.sync import SyncService
+from app.services.application.full_snapshot_sync import SourceSyncResult, SourceSyncStats
+from app.services.application.sync import SyncService
 
 
 def _make_source(identifier: str, platform: PlatformType = PlatformType.GREENHOUSE) -> Source:
