@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.services.match_query import (
+from app.services.infra.match_query import (
     build_sql_prefilter,
     fetch_candidates,
     to_asyncpg_dsn,

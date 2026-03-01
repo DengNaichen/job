@@ -1,6 +1,6 @@
 """Unit tests for matching helpers."""
 
-from app.services.matching import (
+from app.services.domain.matching import (
     build_user_embedding_text,
     build_user_skill_tokens,
     compute_domain_match_score,

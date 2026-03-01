@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.services.llm import LLMConfig
-from app.services.llm_match_recommendation import (
+from app.services.infra.llm import LLMConfig
+from app.services.infra.llm_match_recommendation import (
     LLMMatchRecommendation,
     build_llm_match_payload,
     get_llm_adjustment,
@@ -142,11 +142,11 @@ async def test_get_llm_match_recommendation_parses_structured_response(
         }
 
     monkeypatch.setattr(
-        "app.services.llm_match_recommendation.get_llm_config",
+        "app.services.infra.llm_match_recommendation.get_llm_config",
         lambda: LLMConfig(provider="openai", model="gpt-4o-mini", api_key="test-key"),
     )
     monkeypatch.setattr(
-        "app.services.llm_match_recommendation.complete_json",
+        "app.services.infra.llm_match_recommendation.complete_json",
         fake_complete_json,
     )
 
@@ -187,11 +187,11 @@ async def test_apply_llm_rerank_reorders_only_window(monkeypatch: pytest.MonkeyP
         )
 
     monkeypatch.setattr(
-        "app.services.llm_match_recommendation.get_llm_config",
+        "app.services.infra.llm_match_recommendation.get_llm_config",
         lambda: LLMConfig(provider="openai", model="gpt-4o-mini", api_key="test-key"),
     )
     monkeypatch.setattr(
-        "app.services.llm_match_recommendation.get_llm_match_recommendation",
+        "app.services.infra.llm_match_recommendation.get_llm_match_recommendation",
         fake_recommendation,
     )
 
@@ -240,11 +240,11 @@ async def test_apply_llm_rerank_falls_back_per_item_on_failure(
         )
 
     monkeypatch.setattr(
-        "app.services.llm_match_recommendation.get_llm_config",
+        "app.services.infra.llm_match_recommendation.get_llm_config",
         lambda: LLMConfig(provider="openai", model="gpt-4o-mini", api_key="test-key"),
     )
     monkeypatch.setattr(
-        "app.services.llm_match_recommendation.get_llm_match_recommendation",
+        "app.services.infra.llm_match_recommendation.get_llm_match_recommendation",
         fake_recommendation,
     )
 

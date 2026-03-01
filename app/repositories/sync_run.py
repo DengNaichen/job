@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.contracts.sync import SourceSyncStats
 from app.models import SyncRun, SyncRunStatus
-from app.services.full_snapshot_sync import SourceSyncStats
 
 
 def _now_naive_utc() -> datetime:

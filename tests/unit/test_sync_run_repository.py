@@ -4,7 +4,7 @@ import pytest
 
 from app.models import SyncRunStatus
 from app.repositories.sync_run import SyncRunRepository
-from app.services.full_snapshot_sync import SourceSyncStats
+from app.contracts.sync import SourceSyncStats
 
 
 @pytest.mark.asyncio
