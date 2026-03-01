@@ -21,7 +21,8 @@ class TikTokMapper(BaseMapper):
             status="open",
             location_text=self._location_text(raw_job),
             department=self._nested_label(raw_job.get("job_category")),
-            team=self._nested_label(raw_job.get("department_info")) or self._nested_label(raw_job.get("job_subject")),
+            team=self._nested_label(raw_job.get("department_info"))
+            or self._nested_label(raw_job.get("job_subject")),
             employment_type=self._nested_label(raw_job.get("recruit_type")),
             description_html=None,
             description_plain=self._description_text(raw_job),

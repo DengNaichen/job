@@ -105,14 +105,17 @@ class TikTokFetcher(BaseFetcher):
                 raise ValueError("TikTok response payload must be a JSON object")
             except httpx.HTTPStatusError as exc:
                 last_error = exc
-                if exc.response.status_code not in self.RETRYABLE_STATUS_CODES or attempt + 1 >= self.MAX_RETRIES:
+                if (
+                    exc.response.status_code not in self.RETRYABLE_STATUS_CODES
+                    or attempt + 1 >= self.MAX_RETRIES
+                ):
                     raise
             except httpx.RequestError as exc:
                 last_error = exc
                 if attempt + 1 >= self.MAX_RETRIES:
                     raise
 
-            await asyncio.sleep(self.RETRY_BACKOFF_SECONDS * (2 ** attempt))
+            await asyncio.sleep(self.RETRY_BACKOFF_SECONDS * (2**attempt))
 
         if last_error is not None:
             raise last_error

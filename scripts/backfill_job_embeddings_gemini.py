@@ -21,6 +21,7 @@ from app.services.embedding import (
     get_embedding_config,
     resolve_embedding_model_name,
 )
+
 HTML_TAG_RE = re.compile(r"<[^>]+>")
 DEFAULT_MAX_EMBED_TEXT_CHARS = 12000
 
@@ -237,7 +238,9 @@ async def _embed_batch(
 ) -> tuple[list[tuple[str, str, str]], int]:
     semaphore = asyncio.Semaphore(concurrency)
 
-    async def run_one_fallback(row: JobRow, text: str, estimated_tokens: int) -> tuple[str, str, str] | Exception:
+    async def run_one_fallback(
+        row: JobRow, text: str, estimated_tokens: int
+    ) -> tuple[str, str, str] | Exception:
         try:
             await tpm_limiter.acquire(estimated_tokens)
             async with semaphore:
@@ -419,13 +422,26 @@ async def run(args: argparse.Namespace) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Backfill Job embeddings using LiteLLM API")
-    parser.add_argument("--model", default=None, help="Embedding model name. Default: env EMBEDDING_MODEL")
-    parser.add_argument("--dim", type=int, default=None, help="Embedding dimension. Default: env EMBEDDING_DIM")
+    parser.add_argument(
+        "--model", default=None, help="Embedding model name. Default: env EMBEDDING_MODEL"
+    )
+    parser.add_argument(
+        "--dim", type=int, default=None, help="Embedding dimension. Default: env EMBEDDING_DIM"
+    )
     parser.add_argument("--batch-size", type=int, default=None, help="Rows fetched per batch")
     parser.add_argument("--concurrency", type=int, default=5, help="Concurrent embedding API calls")
-    parser.add_argument("--api-batch-size", type=int, default=16, help="Texts per embedding API request")
-    parser.add_argument("--max-retries", type=int, default=3, help="Max retries for transient API errors")
-    parser.add_argument("--target-tpm", type=int, default=0, help="Estimated token-per-minute cap. 0 disables limiter.")
+    parser.add_argument(
+        "--api-batch-size", type=int, default=16, help="Texts per embedding API request"
+    )
+    parser.add_argument(
+        "--max-retries", type=int, default=3, help="Max retries for transient API errors"
+    )
+    parser.add_argument(
+        "--target-tpm",
+        type=int,
+        default=0,
+        help="Estimated token-per-minute cap. 0 disables limiter.",
+    )
     parser.add_argument(
         "--max-embed-chars",
         type=int,
@@ -438,8 +454,12 @@ def parse_args() -> argparse.Namespace:
         help="Only embed jobs with structured_jd IS NOT NULL.",
     )
     parser.add_argument("--limit", type=int, default=None, help="Max rows to process")
-    parser.add_argument("--force", action="store_true", help="Recompute embeddings even when already present")
-    parser.add_argument("--dry-run", action="store_true", help="Compute embeddings but skip DB writes")
+    parser.add_argument(
+        "--force", action="store_true", help="Recompute embeddings even when already present"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Compute embeddings but skip DB writes"
+    )
     return parser.parse_args()
 
 

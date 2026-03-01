@@ -152,20 +152,26 @@ async def run(args: argparse.Namespace) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Import Eightfold jobs for one or all enabled source slugs.")
+    parser = argparse.ArgumentParser(
+        description="Import Eightfold jobs for one or all enabled source slugs."
+    )
     parser.add_argument(
         "--slug",
         default=None,
         help="Exact Source.identifier to import. Defaults to all enabled Eightfold sources.",
     )
-    parser.add_argument("--limit", type=int, default=None, help="Limit number of sources when running all.")
+    parser.add_argument(
+        "--limit", type=int, default=None, help="Limit number of sources when running all."
+    )
     parser.add_argument(
         "--include-content",
         action=argparse.BooleanOptionalAction,
         default=True,
         help="Fetch per-job detail payloads to populate descriptions and normalized locations.",
     )
-    parser.add_argument("--dry-run", action="store_true", help="Process all records but rollback writes.")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Process all records but rollback writes."
+    )
     return parser.parse_args()
 
 

@@ -70,10 +70,7 @@ def test_load_candidates_dedupes_by_platform_and_identifier(tmp_path: Path) -> N
     candidates, summaries = module.load_candidates(tmp_path)
 
     assert len(candidates) == 4
-    assert [
-        (candidate.platform, candidate.identifier)
-        for candidate in candidates
-    ] == [
+    assert [(candidate.platform, candidate.identifier) for candidate in candidates] == [
         (PlatformType.ASHBY, "openai"),
         (PlatformType.ASHBY, "anthropic"),
         (PlatformType.LEVER, "stripe"),
@@ -105,7 +102,9 @@ def test_validate_candidate_name_flags_numeric_placeholder_names() -> None:
 
 
 @pytest.mark.asyncio
-async def test_verify_candidate_requires_live_fetch_and_sample_map(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_verify_candidate_requires_live_fetch_and_sample_map(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     module = _load_module()
 
     class FakeFetcher:

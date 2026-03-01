@@ -72,7 +72,9 @@ async def test_greenhouse_fetch_with_content(fetcher, mapper):
 
     # Check first job has description_html
     first_job = mapper.map(jobs[0])
-    assert first_job.description_html is not None, "Should have description when include_content=True"
+    assert first_job.description_html is not None, (
+        "Should have description when include_content=True"
+    )
 
 
 @pytest.mark.integration

@@ -100,10 +100,7 @@ class FullSnapshotSyncService:
                 source=source_key,
                 external_job_ids=[payload["external_job_id"] for payload in unique_payloads],
             )
-            existing_map = {
-                str(job.external_job_id): job
-                for job in existing_rows
-            }
+            existing_map = {str(job.external_job_id): job for job in existing_rows}
 
             staged_jobs: list[Job] = []
             for payload in unique_payloads:
@@ -188,7 +185,9 @@ class FullSnapshotSyncService:
     ) -> None:
         normalized_payload = dict(payload)
         normalized_payload["published_at"] = _to_naive_utc(normalized_payload.get("published_at"))
-        normalized_payload["source_updated_at"] = _to_naive_utc(normalized_payload.get("source_updated_at"))
+        normalized_payload["source_updated_at"] = _to_naive_utc(
+            normalized_payload.get("source_updated_at")
+        )
         for key, value in normalized_payload.items():
             setattr(job, key, value)
         job.status = JobStatus.open

@@ -208,7 +208,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Batch parse JDs and persist structured_jd")
     parser.add_argument("--limit", type=int, default=100, help="Max jobs to process")
     parser.add_argument("--batch-size", type=int, default=10, help="Jobs per LLM batch")
-    parser.add_argument("--concurrency", type=int, default=1, help="Concurrent batch parse requests")
+    parser.add_argument(
+        "--concurrency", type=int, default=1, help="Concurrent batch parse requests"
+    )
     parser.add_argument(
         "--version-only",
         action="store_true",

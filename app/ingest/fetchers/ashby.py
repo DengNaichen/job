@@ -26,7 +26,9 @@ class AshbyFetcher(BaseFetcher):
         FullSnapshotSyncService exposes a generic include_content flag.
         For Ashby, that flag is reused to request optional compensation data.
         """
-        include_compensation_flag = include_content if include_compensation is None else include_compensation
+        include_compensation_flag = (
+            include_content if include_compensation is None else include_compensation
+        )
         url = f"{self.BASE_URL}/{slug}"
         params = {"includeCompensation": str(include_compensation_flag).lower()}
 

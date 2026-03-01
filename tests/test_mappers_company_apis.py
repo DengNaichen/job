@@ -49,7 +49,12 @@ class TestUberMapper:
             "timeType": "Full-Time",
             "creationDate": "2026-02-28T10:30:00Z",
             "updatedDate": "2026-02-28T11:30:00Z",
-            "location": {"city": "San Francisco", "region": "California", "countryName": "United States", "country": "USA"},
+            "location": {
+                "city": "San Francisco",
+                "region": "California",
+                "countryName": "United States",
+                "country": "USA",
+            },
         }
 
         result = mapper.map(raw_job)

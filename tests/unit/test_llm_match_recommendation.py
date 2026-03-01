@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from types import SimpleNamespace
-
 import pytest
 
 from app.services.llm import LLMConfig
@@ -133,7 +131,12 @@ async def test_get_llm_match_recommendation_parses_structured_response(
     async def fake_complete_json(**kwargs):  # noqa: ANN003
         return {
             "recommendation": "yes",
-            "reasons": ["Strong analytics alignment", "Relevant BI tooling", "Cross-functional work", "extra"],
+            "reasons": [
+                "Strong analytics alignment",
+                "Relevant BI tooling",
+                "Cross-functional work",
+                "extra",
+            ],
             "gaps": ["Limited finance depth"],
             "resume_focus_points": ["Highlight dashboard ownership", "Quantify impact"],
         }

@@ -155,8 +155,18 @@ def test_filter_match_candidates_by_min_cosine_score_rejects_invalid_threshold()
 
 def test_hard_filter_excludes_sponsorship_only_when_needed() -> None:
     rows = [
-        {"job_id": "blocked", "sponsorship_not_available": "yes", "min_degree_rank": -1, "jd_experience_years": None},
-        {"job_id": "unknown", "sponsorship_not_available": "unknown", "min_degree_rank": -1, "jd_experience_years": None},
+        {
+            "job_id": "blocked",
+            "sponsorship_not_available": "yes",
+            "min_degree_rank": -1,
+            "jd_experience_years": None,
+        },
+        {
+            "job_id": "unknown",
+            "sponsorship_not_available": "unknown",
+            "min_degree_rank": -1,
+            "jd_experience_years": None,
+        },
     ]
 
     passed, summary = hard_filter_match_candidates(
@@ -183,9 +193,24 @@ def test_hard_filter_excludes_sponsorship_only_when_needed() -> None:
 
 def test_hard_filter_excludes_degree_only_when_user_degree_known() -> None:
     rows = [
-        {"job_id": "blocked", "sponsorship_not_available": "unknown", "min_degree_rank": 3, "jd_experience_years": None},
-        {"job_id": "allowed", "sponsorship_not_available": "unknown", "min_degree_rank": 2, "jd_experience_years": None},
-        {"job_id": "unknown", "sponsorship_not_available": "unknown", "min_degree_rank": -1, "jd_experience_years": None},
+        {
+            "job_id": "blocked",
+            "sponsorship_not_available": "unknown",
+            "min_degree_rank": 3,
+            "jd_experience_years": None,
+        },
+        {
+            "job_id": "allowed",
+            "sponsorship_not_available": "unknown",
+            "min_degree_rank": 2,
+            "jd_experience_years": None,
+        },
+        {
+            "job_id": "unknown",
+            "sponsorship_not_available": "unknown",
+            "min_degree_rank": -1,
+            "jd_experience_years": None,
+        },
     ]
 
     passed, summary = hard_filter_match_candidates(
@@ -211,9 +236,24 @@ def test_hard_filter_excludes_degree_only_when_user_degree_known() -> None:
 
 def test_hard_filter_excludes_experience_beyond_buffer() -> None:
     rows = [
-        {"job_id": "blocked", "sponsorship_not_available": "unknown", "min_degree_rank": -1, "jd_experience_years": 5},
-        {"job_id": "allowed", "sponsorship_not_available": "unknown", "min_degree_rank": -1, "jd_experience_years": 4},
-        {"job_id": "unknown", "sponsorship_not_available": "unknown", "min_degree_rank": -1, "jd_experience_years": None},
+        {
+            "job_id": "blocked",
+            "sponsorship_not_available": "unknown",
+            "min_degree_rank": -1,
+            "jd_experience_years": 5,
+        },
+        {
+            "job_id": "allowed",
+            "sponsorship_not_available": "unknown",
+            "min_degree_rank": -1,
+            "jd_experience_years": 4,
+        },
+        {
+            "job_id": "unknown",
+            "sponsorship_not_available": "unknown",
+            "min_degree_rank": -1,
+            "jd_experience_years": None,
+        },
     ]
 
     passed, summary = hard_filter_match_candidates(

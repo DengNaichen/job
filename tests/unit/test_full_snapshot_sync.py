@@ -161,7 +161,9 @@ async def test_full_snapshot_sync_second_full_import_updates_without_duplicates(
 
 
 @pytest.mark.asyncio
-async def test_full_snapshot_sync_closes_jobs_missing_from_next_snapshot(session: AsyncSession) -> None:
+async def test_full_snapshot_sync_closes_jobs_missing_from_next_snapshot(
+    session: AsyncSession,
+) -> None:
     service = _service(session)
     await service.sync_source(
         source=_source(),
@@ -185,7 +187,9 @@ async def test_full_snapshot_sync_closes_jobs_missing_from_next_snapshot(session
 
 
 @pytest.mark.asyncio
-async def test_full_snapshot_sync_reopens_closed_job_when_it_reappears(session: AsyncSession) -> None:
+async def test_full_snapshot_sync_reopens_closed_job_when_it_reappears(
+    session: AsyncSession,
+) -> None:
     service = _service(session)
     await service.sync_source(
         source=_source(),
@@ -294,7 +298,9 @@ async def test_full_snapshot_sync_mapper_failure_rolls_back_without_closing_jobs
 
 
 @pytest.mark.asyncio
-async def test_full_snapshot_sync_dry_run_does_not_persist_or_close_jobs(session: AsyncSession) -> None:
+async def test_full_snapshot_sync_dry_run_does_not_persist_or_close_jobs(
+    session: AsyncSession,
+) -> None:
     service = _service(session)
     result = await service.sync_source(
         source=_source(),

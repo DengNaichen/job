@@ -51,7 +51,9 @@ async def test_parse_jd_normalizes_new_fields(monkeypatch: pytest.MonkeyPatch) -
 
 
 @pytest.mark.asyncio
-async def test_parse_jd_batch_merges_compact_llm_output_with_rules(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_parse_jd_batch_merges_compact_llm_output_with_rules(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def fake_complete_json(**kwargs):  # noqa: ANN003
         return {
             "jobs": [

@@ -124,9 +124,7 @@ def upgrade() -> None:
     )
 
     # Mark previously parsed rows as v1 so backfill can target only historical parsed samples.
-    op.execute(
-        "UPDATE job SET structured_jd_version = 1 WHERE structured_jd IS NOT NULL"
-    )
+    op.execute("UPDATE job SET structured_jd_version = 1 WHERE structured_jd IS NOT NULL")
 
 
 def downgrade() -> None:

@@ -17,6 +17,7 @@ from app.models.source import PlatformType
 
 class SourceCreate(BaseModel):
     """Schema for creating a new source."""
+
     name: str = Field(..., min_length=1, max_length=255, description="Company name")
     platform: PlatformType = Field(..., description="Platform type")
     identifier: str = Field(..., min_length=1, max_length=255, description="Platform identifier")
@@ -35,6 +36,7 @@ class SourceCreate(BaseModel):
 
 class SourceUpdate(BaseModel):
     """Schema for updating a source (partial update)."""
+
     name: str | None = Field(default=None, min_length=1, max_length=255)
     platform: PlatformType | None = Field(default=None)
     identifier: str | None = Field(default=None, min_length=1, max_length=255)
@@ -55,6 +57,7 @@ class SourceUpdate(BaseModel):
 
 class SourceRead(BaseModel):
     """Schema for reading a source."""
+
     id: str
     name: str
     platform: PlatformType
@@ -69,12 +72,14 @@ class SourceRead(BaseModel):
 
 class ErrorDetail(BaseModel):
     """Error detail structure."""
+
     code: str
     message: str
 
 
 class SourceResponse(BaseModel):
     """Single source response wrapper."""
+
     success: bool = True
     data: SourceRead
     message: str = "操作成功"
@@ -82,6 +87,7 @@ class SourceResponse(BaseModel):
 
 class SourceListResponse(BaseModel):
     """Source list response wrapper."""
+
     success: bool = True
     data: list[SourceRead]
     total: int
@@ -89,6 +95,7 @@ class SourceListResponse(BaseModel):
 
 class SourceSlugListResponse(BaseModel):
     """Slug list response wrapper."""
+
     success: bool = True
     platform: PlatformType
     data: list[str]
@@ -97,11 +104,13 @@ class SourceSlugListResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Error response wrapper."""
+
     success: bool = False
     error: ErrorDetail
 
 
 class DeleteResponse(BaseModel):
     """Delete response wrapper."""
+
     success: bool = True
     message: str = "数据源已删除"

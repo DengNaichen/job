@@ -20,7 +20,9 @@ class TestAshbyFetcher:
     @respx.mock
     async def test_fetch_returns_jobs(self):
         respx.get("https://api.ashbyhq.com/posting-api/job-board/test-company").mock(
-            return_value=Response(200, json={"apiVersion": "1", "jobs": [{"id": "job-1"}, {"id": "job-2"}]})
+            return_value=Response(
+                200, json={"apiVersion": "1", "jobs": [{"id": "job-1"}, {"id": "job-2"}]}
+            )
         )
 
         fetcher = AshbyFetcher()

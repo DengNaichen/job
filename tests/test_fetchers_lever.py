@@ -20,7 +20,9 @@ class TestLeverFetcher:
     @respx.mock
     async def test_fetch_returns_jobs(self):
         route = respx.get("https://api.lever.co/v0/postings/test-company").mock(
-            return_value=Response(200, json=[{"id": "1", "text": "Engineer"}, {"id": "2", "text": "Designer"}])
+            return_value=Response(
+                200, json=[{"id": "1", "text": "Engineer"}, {"id": "2", "text": "Designer"}]
+            )
         )
 
         fetcher = LeverFetcher()
@@ -48,7 +50,9 @@ class TestLeverFetcher:
     @pytest.mark.asyncio
     @respx.mock
     async def test_fetch_empty_jobs(self):
-        respx.get("https://api.lever.co/v0/postings/empty").mock(return_value=Response(200, json=[]))
+        respx.get("https://api.lever.co/v0/postings/empty").mock(
+            return_value=Response(200, json=[])
+        )
 
         fetcher = LeverFetcher()
         result = await fetcher.fetch("empty")

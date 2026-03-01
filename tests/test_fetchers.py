@@ -21,7 +21,9 @@ class TestGreenhouseFetcher:
     async def test_fetch_returns_jobs(self):
         """Test normal job list return."""
         respx.get("https://boards-api.greenhouse.io/v1/boards/test-company/jobs").mock(
-            return_value=Response(200, json={"jobs": [{"id": 1, "title": "Engineer"}, {"id": 2, "title": "Designer"}]})
+            return_value=Response(
+                200, json={"jobs": [{"id": 1, "title": "Engineer"}, {"id": 2, "title": "Designer"}]}
+            )
         )
 
         fetcher = GreenhouseFetcher()

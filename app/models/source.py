@@ -18,6 +18,7 @@ from sqlmodel import Field, SQLModel
 
 class PlatformType(str, enum.Enum):
     """Recruitment platform types."""
+
     GREENHOUSE = "greenhouse"
     LEVER = "lever"
     WORKDAY = "workday"
@@ -60,6 +61,7 @@ def build_source_key(platform: PlatformType | str, identifier: str) -> str:
 
 class Source(SQLModel, table=True):
     """Data source configuration for job scraping."""
+
     __tablename__ = "sources"
     __table_args__ = (
         UniqueConstraint("name_normalized", "platform", name="uq_sources_name_platform"),
@@ -67,43 +69,25 @@ class Source(SQLModel, table=True):
     )
 
     id: str = Field(
-        default_factory=lambda: str(uuid.uuid4()),
-        primary_key=True,
-        description="Unique identifier"
+        default_factory=lambda: str(uuid.uuid4()), primary_key=True, description="Unique identifier"
     )
-    name: str = Field(
-        max_length=255,
-        description="Company name (display name)"
-    )
+    name: str = Field(max_length=255, description="Company name (display name)")
     name_normalized: str = Field(
-        max_length=255,
-        index=True,
-        description="Normalized company name for uniqueness check"
+        max_length=255, index=True, description="Normalized company name for uniqueness check"
     )
     platform: PlatformType = Field(
-        sa_column=Column(String(50), nullable=False),
-        description="Platform type"
+        sa_column=Column(String(50), nullable=False), description="Platform type"
     )
-    identifier: str = Field(
-        max_length=255,
-        description="Platform identifier"
-    )
-    enabled: bool = Field(
-        default=True,
-        description="Enabled status"
-    )
-    notes: str | None = Field(
-        default=None,
-        max_length=1000,
-        description="Notes"
-    )
+    identifier: str = Field(max_length=255, description="Platform identifier")
+    enabled: bool = Field(default=True, description="Enabled status")
+    notes: str | None = Field(default=None, max_length=1000, description="Notes")
     created_at: datetime = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False),
         default_factory=lambda: datetime.now(timezone.utc),
-        description="Created timestamp"
+        description="Created timestamp",
     )
     updated_at: datetime = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False),
         default_factory=lambda: datetime.now(timezone.utc),
-        description="Last updated timestamp"
+        description="Last updated timestamp",
     )

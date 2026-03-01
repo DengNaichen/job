@@ -8,7 +8,6 @@ Tests for MVP User Story 1:
 
 import pytest
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, patch
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -432,3 +431,56 @@ class TestSourceRepository:
         found = await repo.get_by_name_normalized("nonexistent")
 
         assert found is None
+
+
+class TestSourceServiceDelete:
+    """Tests for SourceService delete behavior."""
+
+    @pytest.mark.asyncio
+    async def test_delete_source_without_sync_runs_succeeds(self, session: AsyncSession):
+        from app.models import PlatformType, Source
+        from app.repositories.source import SourceRepository
+        from app.repositories.sync_run import SyncRunRepository
+        from app.services.source import SourceService
+
+        source_repo = SourceRepository(session)
+        sync_run_repo = SyncRunRepository(session)
+        service = SourceService(source_repo, sync_run_repo)
+        source = await source_repo.create(
+            Source(
+                name="Stripe",
+                name_normalized="stripe",
+                platform=PlatformType.GREENHOUSE,
+                identifier="stripe",
+            )
+        )
+
+        await service.delete_source(source.id)
+
+        assert await source_repo.get_by_id(source.id) is None
+
+    @pytest.mark.asyncio
+    async def test_delete_source_with_sync_runs_raises_has_references(self, session: AsyncSession):
+        from app.models import PlatformType, Source, build_source_key
+        from app.repositories.source import SourceRepository
+        from app.repositories.sync_run import SyncRunRepository
+        from app.services.source import HasReferencesError, SourceService
+
+        source_repo = SourceRepository(session)
+        sync_run_repo = SyncRunRepository(session)
+        service = SourceService(source_repo, sync_run_repo)
+        source = await source_repo.create(
+            Source(
+                name="Stripe",
+                name_normalized="stripe",
+                platform=PlatformType.GREENHOUSE,
+                identifier="stripe",
+            )
+        )
+        source_id = source.id
+        await sync_run_repo.create_running(
+            source=build_source_key(source.platform, source.identifier)
+        )
+
+        with pytest.raises(HasReferencesError):
+            await service.delete_source(source_id)

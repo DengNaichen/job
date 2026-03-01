@@ -28,23 +28,45 @@ class OverlapResolution:
 
 
 OVERLAP_RESOLUTIONS: dict[str, OverlapResolution] = {
-    "aleph": OverlapResolution("aleph", PlatformType.LEVER, "much_higher_job_count_equal_sample_richness"),
-    "antimetal": OverlapResolution("antimetal", PlatformType.ASHBY, "higher_job_count_and_richer_sample"),
+    "aleph": OverlapResolution(
+        "aleph", PlatformType.LEVER, "much_higher_job_count_equal_sample_richness"
+    ),
+    "antimetal": OverlapResolution(
+        "antimetal", PlatformType.ASHBY, "higher_job_count_and_richer_sample"
+    ),
     "baton": OverlapResolution("baton", PlatformType.ASHBY, "near_tie_prefer_richer_sample"),
     "extend": OverlapResolution("extend", PlatformType.ASHBY, "near_tie_prefer_richer_sample"),
     "finch": OverlapResolution("finch", PlatformType.LEVER, "much_higher_job_count"),
     "found": OverlapResolution("found", PlatformType.ASHBY, "higher_job_count_and_richer_sample"),
-    "glide": OverlapResolution("glide", PlatformType.LEVER, "highest_job_count_equal_top_sample_richness"),
-    "harmonic": OverlapResolution("harmonic", PlatformType.GREENHOUSE, "materially_higher_job_count_with_acceptable_sample_quality"),
-    "hive": OverlapResolution("hive", PlatformType.LEVER, "much_higher_job_count_and_richer_sample"),
+    "glide": OverlapResolution(
+        "glide", PlatformType.LEVER, "highest_job_count_equal_top_sample_richness"
+    ),
+    "harmonic": OverlapResolution(
+        "harmonic",
+        PlatformType.GREENHOUSE,
+        "materially_higher_job_count_with_acceptable_sample_quality",
+    ),
+    "hive": OverlapResolution(
+        "hive", PlatformType.LEVER, "much_higher_job_count_and_richer_sample"
+    ),
     "hook": OverlapResolution("hook", PlatformType.ASHBY, "near_tie_prefer_richer_sample"),
     "knock": OverlapResolution("knock", PlatformType.ASHBY, "equal_job_count_prefer_richer_sample"),
-    "known": OverlapResolution("known", PlatformType.GREENHOUSE, "materially_higher_job_count_with_acceptable_sample_quality"),
+    "known": OverlapResolution(
+        "known",
+        PlatformType.GREENHOUSE,
+        "materially_higher_job_count_with_acceptable_sample_quality",
+    ),
     "latitude": OverlapResolution("latitude", PlatformType.GREENHOUSE, "much_higher_job_count"),
-    "ledger": OverlapResolution("ledger", PlatformType.ASHBY, "much_higher_job_count_and_richer_sample"),
-    "range": OverlapResolution("range", PlatformType.ASHBY, "much_higher_job_count_and_richer_sample"),
+    "ledger": OverlapResolution(
+        "ledger", PlatformType.ASHBY, "much_higher_job_count_and_richer_sample"
+    ),
+    "range": OverlapResolution(
+        "range", PlatformType.ASHBY, "much_higher_job_count_and_richer_sample"
+    ),
     "reach": OverlapResolution("reach", PlatformType.ASHBY, "equal_job_count_prefer_richer_sample"),
-    "sesame": OverlapResolution("sesame", PlatformType.ASHBY, "much_higher_job_count_and_richer_sample"),
+    "sesame": OverlapResolution(
+        "sesame", PlatformType.ASHBY, "much_higher_job_count_and_richer_sample"
+    ),
     "stackblitz": OverlapResolution("stackblitz", PlatformType.GREENHOUSE, "much_higher_job_count"),
 }
 
@@ -109,7 +131,9 @@ def resolve_overlap_candidates(
             )
 
         selected.append(winner)
-        for candidate in sorted(group, key=lambda item: (item.platform.value, item.identifier.casefold())):
+        for candidate in sorted(
+            group, key=lambda item: (item.platform.value, item.identifier.casefold())
+        ):
             overlap_rows.append(
                 {
                     "identifier": candidate.identifier,
@@ -176,14 +200,18 @@ async def import_candidates(
         existing_sources = list(existing_rows.all())
         existing_by_identifier = {
             (
-                source.platform.value if isinstance(source.platform, PlatformType) else str(source.platform).strip(),
+                source.platform.value
+                if isinstance(source.platform, PlatformType)
+                else str(source.platform).strip(),
                 source.identifier.strip().casefold(),
             ): source
             for source in existing_sources
         }
         existing_by_name = {
             (
-                source.platform.value if isinstance(source.platform, PlatformType) else str(source.platform).strip(),
+                source.platform.value
+                if isinstance(source.platform, PlatformType)
+                else str(source.platform).strip(),
                 normalize_name(source.name),
             ): source
             for source in existing_sources
