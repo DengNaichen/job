@@ -77,6 +77,7 @@ Current live counts, source coverage, storage footprint, and enrichment cost not
 - [x] Experimental top-10 LLM enum recommendation rerank (P3)
 - [ ] Evaluation / benchmark harness (P2)
 - [ ] Retrieval redesign: move away from `JD-only` embedding as the main retrieval primitive (P2)
+- [ ] Location modeling v1 on `job`: add structured fields for filtering/ranking while keeping `location_text` as compatibility/display text (P2)
 - [ ] Hybrid retrieval: title / skills / domain / location / structured filters + optional vector recall (P2)
 - [ ] Embedding storage redesign: move vectors out of the hot `job` row and support model/version isolation (P2)
 - [ ] Production-ready matching service (P3)
@@ -92,7 +93,7 @@ Current live counts, source coverage, storage footprint, and enrichment cost not
 ## Phase 8: Post-MVP Architecture Cleanup
 
 - [ ] Add `source_id` foreign key to `job` and `syncrun`, keep `source_key` only as a stable natural-key/cache layer during migration (P1)
-- [ ] Normalize location modeling: move beyond `location_text` to structured location fields, then consider `locations + job_locations` if needed (P2)
+- [ ] Revisit full location normalization: add `locations + job_locations` only if multi-location jobs or canonical location reuse justify the extra complexity (P3)
 - [ ] Split hot vs cold job data: keep frequently queried fields hot, move large content blobs / payloads / vectors out of the main row where appropriate (P2)
 - [ ] Replace per-job ORM staging with batch-first ingest writes and bulk upsert paths (P1)
 - [ ] Parallelize / short-circuit blob sync so large sources stop paying one network round-trip chain per job (P1)

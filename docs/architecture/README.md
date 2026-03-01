@@ -8,6 +8,10 @@ They are intentionally lightweight:
 - close to the current codebase
 - explicit about where the design is still transitional
 
+Detailed migration specs:
+
+- [Source ID Migration](./source-id-migration.md)
+
 ## 1. System Overview
 
 ```mermaid
