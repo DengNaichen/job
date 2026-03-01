@@ -74,13 +74,8 @@ open http://localhost:8000/docs
 
 ## 数据库迁移
 
-```bash
-# 生成迁移
-./scripts/uv run alembic revision --autogenerate -m "init"
-
-# 执行迁移
-./scripts/uv run alembic upgrade head
-```
+数据库迁移目录是本地私有维护，不随这个仓库公开发布。
+如果你在本地维护了 Alembic 子仓库，请在那里生成并执行迁移。
 
 ## API 端点
 

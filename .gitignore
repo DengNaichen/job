@@ -7,7 +7,10 @@ node_modules
 /generated/prisma
 notebooks/
 artifacts/
+alembic/
 scripts/__pycache__/
+scripts/local/*
+!scripts/local/.gitkeep
 
 # Generated ATS audit and verification reports
 reports/*_missing_identifiers.csv
@@ -21,6 +24,5 @@ __pycache__/
 *$py.class
 .pytest_cache/
 .venv/
-alembic/__pycache__/
 app/__pycache__/
 tests/__pycache__/
