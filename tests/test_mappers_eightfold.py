@@ -45,7 +45,9 @@ class TestEightfoldMapper:
         assert result.published_at == datetime.fromtimestamp(1709164800, timezone.utc)
         assert result.source_updated_at == datetime.fromtimestamp(1709251200, timezone.utc)
 
-    def test_map_falls_back_to_locations_when_standardized_missing(self, mapper: EightfoldMapper) -> None:
+    def test_map_falls_back_to_locations_when_standardized_missing(
+        self, mapper: EightfoldMapper
+    ) -> None:
         raw_job = {
             "id": "job-1",
             "name": "Designer",
@@ -62,7 +64,9 @@ class TestEightfoldMapper:
         assert result.published_at is None
         assert result.source_updated_at is None
 
-    def test_map_strips_empty_strings_and_supports_millisecond_timestamps(self, mapper: EightfoldMapper) -> None:
+    def test_map_strips_empty_strings_and_supports_millisecond_timestamps(
+        self, mapper: EightfoldMapper
+    ) -> None:
         raw_job = {
             "id": "job-2",
             "name": "  ML Engineer  ",

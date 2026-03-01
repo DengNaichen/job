@@ -54,9 +54,19 @@ def test_load_greenhouse_candidates_dedupes_identifier_and_name(tmp_path: Path) 
 
 def test_filter_missing_greenhouse_candidates_respects_identifier_and_name_collisions() -> None:
     candidates = [
-        GreenhouseCandidate(name="OpenAI", identifier="openai", url="https://job-boards.greenhouse.io/openai"),
-        GreenhouseCandidate(name="Stripe", identifier="stripe-new", url="https://job-boards.greenhouse.io/stripe-new"),
-        GreenhouseCandidate(name="Anthropic", identifier="anthropic", url="https://job-boards.greenhouse.io/anthropic"),
+        GreenhouseCandidate(
+            name="OpenAI", identifier="openai", url="https://job-boards.greenhouse.io/openai"
+        ),
+        GreenhouseCandidate(
+            name="Stripe",
+            identifier="stripe-new",
+            url="https://job-boards.greenhouse.io/stripe-new",
+        ),
+        GreenhouseCandidate(
+            name="Anthropic",
+            identifier="anthropic",
+            url="https://job-boards.greenhouse.io/anthropic",
+        ),
     ]
     existing_sources = [
         Source(
@@ -76,7 +86,9 @@ def test_filter_missing_greenhouse_candidates_respects_identifier_and_name_colli
 
     missing = filter_missing_greenhouse_candidates(candidates, existing_sources, summary)
 
-    assert [(candidate.name, candidate.identifier) for candidate in missing] == [("Anthropic", "anthropic")]
+    assert [(candidate.name, candidate.identifier) for candidate in missing] == [
+        ("Anthropic", "anthropic")
+    ]
     assert summary.existing_in_db == 1
     assert summary.name_collisions == 1
     assert summary.missing_in_db == 1
@@ -152,8 +164,14 @@ async def test_verify_greenhouse_candidate_records_http_status() -> None:
 def test_candidates_csv_round_trip(tmp_path: Path) -> None:
     path = tmp_path / "report.csv"
     candidates = [
-        GreenhouseCandidate(name="OpenAI", identifier="openai", url="https://job-boards.greenhouse.io/openai"),
-        GreenhouseCandidate(name="Anthropic", identifier="anthropic", url="https://job-boards.greenhouse.io/anthropic"),
+        GreenhouseCandidate(
+            name="OpenAI", identifier="openai", url="https://job-boards.greenhouse.io/openai"
+        ),
+        GreenhouseCandidate(
+            name="Anthropic",
+            identifier="anthropic",
+            url="https://job-boards.greenhouse.io/anthropic",
+        ),
     ]
 
     write_candidates_csv(path, candidates)

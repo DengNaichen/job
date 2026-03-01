@@ -160,14 +160,17 @@ class EightfoldFetcher(BaseFetcher):
             except httpx.HTTPStatusError as exc:
                 last_error = exc
                 status_code = exc.response.status_code
-                if status_code not in self.RETRYABLE_STATUS_CODES or attempt + 1 >= self.MAX_RETRIES:
+                if (
+                    status_code not in self.RETRYABLE_STATUS_CODES
+                    or attempt + 1 >= self.MAX_RETRIES
+                ):
                     raise
             except httpx.RequestError as exc:
                 last_error = exc
                 if attempt + 1 >= self.MAX_RETRIES:
                     raise
 
-            await asyncio.sleep(self.RETRY_BACKOFF_SECONDS * (2 ** attempt))
+            await asyncio.sleep(self.RETRY_BACKOFF_SECONDS * (2**attempt))
 
         if last_error is not None:
             raise last_error

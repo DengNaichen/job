@@ -14,7 +14,9 @@ from app.services.full_snapshot_sync import SourceSyncResult, SourceSyncStats
 def _load_import_module():
     root = Path(__file__).resolve().parents[2]
     module_path = root / "scripts" / "import_smartrecruiters_jobs.py"
-    spec = importlib.util.spec_from_file_location("import_smartrecruiters_jobs_test_module", module_path)
+    spec = importlib.util.spec_from_file_location(
+        "import_smartrecruiters_jobs_test_module", module_path
+    )
     if spec is None or spec.loader is None:  # pragma: no cover - importlib guard
         raise RuntimeError("Unable to load import_smartrecruiters_jobs.py")
     module = importlib.util.module_from_spec(spec)

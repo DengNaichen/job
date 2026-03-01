@@ -91,7 +91,9 @@ def test_filter_missing_candidates_respects_identifier_and_name_collisions() -> 
 
     missing = module.filter_missing_candidates(candidates, existing_sources, summary)
 
-    assert [(candidate.name, candidate.identifier) for candidate in missing] == [("Anthropic", "anthropic")]
+    assert [(candidate.name, candidate.identifier) for candidate in missing] == [
+        ("Anthropic", "anthropic")
+    ]
     assert summary.existing_in_db == 1
     assert summary.name_collisions == 1
     assert summary.missing_in_db == 1

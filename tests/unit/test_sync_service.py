@@ -62,7 +62,9 @@ async def test_sync_service_success_records_successful_run(
 
         monkeypatch.setattr(service, "_execute_snapshot_sync", fake_execute_snapshot_sync)
 
-        sync_run = await service.sync_source(source=source, include_content=True, dry_run=False, retry_attempts=1)
+        sync_run = await service.sync_source(
+            source=source, include_content=True, dry_run=False, retry_attempts=1
+        )
 
         assert sync_run.status == SyncRunStatus.success
         assert sync_run.fetched_count == 4

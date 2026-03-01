@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-from app.services.match_query import build_sql_prefilter, fetch_candidates, to_asyncpg_dsn, vector_literal
+from app.services.match_query import (
+    build_sql_prefilter,
+    fetch_candidates,
+    to_asyncpg_dsn,
+    vector_literal,
+)
 
 
 class _FakeConnection:
@@ -24,7 +29,10 @@ def test_to_asyncpg_dsn_rewrites_sqlalchemy_driver() -> None:
         to_asyncpg_dsn("postgresql+asyncpg://postgres:postgres@localhost:5434/job_db")
         == "postgresql://postgres:postgres@localhost:5434/job_db"
     )
-    assert to_asyncpg_dsn("postgresql://postgres@localhost/job_db") == "postgresql://postgres@localhost/job_db"
+    assert (
+        to_asyncpg_dsn("postgresql://postgres@localhost/job_db")
+        == "postgresql://postgres@localhost/job_db"
+    )
 
 
 def test_vector_literal_formats_values() -> None:

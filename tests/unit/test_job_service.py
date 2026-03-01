@@ -1,4 +1,5 @@
 """Unit tests for JobService."""
+
 from unittest.mock import AsyncMock
 
 import pytest
@@ -68,7 +69,11 @@ async def test_update_job_updates_timestamp() -> None:
 
     updated = await service.update_job("job-1", JobUpdate(title="Senior Engineer"))
 
-    previous_updated_at_naive = previous_updated_at.replace(tzinfo=None) if previous_updated_at.tzinfo else previous_updated_at
+    previous_updated_at_naive = (
+        previous_updated_at.replace(tzinfo=None)
+        if previous_updated_at.tzinfo
+        else previous_updated_at
+    )
     assert updated.title == "Senior Engineer"
     assert updated.updated_at >= previous_updated_at_naive
     repository.update.assert_awaited_once_with(job)

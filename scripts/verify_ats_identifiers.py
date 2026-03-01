@@ -51,11 +51,19 @@ def build_parser() -> argparse.ArgumentParser:
 
 async def run(args: argparse.Namespace) -> int:
     platform = parse_platform(args.platform)
-    input_path = Path(args.input).expanduser().resolve() if args.input else default_missing_report_path(platform).resolve()
+    input_path = (
+        Path(args.input).expanduser().resolve()
+        if args.input
+        else default_missing_report_path(platform).resolve()
+    )
     if not input_path.exists():
         raise SystemExit(f"Input CSV does not exist: {input_path}")
 
-    output_path = Path(args.output).expanduser().resolve() if args.output else default_verification_report_path(platform).resolve()
+    output_path = (
+        Path(args.output).expanduser().resolve()
+        if args.output
+        else default_verification_report_path(platform).resolve()
+    )
     candidates = read_candidates_csv(input_path)
     candidates = [candidate for candidate in candidates if candidate.platform == platform]
     concurrency = args.concurrency or PLATFORM_AUDIT_CONFIGS[platform].default_verify_concurrency

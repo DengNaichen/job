@@ -200,10 +200,7 @@ async def parse_jd_batch(
         job_id for job_id, count in Counter(input_job_ids).items() if count > 1
     )
     if duplicate_input_job_ids:
-        raise ValueError(
-            "Duplicate job_id in input jobs: "
-            + ", ".join(duplicate_input_job_ids)
-        )
+        raise ValueError("Duplicate job_id in input jobs: " + ", ".join(duplicate_input_job_ids))
 
     # 构建 jobs 文本
     jobs_parts = []
@@ -219,9 +216,7 @@ async def parse_jd_batch(
 
     config = get_llm_config()
     batch_max_tokens = (
-        GEMINI_BATCH_MAX_TOKENS
-        if config.provider == "gemini"
-        else DEFAULT_BATCH_MAX_TOKENS
+        GEMINI_BATCH_MAX_TOKENS if config.provider == "gemini" else DEFAULT_BATCH_MAX_TOKENS
     )
 
     result = await complete_json(
@@ -242,13 +237,11 @@ async def parse_jd_batch(
 
         raw_item = next(
             (
-                item for item in raw_jobs
+                item
+                for item in raw_jobs
                 if (
                     isinstance(item, dict)
-                    and (
-                        item.get("i") == input_job_id
-                        or item.get("job_id") == input_job_id
-                    )
+                    and (item.get("i") == input_job_id or item.get("job_id") == input_job_id)
                 )
             ),
             None,
@@ -276,9 +269,16 @@ async def parse_jd_batch(
         job_id for job_id, count in Counter(output_job_ids).items() if count > 1
     )
     missing_job_ids = [job_id for job_id in input_job_ids if job_id not in output_job_id_set]
-    unexpected_job_ids = sorted(job_id for job_id in output_job_id_set if job_id not in input_job_id_set)
+    unexpected_job_ids = sorted(
+        job_id for job_id in output_job_id_set if job_id not in input_job_id_set
+    )
 
-    if duplicate_output_job_ids or missing_job_ids or unexpected_job_ids or len(output_job_ids) != len(input_job_ids):
+    if (
+        duplicate_output_job_ids
+        or missing_job_ids
+        or unexpected_job_ids
+        or len(output_job_ids) != len(input_job_ids)
+    ):
         raise ValueError(
             "Batch JD parse returned inconsistent jobs. "
             f"expected_count={len(input_job_ids)}, actual_count={len(output_job_ids)}, "

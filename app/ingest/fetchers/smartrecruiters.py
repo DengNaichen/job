@@ -37,7 +37,9 @@ class SmartRecruitersFetcher(BaseFetcher):
                 return []
             return await self._fetch_all_details(client, slug, summaries)
 
-    async def _fetch_all_summaries(self, client: httpx.AsyncClient, slug: str) -> list[dict[str, Any]]:
+    async def _fetch_all_summaries(
+        self, client: httpx.AsyncClient, slug: str
+    ) -> list[dict[str, Any]]:
         summaries: list[dict[str, Any]] = []
         offset = 0
 

@@ -28,7 +28,8 @@ class SmartRecruitersMapper(BaseMapper):
             source=self.source_name,
             external_job_id=str(raw_job.get("id", "")),
             title=self._clean(raw_job.get("name")),
-            apply_url=self._clean(raw_job.get("applyUrl")) or self._clean(raw_job.get("postingUrl")),
+            apply_url=self._clean(raw_job.get("applyUrl"))
+            or self._clean(raw_job.get("postingUrl")),
             normalized_apply_url=None,
             status="open",
             location_text=self._clean(self._get_location_text(raw_job)),
@@ -44,7 +45,7 @@ class SmartRecruitersMapper(BaseMapper):
 
     @classmethod
     def _build_description_html(cls, raw_job: dict[str, Any]) -> str | None:
-        sections = ((raw_job.get("jobAd") or {}).get("sections") or {})
+        sections = (raw_job.get("jobAd") or {}).get("sections") or {}
         if not isinstance(sections, dict):
             return None
 
@@ -59,7 +60,11 @@ class SmartRecruitersMapper(BaseMapper):
                 continue
 
             title = section.get("title")
-            title_html = f"<h2>{html.escape(title.strip())}</h2>" if isinstance(title, str) and title.strip() else None
+            title_html = (
+                f"<h2>{html.escape(title.strip())}</h2>"
+                if isinstance(title, str) and title.strip()
+                else None
+            )
             parts.append("\n".join(part for part in [title_html, text.strip()] if part))
 
         return "\n".join(parts) if parts else None

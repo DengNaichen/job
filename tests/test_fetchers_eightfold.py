@@ -53,8 +53,24 @@ class TestEightfoldFetcher:
         )
         detail_1 = respx.get("https://apply.careers.microsoft.com/api/pcsx/position_details").mock(
             side_effect=[
-                Response(200, json={"data": {"jobDescription": "Build systems", "standardizedLocations": ["Toronto"]}}),
-                Response(200, json={"data": {"jobDescription": "Shape roadmap", "standardizedLocations": ["Remote"]}}),
+                Response(
+                    200,
+                    json={
+                        "data": {
+                            "jobDescription": "Build systems",
+                            "standardizedLocations": ["Toronto"],
+                        }
+                    },
+                ),
+                Response(
+                    200,
+                    json={
+                        "data": {
+                            "jobDescription": "Shape roadmap",
+                            "standardizedLocations": ["Remote"],
+                        }
+                    },
+                ),
             ]
         )
 
@@ -91,9 +107,9 @@ class TestEightfoldFetcher:
                 },
             )
         )
-        detail_route = respx.get("https://apply.careers.microsoft.com/api/pcsx/position_details").mock(
-            return_value=Response(200, json={"data": {"jobDescription": "Build systems"}})
-        )
+        detail_route = respx.get(
+            "https://apply.careers.microsoft.com/api/pcsx/position_details"
+        ).mock(return_value=Response(200, json={"data": {"jobDescription": "Build systems"}}))
 
         fetcher = EightfoldFetcher()
         result = await fetcher.fetch("microsoft", include_content=False)
@@ -123,7 +139,9 @@ class TestEightfoldFetcher:
                 },
             )
         )
-        detail_route = respx.get("https://apply.careers.microsoft.com/api/pcsx/position_details").mock(
+        detail_route = respx.get(
+            "https://apply.careers.microsoft.com/api/pcsx/position_details"
+        ).mock(
             side_effect=[
                 Response(500, json={"error": "server error"}),
                 Response(200, json={"data": {"jobDescription": "Recovered"}}),

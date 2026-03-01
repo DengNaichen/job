@@ -260,8 +260,12 @@ class SupabaseBlobStorage:
             return response
 
         if last_error is not None:
-            raise BlobStorageError(f"Supabase storage request failed for {url}: {last_error}") from last_error
-        raise BlobStorageError(f"Supabase storage request failed for {url} after {self.max_retries} attempts")
+            raise BlobStorageError(
+                f"Supabase storage request failed for {url}: {last_error}"
+            ) from last_error
+        raise BlobStorageError(
+            f"Supabase storage request failed for {url} after {self.max_retries} attempts"
+        )
 
     @staticmethod
     def _is_missing_object_response(response: httpx.Response) -> bool:
@@ -510,7 +514,10 @@ class JobBlobManager:
             job.raw_payload_hash = None
             return False, updated
 
-        if existing_pointers.raw_payload_hash == prepared.sha256 and existing_pointers.raw_payload_key:
+        if (
+            existing_pointers.raw_payload_hash == prepared.sha256
+            and existing_pointers.raw_payload_key
+        ):
             job.raw_payload_key = existing_pointers.raw_payload_key
             job.raw_payload_hash = existing_pointers.raw_payload_hash
             return False, False

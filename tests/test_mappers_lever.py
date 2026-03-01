@@ -56,7 +56,9 @@ class TestLeverMapper:
         assert result.description_html == "<div>HTML description</div>"
         assert result.description_plain == "Plain description"
         assert result.published_at == datetime(2024, 7, 10, 10, 18, 27, 905000, tzinfo=timezone.utc)
-        assert result.source_updated_at == datetime(2024, 7, 11, 10, 18, 27, 905000, tzinfo=timezone.utc)
+        assert result.source_updated_at == datetime(
+            2024, 7, 11, 10, 18, 27, 905000, tzinfo=timezone.utc
+        )
 
     def test_map_with_invalid_dates(self, mapper):
         raw_job = {

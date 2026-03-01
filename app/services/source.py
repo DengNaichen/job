@@ -16,6 +16,7 @@ from app.schemas.source import SourceCreate, SourceUpdate
 
 class SourceError(Exception):
     """Base exception for Source service errors."""
+
     def __init__(self, code: str, message: str):
         self.code = code
         self.message = message
@@ -28,7 +29,7 @@ class DuplicateNameError(SourceError):
     def __init__(self, name: str, platform: str):
         super().__init__(
             code="DUPLICATE_NAME",
-            message="同一平台下公司名称已存在 (Company name already exists on this platform)"
+            message="同一平台下公司名称已存在 (Company name already exists on this platform)",
         )
         self.name = name
         self.platform = platform
@@ -48,19 +49,17 @@ class DuplicateIdentifierError(SourceError):
 
 class SourceNotFoundError(SourceError):
     """Raised when a source is not found."""
+
     def __init__(self):
-        super().__init__(
-            code="NOT_FOUND",
-            message="数据源不存在"
-        )
+        super().__init__(code="NOT_FOUND", message="数据源不存在")
 
 
 class HasReferencesError(SourceError):
     """Raised when attempting to delete a source with associated records."""
+
     def __init__(self):
         super().__init__(
-            code="HAS_REFERENCES",
-            message="该数据源有关联的抓取记录，无法删除。建议禁用而非删除"
+            code="HAS_REFERENCES", message="该数据源有关联的抓取记录，无法删除。建议禁用而非删除"
         )
 
 
@@ -99,7 +98,9 @@ class SourceService:
             raise DuplicateNameError(source_in.name, platform.value)
 
         # Check duplicate identifier on same platform.
-        existing = await self.repository.get_by_platform_and_identifier(platform, source_in.identifier)
+        existing = await self.repository.get_by_platform_and_identifier(
+            platform, source_in.identifier
+        )
         if existing:
             raise DuplicateIdentifierError(platform.value, source_in.identifier)
 
@@ -185,7 +186,9 @@ class SourceService:
         # Handle name update with duplicate check (within platform)
         if "name" in update_data:
             new_name_normalized = normalize_name(update_data["name"])
-            existing = await self.repository.get_by_name_and_platform(new_name_normalized, target_platform)
+            existing = await self.repository.get_by_name_and_platform(
+                new_name_normalized, target_platform
+            )
             if existing and existing.id != source_id:
                 raise DuplicateNameError(update_data["name"], target_platform.value)
             source.name = update_data["name"]
@@ -198,14 +201,18 @@ class SourceService:
         # Handle identifier update / platform change collision
         if "identifier" in update_data or "platform" in update_data:
             new_identifier = update_data.get("identifier", source.identifier)
-            existing = await self.repository.get_by_platform_and_identifier(target_platform, new_identifier)
+            existing = await self.repository.get_by_platform_and_identifier(
+                target_platform, new_identifier
+            )
             if existing and existing.id != source_id:
                 raise DuplicateIdentifierError(target_platform.value, new_identifier)
             source.identifier = new_identifier
 
         # Handle name collision when only platform changes
         if "platform" in update_data and "name" not in update_data:
-            existing = await self.repository.get_by_name_and_platform(source.name_normalized, target_platform)
+            existing = await self.repository.get_by_name_and_platform(
+                source.name_normalized, target_platform
+            )
             if existing and existing.id != source_id:
                 raise DuplicateNameError(source.name, target_platform.value)
 

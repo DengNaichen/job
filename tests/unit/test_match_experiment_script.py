@@ -99,7 +99,9 @@ def _make_response(*, llm_enabled: bool) -> MatchResponse:
                     "job_id": "job-2" if llm_enabled else "job-1",
                     "source": "greenhouse",
                     "title": "Job 2" if llm_enabled else "Job 1",
-                    "apply_url": "https://example.com/job-2" if llm_enabled else "https://example.com/job-1",
+                    "apply_url": "https://example.com/job-2"
+                    if llm_enabled
+                    else "https://example.com/job-1",
                     "location_text": "Toronto, ON",
                     "department": "Analytics",
                     "team": "BI",
@@ -125,7 +127,9 @@ def _make_response(*, llm_enabled: bool) -> MatchResponse:
                     "llm_recommendation": "yes" if llm_enabled else None,
                     "llm_reasons": ["Relevant analytics experience"] if llm_enabled else [],
                     "llm_gaps": [],
-                    "llm_resume_focus_points": ["Highlight dashboard ownership"] if llm_enabled else [],
+                    "llm_resume_focus_points": ["Highlight dashboard ownership"]
+                    if llm_enabled
+                    else [],
                     "llm_adjustment": 0.015 if llm_enabled else 0.0,
                     "llm_adjusted_score": 0.931 if llm_enabled else 0.916,
                     "llm_enriched": llm_enabled,
@@ -134,7 +138,9 @@ def _make_response(*, llm_enabled: bool) -> MatchResponse:
                     "job_id": "job-1" if llm_enabled else "job-2",
                     "source": "greenhouse",
                     "title": "Job 1" if llm_enabled else "Job 2",
-                    "apply_url": "https://example.com/job-1" if llm_enabled else "https://example.com/job-2",
+                    "apply_url": "https://example.com/job-1"
+                    if llm_enabled
+                    else "https://example.com/job-2",
                     "location_text": "Toronto, ON",
                     "department": "Analytics",
                     "team": "BI",
@@ -160,7 +166,9 @@ def _make_response(*, llm_enabled: bool) -> MatchResponse:
                     "llm_recommendation": "yes" if llm_enabled else None,
                     "llm_reasons": ["Relevant analytics experience"] if llm_enabled else [],
                     "llm_gaps": [],
-                    "llm_resume_focus_points": ["Highlight dashboard ownership"] if llm_enabled else [],
+                    "llm_resume_focus_points": ["Highlight dashboard ownership"]
+                    if llm_enabled
+                    else [],
                     "llm_adjustment": 0.015 if llm_enabled else 0.0,
                     "llm_adjusted_score": 0.896 if llm_enabled else 0.881,
                     "llm_enriched": llm_enabled,
@@ -199,7 +207,9 @@ async def test_run_skips_llm_rerank_when_flag_disabled(
             {
                 "summary": "Analytics profile",
                 "skills": ["Python", "SQL"],
-                "workHistory": [{"title": "Analyst", "company": "ACME", "bullets": ["Built dashboards"]}],
+                "workHistory": [
+                    {"title": "Analyst", "company": "ACME", "bullets": ["Built dashboards"]}
+                ],
                 "education": [{"degree": "B.S."}],
                 "totalYearsExperience": 3,
             }
@@ -254,7 +264,9 @@ async def test_run_applies_llm_rerank_when_enabled(
             {
                 "summary": "Analytics profile",
                 "skills": ["Python", "SQL"],
-                "workHistory": [{"title": "Analyst", "company": "ACME", "bullets": ["Built dashboards"]}],
+                "workHistory": [
+                    {"title": "Analyst", "company": "ACME", "bullets": ["Built dashboards"]}
+                ],
                 "education": [{"degree": "B.S."}],
                 "totalYearsExperience": 3,
             }

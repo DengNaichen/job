@@ -102,7 +102,9 @@ def parse_args() -> argparse.Namespace:
         default=3,
         help="Concurrent LLM requests for top-N recommendation rerank",
     )
-    parser.add_argument("--max-user-chars", type=int, default=12000, help="Max chars for user embedding text")
+    parser.add_argument(
+        "--max-user-chars", type=int, default=12000, help="Max chars for user embedding text"
+    )
     parser.add_argument("--output", default=None, help="Optional output JSON file path")
     return parser.parse_args()
 

@@ -36,18 +36,137 @@ DEGREE_LEVEL_RANK: dict[str, int] = {
 }
 
 _JOB_DOMAIN_KEYWORDS: list[tuple[str, tuple[str, ...]]] = [
-    ("cybersecurity", ("cybersecurity", "security", "threat", "malware", "fraud", "siem", "soc", "trust and safety")),
-    ("legal_compliance", ("legal", "compliance", "privacy", "regulatory", "contracts", "sanctions", "aml", "policy")),
-    ("finance_treasury", ("finance", "financial", "treasury", "banking", "payments", "accounting", "fp&a", "audit", "tax", "controller")),
-    ("hr_recruiting", ("recruit", "recruiting", "talent", "people ops", "human resources", "hr ", "sourcer")),
-    ("customer_support", ("customer support", "customer service", "customer success", "service recovery", "call center", "support quality", "support")),
-    ("marketing_growth", ("marketing", "growth", "brand", "content", "communications", "crm", "seo", "pr", "demand generation")),
-    ("sales_account_management", ("sales", "account executive", "account manager", "business development", "partnership", "partnerships", "acquisition", "revenue")),
-    ("product_program", ("product manager", "product management", "technical product manager", "program manager", "project manager", "tpm")),
-    ("data_ai", ("data scientist", "data science", "data analyst", "analytics", "machine learning", "ml ", " llm", "artificial intelligence", "business intelligence", "bi ")),
+    (
+        "cybersecurity",
+        (
+            "cybersecurity",
+            "security",
+            "threat",
+            "malware",
+            "fraud",
+            "siem",
+            "soc",
+            "trust and safety",
+        ),
+    ),
+    (
+        "legal_compliance",
+        ("legal", "compliance", "privacy", "regulatory", "contracts", "sanctions", "aml", "policy"),
+    ),
+    (
+        "finance_treasury",
+        (
+            "finance",
+            "financial",
+            "treasury",
+            "banking",
+            "payments",
+            "accounting",
+            "fp&a",
+            "audit",
+            "tax",
+            "controller",
+        ),
+    ),
+    (
+        "hr_recruiting",
+        ("recruit", "recruiting", "talent", "people ops", "human resources", "hr ", "sourcer"),
+    ),
+    (
+        "customer_support",
+        (
+            "customer support",
+            "customer service",
+            "customer success",
+            "service recovery",
+            "call center",
+            "support quality",
+            "support",
+        ),
+    ),
+    (
+        "marketing_growth",
+        (
+            "marketing",
+            "growth",
+            "brand",
+            "content",
+            "communications",
+            "crm",
+            "seo",
+            "pr",
+            "demand generation",
+        ),
+    ),
+    (
+        "sales_account_management",
+        (
+            "sales",
+            "account executive",
+            "account manager",
+            "business development",
+            "partnership",
+            "partnerships",
+            "acquisition",
+            "revenue",
+        ),
+    ),
+    (
+        "product_program",
+        (
+            "product manager",
+            "product management",
+            "technical product manager",
+            "program manager",
+            "project manager",
+            "tpm",
+        ),
+    ),
+    (
+        "data_ai",
+        (
+            "data scientist",
+            "data science",
+            "data analyst",
+            "analytics",
+            "machine learning",
+            "ml ",
+            " llm",
+            "artificial intelligence",
+            "business intelligence",
+            "bi ",
+        ),
+    ),
     ("design", ("design", "designer", "ux", "ui", "product design", "visual design")),
-    ("operations", ("operations", "strategy", "business analyst", "workforce", "wfm", "planning", "procurement", "logistics", "supply chain")),
-    ("software_engineering", ("software", "engineering", "engineer", "developer", "backend", "frontend", "full stack", "devops", "sre", "platform")),
+    (
+        "operations",
+        (
+            "operations",
+            "strategy",
+            "business analyst",
+            "workforce",
+            "wfm",
+            "planning",
+            "procurement",
+            "logistics",
+            "supply chain",
+        ),
+    ),
+    (
+        "software_engineering",
+        (
+            "software",
+            "engineering",
+            "engineer",
+            "developer",
+            "backend",
+            "frontend",
+            "full stack",
+            "devops",
+            "sre",
+            "platform",
+        ),
+    ),
 ]
 
 _LEGACY_INDUSTRY_TO_JOB_DOMAIN: dict[str, JobDomainNormalized] = {
@@ -155,7 +274,10 @@ def normalize_degree_level(value: object) -> DegreeLevel:
     if text in DEGREE_LEVEL_RANK:
         return text  # type: ignore[return-value]
 
-    if any(token in text for token in ("phd", "ph.d", "doctorate", "doctoral", "md", "m.d", "juris doctor", "jd ")):
+    if any(
+        token in text
+        for token in ("phd", "ph.d", "doctorate", "doctoral", "md", "m.d", "juris doctor", "jd ")
+    ):
         return "doctorate"
     if any(token in text for token in ("master", "m.s", "ms ", "msc", "m.sc", "mba", "ma ", "m.a")):
         return "master"
@@ -174,7 +296,9 @@ def degree_level_to_rank(level: str) -> int:
     return DEGREE_LEVEL_RANK.get(level, -1)
 
 
-def build_structured_jd_storage_payload(payload: StructuredJD | dict[str, object]) -> dict[str, object]:
+def build_structured_jd_storage_payload(
+    payload: StructuredJD | dict[str, object],
+) -> dict[str, object]:
     """Build a compact structured_jd payload for JSONB storage.
 
     Canonical filter/sort fields live in typed Job columns and should not be

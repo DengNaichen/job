@@ -212,17 +212,17 @@ async def compare_candidates(
 
     async with AsyncSession(engine) as session:
         existing_sources = await session.exec(
-            select(Source).where(Source.platform.in_([candidate.platform for candidate in candidates]))
+            select(Source).where(
+                Source.platform.in_([candidate.platform for candidate in candidates])
+            )
         )
         existing_rows = list(existing_sources.all())
 
         existing_by_identifier = {
-            _candidate_key(source.platform, source.identifier): source
-            for source in existing_rows
+            _candidate_key(source.platform, source.identifier): source for source in existing_rows
         }
         existing_by_name = {
-            _source_name_key(source.platform, source.name): source
-            for source in existing_rows
+            _source_name_key(source.platform, source.name): source for source in existing_rows
         }
 
         insertable: list[SourceCandidate] = []
@@ -257,7 +257,10 @@ def validate_candidate_name(candidate: SourceCandidate) -> list[str]:
         reasons.append("name_looks_like_url")
     if name.isdigit():
         reasons.append("name_is_numeric_only")
-    if normalized == candidate.identifier.strip().casefold() and candidate.identifier.strip().isdigit():
+    if (
+        normalized == candidate.identifier.strip().casefold()
+        and candidate.identifier.strip().isdigit()
+    ):
         reasons.append("name_matches_numeric_identifier")
     return reasons
 
@@ -409,10 +412,7 @@ async def apply_candidates(
                     platform=candidate.platform,
                     identifier=candidate.identifier.strip(),
                     enabled=True,
-                    notes=(
-                        "Imported from stapply-ai/ats-scrapers company CSV "
-                        f"({candidate.url})"
-                    ),
+                    notes=(f"Imported from stapply-ai/ats-scrapers company CSV ({candidate.url})"),
                 )
             )
             summaries[candidate.platform.value].inserted += 1
@@ -477,9 +477,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 async def run(args: argparse.Namespace) -> int:
     if not args.clone_path:
-        raise SystemExit(
-            "Missing --clone-path. Clone stapply-ai/ats-scrapers locally first."
-        )
+        raise SystemExit("Missing --clone-path. Clone stapply-ai/ats-scrapers locally first.")
 
     clone_path = Path(args.clone_path).expanduser().resolve()
     if not clone_path.exists():
@@ -518,10 +516,7 @@ async def run(args: argparse.Namespace) -> int:
     if insertable:
         print("sample_missing=")
         for candidate in insertable[:20]:
-            print(
-                f"  - {candidate.platform.value}: "
-                f"{candidate.identifier} ({candidate.name})"
-            )
+            print(f"  - {candidate.platform.value}: {candidate.identifier} ({candidate.name})")
 
     if args.verify or args.apply:
         print("=== LIVE VERIFICATION ===")

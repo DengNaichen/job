@@ -19,7 +19,9 @@ class TestSmartRecruitersFetcher:
     @pytest.mark.asyncio
     @respx.mock
     async def test_fetch_paginates_and_merges_detail_payloads(self):
-        list_route = respx.get("https://api.smartrecruiters.com/v1/companies/test-company/postings").mock(
+        list_route = respx.get(
+            "https://api.smartrecruiters.com/v1/companies/test-company/postings"
+        ).mock(
             side_effect=[
                 Response(
                     200,
@@ -53,11 +55,19 @@ class TestSmartRecruitersFetcher:
                 ),
             ]
         )
-        detail_1 = respx.get("https://api.smartrecruiters.com/v1/companies/test-company/postings/job-1").mock(
-            return_value=Response(200, json={"id": "job-1", "applyUrl": "https://apply/1", "jobAd": {"sections": {}}})
+        detail_1 = respx.get(
+            "https://api.smartrecruiters.com/v1/companies/test-company/postings/job-1"
+        ).mock(
+            return_value=Response(
+                200, json={"id": "job-1", "applyUrl": "https://apply/1", "jobAd": {"sections": {}}}
+            )
         )
-        detail_2 = respx.get("https://api.smartrecruiters.com/v1/companies/test-company/postings/job-2").mock(
-            return_value=Response(200, json={"id": "job-2", "applyUrl": "https://apply/2", "jobAd": {"sections": {}}})
+        detail_2 = respx.get(
+            "https://api.smartrecruiters.com/v1/companies/test-company/postings/job-2"
+        ).mock(
+            return_value=Response(
+                200, json={"id": "job-2", "applyUrl": "https://apply/2", "jobAd": {"sections": {}}}
+            )
         )
 
         fetcher = SmartRecruitersFetcher()
@@ -89,9 +99,9 @@ class TestSmartRecruitersFetcher:
                 },
             )
         )
-        detail = respx.get("https://api.smartrecruiters.com/v1/companies/test-company/postings/job-1").mock(
-            return_value=Response(200, json={"id": "job-1", "applyUrl": "https://apply/1"})
-        )
+        detail = respx.get(
+            "https://api.smartrecruiters.com/v1/companies/test-company/postings/job-1"
+        ).mock(return_value=Response(200, json={"id": "job-1", "applyUrl": "https://apply/1"}))
 
         fetcher = SmartRecruitersFetcher()
         result = await fetcher.fetch("test-company", include_content=False)
@@ -138,7 +148,9 @@ class TestSmartRecruitersFetcher:
             return_value=Response(404, json={"error": "not found"})
         )
         respx.get("https://api.smartrecruiters.com/v1/companies/test-company/postings/job-2").mock(
-            return_value=Response(200, json={"id": "job-2", "applyUrl": "https://apply/2", "jobAd": {"sections": {}}})
+            return_value=Response(
+                200, json={"id": "job-2", "applyUrl": "https://apply/2", "jobAd": {"sections": {}}}
+            )
         )
 
         fetcher = SmartRecruitersFetcher()
@@ -166,10 +178,15 @@ class TestSmartRecruitersFetcher:
                 },
             )
         )
-        detail_route = respx.get("https://api.smartrecruiters.com/v1/companies/test-company/postings/job-1").mock(
+        detail_route = respx.get(
+            "https://api.smartrecruiters.com/v1/companies/test-company/postings/job-1"
+        ).mock(
             side_effect=[
                 Response(500, json={"error": "server error"}),
-                Response(200, json={"id": "job-1", "applyUrl": "https://apply/1", "jobAd": {"sections": {}}}),
+                Response(
+                    200,
+                    json={"id": "job-1", "applyUrl": "https://apply/1", "jobAd": {"sections": {}}},
+                ),
             ]
         )
 

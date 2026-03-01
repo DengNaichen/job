@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import re
 
-from app.schemas.structured_jd import degree_level_to_rank, normalize_degree_level, normalize_job_domain_name, normalize_sponsorship
+from app.schemas.structured_jd import (
+    degree_level_to_rank,
+    normalize_degree_level,
+    normalize_job_domain_name,
+    normalize_sponsorship,
+)
 
 _YEAR_PATTERN = re.compile(
     r"(?P<low>\d{1,2})\s*(?:\+|plus)?\s*(?:[-–—to]{1,3}\s*(?P<high>\d{1,2}))?\s+years?",

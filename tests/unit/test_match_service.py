@@ -93,7 +93,9 @@ async def test_match_service_run_returns_typed_response_without_llm(
         "app.services.match_service.get_settings",
         lambda: SimpleNamespace(database_url="postgresql+asyncpg://local/test", embedding_dim=3),
     )
-    monkeypatch.setattr("app.services.match_service.get_embedding_config", lambda: SimpleNamespace())
+    monkeypatch.setattr(
+        "app.services.match_service.get_embedding_config", lambda: SimpleNamespace()
+    )
     monkeypatch.setattr("app.services.match_service.embed_text", fake_embed_text)
     monkeypatch.setattr("app.services.match_service.fetch_candidates", fake_fetch_candidates)
 
@@ -179,7 +181,9 @@ async def test_match_service_run_applies_llm_rerank(
         "app.services.match_service.get_settings",
         lambda: SimpleNamespace(database_url="postgresql+asyncpg://local/test", embedding_dim=3),
     )
-    monkeypatch.setattr("app.services.match_service.get_embedding_config", lambda: SimpleNamespace())
+    monkeypatch.setattr(
+        "app.services.match_service.get_embedding_config", lambda: SimpleNamespace()
+    )
     monkeypatch.setattr("app.services.match_service.embed_text", fake_embed_text)
     monkeypatch.setattr("app.services.match_service.fetch_candidates", fake_fetch_candidates)
     monkeypatch.setattr(
@@ -220,7 +224,9 @@ async def test_match_service_run_wraps_query_errors(
         "app.services.match_service.get_settings",
         lambda: SimpleNamespace(database_url="postgresql+asyncpg://local/test", embedding_dim=3),
     )
-    monkeypatch.setattr("app.services.match_service.get_embedding_config", lambda: SimpleNamespace())
+    monkeypatch.setattr(
+        "app.services.match_service.get_embedding_config", lambda: SimpleNamespace()
+    )
     monkeypatch.setattr("app.services.match_service.embed_text", fake_embed_text)
 
     with pytest.raises(MatchQueryError):
@@ -248,7 +254,9 @@ async def test_match_service_run_fails_fast_when_llm_not_configured(
         "app.services.match_service.get_settings",
         lambda: SimpleNamespace(database_url="postgresql+asyncpg://local/test", embedding_dim=3),
     )
-    monkeypatch.setattr("app.services.match_service.get_embedding_config", lambda: SimpleNamespace())
+    monkeypatch.setattr(
+        "app.services.match_service.get_embedding_config", lambda: SimpleNamespace()
+    )
     monkeypatch.setattr("app.services.match_service.embed_text", fake_embed_text)
     monkeypatch.setattr("app.services.match_service.fetch_candidates", fake_fetch_candidates)
     monkeypatch.setattr(

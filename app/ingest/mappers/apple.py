@@ -81,7 +81,9 @@ class AppleMapper(BaseMapper):
             cleaned = cls._clean(value)
             if not cleaned:
                 continue
-            sections.append(f"<h2>{html.escape(title)}</h2><p>{html.escape(cleaned).replace(chr(10), '<br/>')}</p>")
+            sections.append(
+                f"<h2>{html.escape(title)}</h2><p>{html.escape(cleaned).replace(chr(10), '<br/>')}</p>"
+            )
         return "\n".join(sections) if sections else None
 
     @classmethod

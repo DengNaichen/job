@@ -13,9 +13,7 @@ class TestGitHubRepoFetcher:
     @pytest.mark.asyncio
     @respx.mock
     async def test_fetch_from_json_list(self):
-        respx.get(
-            "https://raw.githubusercontent.com/acme/jobs/main/data/jobs.json"
-        ).mock(
+        respx.get("https://raw.githubusercontent.com/acme/jobs/main/data/jobs.json").mock(
             return_value=Response(
                 200,
                 json=[
@@ -33,9 +31,9 @@ class TestGitHubRepoFetcher:
     @pytest.mark.asyncio
     @respx.mock
     async def test_fetch_from_jobs_key(self):
-        respx.get(
-            "https://raw.githubusercontent.com/acme/jobs/main/data/jobs.json"
-        ).mock(return_value=Response(200, json={"jobs": [{"id": "1", "title": "Engineer"}]}))
+        respx.get("https://raw.githubusercontent.com/acme/jobs/main/data/jobs.json").mock(
+            return_value=Response(200, json={"jobs": [{"id": "1", "title": "Engineer"}]})
+        )
 
         fetcher = GitHubRepoFetcher()
         result = await fetcher.fetch("acme/jobs:data/jobs.json")

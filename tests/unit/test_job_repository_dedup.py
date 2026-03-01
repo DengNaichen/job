@@ -32,7 +32,9 @@ def _make_job(
 
 
 @pytest.mark.asyncio
-async def test_list_by_source_and_external_ids_filters_to_same_source(session: AsyncSession) -> None:
+async def test_list_by_source_and_external_ids_filters_to_same_source(
+    session: AsyncSession,
+) -> None:
     target = _make_job(source="greenhouse:airbnb", external_job_id="123")
     other_source = _make_job(source="greenhouse:stripe", external_job_id="123")
     other_id = _make_job(source="greenhouse:airbnb", external_job_id="456")
@@ -52,7 +54,9 @@ async def test_list_by_source_and_external_ids_filters_to_same_source(session: A
 
 
 @pytest.mark.asyncio
-async def test_bulk_close_missing_for_source_only_closes_stale_open_rows(session: AsyncSession) -> None:
+async def test_bulk_close_missing_for_source_only_closes_stale_open_rows(
+    session: AsyncSession,
+) -> None:
     cutoff = datetime.now(timezone.utc)
     stale_open = _make_job(
         source="greenhouse:airbnb",
