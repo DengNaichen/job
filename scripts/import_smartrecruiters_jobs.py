@@ -14,7 +14,7 @@ from app.core.database import engine
 from app.ingest.fetchers.smartrecruiters import SmartRecruitersFetcher
 from app.ingest.mappers.smartrecruiters import SmartRecruitersMapper
 from app.models import PlatformType, Source
-from app.services.full_snapshot_sync import FullSnapshotSyncService, SourceSyncResult
+from app.services.application.full_snapshot_sync import FullSnapshotSyncService, SourceSyncResult
 
 
 @dataclass

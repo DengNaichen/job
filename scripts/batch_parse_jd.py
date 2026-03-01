@@ -16,8 +16,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from app.models import Job
 from app.core.config import get_settings
 from app.schemas.structured_jd import BatchStructuredJD
-from app.services.jd_batch_parse import JDBatchParseService
-from app.services.llm import get_token_usage
+from app.services.application.jd_batch_parse import JDBatchParseService
+from app.services.infra.llm import get_token_usage
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

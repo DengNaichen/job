@@ -7,10 +7,13 @@ import pytest
 from app.models import Job
 from app.schemas.job import JobCreate, JobUpdate
 from app.schemas.structured_jd import BatchStructuredJDItem
-from app.services.job import (
+from app.services.application.job import (
     JobNotFoundError,
     JobService,
+)
+from app.services.application.structured_jd import (
     JobStructuredJDMappingError,
+    StructuredJDService,
 )
 
 
@@ -83,7 +86,7 @@ async def test_update_job_updates_timestamp() -> None:
 async def test_persist_structured_jd_batch() -> None:
     """persist_structured_jd_batch should map parsed items and save once."""
     repository = AsyncMock()
-    service = JobService(repository=repository)
+    service = StructuredJDService(repository=repository)
     jobs = [_build_job("job-1"), _build_job("job-2")]
 
     parsed_items = [
@@ -134,7 +137,7 @@ async def test_persist_structured_jd_batch() -> None:
 async def test_persist_structured_jd_batch_missing_mapping() -> None:
     """persist_structured_jd_batch should fail when an input job is missing."""
     repository = AsyncMock()
-    service = JobService(repository=repository)
+    service = StructuredJDService(repository=repository)
     jobs = [_build_job("job-1")]
     parsed_items = [
         BatchStructuredJDItem(
@@ -150,14 +153,14 @@ async def test_persist_structured_jd_batch_missing_mapping() -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_pending_jobs_for_jd_parse_passes_filters() -> None:
-    """list_pending_jobs_for_jd_parse should forward version and exclusion filters."""
+async def test_list_pending_jobs_for_parse_passes_filters() -> None:
+    """list_pending_jobs_for_parse should forward version and exclusion filters."""
     repository = AsyncMock()
     jobs = [_build_job("job-1")]
     repository.list_pending_structured_jd.return_value = jobs
-    service = JobService(repository=repository)
+    service = StructuredJDService(repository=repository)
 
-    result = await service.list_pending_jobs_for_jd_parse(
+    result = await service.list_pending_jobs_for_parse(
         limit=10,
         version_only=True,
         exclude_job_ids={"job-2", "job-3"},

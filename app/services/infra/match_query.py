@@ -4,6 +4,8 @@ from typing import Any
 
 import asyncpg
 
+from app.core.config import get_settings
+
 
 def to_asyncpg_dsn(sqlalchemy_url: str) -> str:
     if sqlalchemy_url.startswith("postgresql+asyncpg://"):
@@ -93,3 +95,38 @@ async def fetch_candidates(
 
     rows = await conn.fetch(query, *params)
     return [dict(row) for row in rows]
+
+
+class MatchCandidateGateway:
+    """Infrastructure adapter for match candidate recall."""
+
+    def __init__(
+        self,
+        *,
+        settings_provider=None,
+        connect=None,
+    ):
+        self.settings_provider = settings_provider or get_settings
+        self.connect = connect or asyncpg.connect
+
+    async def fetch_candidates(
+        self,
+        *,
+        user_vec_literal: str,
+        top_k: int,
+        prefilter_sql: str,
+        prefilter_params: list[object],
+    ) -> list[dict[str, Any]]:
+        settings = self.settings_provider()
+        dsn = to_asyncpg_dsn(settings.database_url)
+        conn = await self.connect(dsn)
+        try:
+            return await fetch_candidates(
+                conn,
+                user_vec_literal=user_vec_literal,
+                top_k=top_k,
+                prefilter_sql=prefilter_sql,
+                prefilter_params=prefilter_params,
+            )
+        finally:
+            await conn.close()

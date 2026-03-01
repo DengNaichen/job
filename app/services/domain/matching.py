@@ -12,7 +12,7 @@ from app.schemas.structured_jd import (
     normalize_degree_level,
     normalize_job_domain_name,
 )
-from app.services.jd_rules import infer_seniority_level
+from app.services.domain.jd_rules import infer_seniority_level
 
 _SKILL_TOKEN_RE = re.compile(r"[^a-z0-9]+")
 

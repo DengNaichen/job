@@ -1,21 +1,21 @@
-"""Job service for business logic."""
+"""Structured JD persistence workflows."""
+
+from __future__ import annotations
 
 from collections.abc import Collection
 from datetime import datetime, timezone
 
-from app.models import Job, JobStatus
+from app.models import Job
 from app.repositories.job import JobRepository
-from app.schemas.job import JobCreate, JobUpdate
 from app.schemas.structured_jd import (
     BatchStructuredJDItem,
     build_structured_jd_projection,
     build_structured_jd_storage_payload,
 )
-from app.services.blob_storage import JobBlobManager, JobBlobPointers
 
 
-class JobError(Exception):
-    """Base exception for Job service errors."""
+class StructuredJDError(Exception):
+    """Base exception for structured JD workflows."""
 
     def __init__(self, code: str, message: str):
         self.code = code
@@ -23,14 +23,7 @@ class JobError(Exception):
         super().__init__(message)
 
 
-class JobNotFoundError(JobError):
-    """Raised when a job is not found."""
-
-    def __init__(self):
-        super().__init__(code="NOT_FOUND", message="Job not found")
-
-
-class JobStructuredJDMappingError(JobError):
+class JobStructuredJDMappingError(StructuredJDError):
     """Raised when parsed structured JD items cannot map to input jobs."""
 
     def __init__(self, job_id: str):
@@ -41,70 +34,13 @@ class JobStructuredJDMappingError(JobError):
         self.job_id = job_id
 
 
-class JobService:
-    """Service for Job business logic."""
+class StructuredJDService:
+    """Application service for structured JD read/write workflows."""
 
-    def __init__(
-        self,
-        repository: JobRepository,
-        blob_manager: JobBlobManager | None = None,
-    ):
+    def __init__(self, repository: JobRepository):
         self.repository = repository
-        self.blob_manager = blob_manager or JobBlobManager()
 
-    async def list_jobs(
-        self,
-        skip: int = 0,
-        limit: int = 100,
-        status: JobStatus | None = None,
-    ) -> list[Job]:
-        """List jobs with optional status filtering."""
-        return await self.repository.list_jobs(skip=skip, limit=limit, status=status)
-
-    async def get_job(self, job_id: str) -> Job:
-        """Get a job by ID."""
-        job = await self.repository.get_by_id(job_id)
-        if not job:
-            raise JobNotFoundError()
-        return job
-
-    async def list_jobs_by_ids(self, job_ids: list[str]) -> list[Job]:
-        """Get jobs by ID while preserving input order."""
-        return await self.repository.list_by_ids(job_ids)
-
-    async def create_job(self, job_in: JobCreate) -> Job:
-        """Create a new job."""
-        job = Job(**job_in.model_dump())
-        await self.blob_manager.sync_job_blobs(job)
-        return await self.repository.create(job)
-
-    async def update_job(self, job_id: str, job_in: JobUpdate) -> Job:
-        """Partially update a job."""
-        job = await self.repository.get_by_id(job_id)
-        if not job:
-            raise JobNotFoundError()
-
-        existing_pointers = JobBlobPointers.from_job(job)
-        update_data = job_in.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(job, key, value)
-        job.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
-        await self.blob_manager.sync_job_blobs(
-            job,
-            existing_pointers=existing_pointers,
-            explicit_fields=set(update_data),
-        )
-
-        return await self.repository.update(job)
-
-    async def delete_job(self, job_id: str) -> None:
-        """Delete a job by ID."""
-        job = await self.repository.get_by_id(job_id)
-        if not job:
-            raise JobNotFoundError()
-        await self.repository.delete(job)
-
-    async def list_pending_jobs_for_jd_parse(
+    async def list_pending_jobs_for_parse(
         self,
         limit: int = 5,
         *,

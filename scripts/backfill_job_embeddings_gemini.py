@@ -14,7 +14,7 @@ from typing import Sequence
 import asyncpg
 
 from app.core.config import get_settings
-from app.services.embedding import (
+from app.services.infra.embedding import (
     EmbeddingConfig,
     embed_text,
     embed_texts,

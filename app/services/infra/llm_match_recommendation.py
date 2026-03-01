@@ -11,14 +11,14 @@ from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.services.jd_rules import infer_seniority_level
-from app.services.llm import LLMConfig, complete_json, get_llm_config, get_token_usage
-from app.services.matching import (
+from app.services.domain.jd_rules import infer_seniority_level
+from app.services.domain.matching import (
     infer_user_degree_rank,
     infer_user_job_domain,
     infer_user_seniority_level,
     to_optional_int,
 )
+from app.services.infra.llm import LLMConfig, complete_json, get_llm_config, get_token_usage
 
 logger = logging.getLogger(__name__)
 
@@ -486,3 +486,35 @@ async def apply_llm_rerank(
         "token_usage": token_summary,
     }
     return reordered_window + prepared_rows[window_size:], summary
+
+
+class LLMMatchReranker:
+    """Infrastructure adapter for optional LLM reranking."""
+
+    def __init__(self, *, config_provider=None):
+        self.config_provider = config_provider or get_llm_config
+
+    async def rerank_if_enabled(
+        self,
+        ranked: list[dict[str, Any]],
+        *,
+        enabled: bool,
+        user_data: dict[str, Any],
+        context_by_job_id: dict[str, dict[str, Any]],
+        llm_top_n: int,
+        concurrency: int,
+    ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+        if not enabled:
+            return attach_default_llm_fields(ranked), build_disabled_llm_rerank_summary()
+
+        config = self.config_provider()
+        if config.provider != "ollama" and not config.api_key:
+            raise ValueError("LLM rerank requested but LLM is not configured")
+
+        return await apply_llm_rerank(
+            ranked,
+            user_data=user_data,
+            context_by_job_id=context_by_job_id,
+            llm_top_n=llm_top_n,
+            concurrency=concurrency,
+        )

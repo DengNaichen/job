@@ -2,7 +2,7 @@
 
 import pytest
 
-from app.services.jd_parser import parse_jd, parse_jd_batch
+from app.services.application.jd_parser import parse_jd, parse_jd_batch
 
 
 @pytest.mark.asyncio
@@ -13,7 +13,7 @@ async def test_parse_jd_defaults_missing_new_fields(monkeypatch: pytest.MonkeyPa
             "s": ["Python", "SQL"],
         }
 
-    monkeypatch.setattr("app.services.jd_parser.complete_json", fake_complete_json)
+    monkeypatch.setattr("app.services.application.jd_parser.complete_json", fake_complete_json)
 
     parsed = await parse_jd("Backend engineer with Python", title="Backend Engineer")
 
@@ -32,7 +32,7 @@ async def test_parse_jd_normalizes_new_fields(monkeypatch: pytest.MonkeyPatch) -
             "s": ["malware analysis", "Python"],
         }
 
-    monkeypatch.setattr("app.services.jd_parser.complete_json", fake_complete_json)
+    monkeypatch.setattr("app.services.application.jd_parser.complete_json", fake_complete_json)
 
     parsed = await parse_jd(
         """
@@ -62,7 +62,7 @@ async def test_parse_jd_batch_merges_compact_llm_output_with_rules(
             ]
         }
 
-    monkeypatch.setattr("app.services.jd_parser.complete_json", fake_complete_json)
+    monkeypatch.setattr("app.services.application.jd_parser.complete_json", fake_complete_json)
 
     parsed = await parse_jd_batch(
         [

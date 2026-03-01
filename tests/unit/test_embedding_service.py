@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.services.embedding import EmbeddingConfig, embed_texts, resolve_embedding_model_name
+from app.services.infra.embedding import EmbeddingConfig, embed_texts, resolve_embedding_model_name
 
 
 def test_resolve_embedding_model_name() -> None:
@@ -29,7 +29,7 @@ async def test_embed_texts_returns_vectors(monkeypatch: pytest.MonkeyPatch) -> N
             ]
         )
 
-    monkeypatch.setattr("app.services.embedding.litellm.aembedding", fake_aembedding)
+    monkeypatch.setattr("app.services.infra.embedding.litellm.aembedding", fake_aembedding)
 
     vectors = await embed_texts(
         ["hello", "world"],
@@ -51,7 +51,7 @@ async def test_embed_texts_fallback_without_dimensions(monkeypatch: pytest.Monke
             raise RuntimeError("unsupported dimensions")
         return SimpleNamespace(data=[{"embedding": [0.1, 0.2, 0.3]}])
 
-    monkeypatch.setattr("app.services.embedding.litellm.aembedding", fake_aembedding)
+    monkeypatch.setattr("app.services.infra.embedding.litellm.aembedding", fake_aembedding)
 
     vectors = await embed_texts(
         ["hello"],

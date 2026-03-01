@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncpg
 from pydantic import ValidationError
 
 from app.core.config import get_settings
@@ -15,20 +14,7 @@ from app.schemas.match import (
     SQLPrefilterSummary,
     VectorThresholdSummary,
 )
-from app.services.embedding import embed_text, get_embedding_config
-from app.services.llm import get_llm_config
-from app.services.llm_match_recommendation import (
-    apply_llm_rerank,
-    attach_default_llm_fields,
-    build_disabled_llm_rerank_summary,
-)
-from app.services.match_query import (
-    build_sql_prefilter,
-    fetch_candidates,
-    to_asyncpg_dsn,
-    vector_literal,
-)
-from app.services.matching import (
+from app.services.domain.matching import (
     build_user_embedding_text,
     build_user_skill_tokens,
     filter_match_candidates_by_min_cosine_score,
@@ -39,6 +25,13 @@ from app.services.matching import (
     infer_user_seniority_level,
     rerank_match_candidates,
     to_int,
+)
+from app.services.infra.embedding import embed_text, get_embedding_config
+from app.services.infra.llm_match_recommendation import LLMMatchReranker
+from app.services.infra.match_query import MatchCandidateGateway
+from app.services.infra.match_query import (
+    build_sql_prefilter,
+    vector_literal,
 )
 
 
@@ -84,6 +77,23 @@ def validate_candidate_profile(candidate_data: dict[str, object]) -> CandidatePr
 class MatchExperimentService:
     """Application service for the offline match experiment pipeline."""
 
+    def __init__(
+        self,
+        *,
+        candidate_gateway: MatchCandidateGateway | None = None,
+        llm_reranker: LLMMatchReranker | None = None,
+        embedding_fn=None,
+        embedding_config_provider=None,
+        settings_provider=None,
+    ):
+        self.settings_provider = settings_provider or get_settings
+        self.embedding_fn = embedding_fn or embed_text
+        self.embedding_config_provider = embedding_config_provider or get_embedding_config
+        self.candidate_gateway = candidate_gateway or MatchCandidateGateway(
+            settings_provider=self.settings_provider
+        )
+        self.llm_reranker = llm_reranker or LLMMatchReranker()
+
     async def run(self, request: MatchRequest) -> MatchResponse:
         legacy_user_data = request.candidate.to_matching_payload()
         user_years = request.candidate.total_years_experience
@@ -101,10 +111,10 @@ class MatchExperimentService:
             legacy_user_data,
             max_chars=request.max_user_chars,
         )
-        settings = get_settings()
-        user_embedding = await embed_text(
+        settings = self.settings_provider()
+        user_embedding = await self.embedding_fn(
             user_text,
-            config=get_embedding_config(),
+            config=self.embedding_config_provider(),
             dimensions=settings.embedding_dim,
         )
         user_vec_literal = vector_literal(user_embedding)
@@ -114,20 +124,14 @@ class MatchExperimentService:
             user_degree_rank=user_degree_rank,
         )
 
-        dsn = to_asyncpg_dsn(settings.database_url)
         try:
-            conn = await asyncpg.connect(dsn)
-            try:
-                candidate_rows = await fetch_candidates(
-                    conn,
-                    user_vec_literal=user_vec_literal,
-                    top_k=request.top_k,
-                    prefilter_sql=sql_prefilter,
-                    prefilter_params=sql_prefilter_params,
-                )
-            finally:
-                await conn.close()
-        except Exception as exc:
+            candidate_rows = await self.candidate_gateway.fetch_candidates(
+                user_vec_literal=user_vec_literal,
+                top_k=request.top_k,
+                prefilter_sql=sql_prefilter,
+                prefilter_params=sql_prefilter_params,
+            )
+        except Exception as exc:  # noqa: BLE001
             raise MatchQueryError() from exc
 
         vector_filtered_rows, vector_threshold_summary = (
@@ -156,20 +160,17 @@ class MatchExperimentService:
             user_seniority=user_seniority,
         )
 
-        if request.enable_llm_rerank:
-            llm_config = get_llm_config()
-            if llm_config.provider != "ollama" and not llm_config.api_key:
-                raise LLMRerankConfigurationError()
-            ranked, llm_rerank_summary = await apply_llm_rerank(
+        try:
+            ranked, llm_rerank_summary = await self.llm_reranker.rerank_if_enabled(
                 ranked,
+                enabled=request.enable_llm_rerank,
                 user_data=legacy_user_data,
                 context_by_job_id=context_by_job_id,
                 llm_top_n=request.llm_top_n,
                 concurrency=request.llm_concurrency,
             )
-        else:
-            ranked = attach_default_llm_fields(ranked)
-            llm_rerank_summary = build_disabled_llm_rerank_summary()
+        except ValueError as exc:
+            raise LLMRerankConfigurationError(str(exc)) from exc
 
         top_results = ranked[: request.top_n]
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.schemas.match import MatchRequest, MatchResponse
-from app.services.match_service import (
+from app.services.application.match_service import (
     CandidateProfileValidationError,
     LLMRerankConfigurationError,
     MatchExperimentService,

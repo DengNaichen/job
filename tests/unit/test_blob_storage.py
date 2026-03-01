@@ -7,7 +7,7 @@ import httpx
 import pytest
 
 from app.models import Job
-from app.services.blob_storage import (
+from app.services.infra.blob_storage import (
     JobBlobManager,
     JobBlobPointers,
     SupabaseBlobStorage,

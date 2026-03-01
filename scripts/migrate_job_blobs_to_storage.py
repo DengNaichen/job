@@ -13,7 +13,7 @@ from sqlmodel import select
 
 from app.core.config import get_settings
 from app.models import Job
-from app.services.blob_storage import (
+from app.services.infra.blob_storage import (
     JobBlobManager,
     JobBlobPointers,
     build_description_html_blob,

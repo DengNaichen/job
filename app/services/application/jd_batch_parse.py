@@ -5,11 +5,11 @@ from collections.abc import Collection
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models.job import Job
-from app.schemas.structured_jd import BatchStructuredJDItem
 from app.repositories.job import JobRepository
 from app.schemas.structured_jd import BatchStructuredJD
-from app.services.job import JobService
-from app.services.jd_parser import parse_jd_batch
+from app.schemas.structured_jd import BatchStructuredJDItem
+from app.services.application.jd_parser import parse_jd_batch
+from app.services.application.structured_jd import StructuredJDService
 
 
 class JDParseServiceError(Exception):
@@ -20,7 +20,7 @@ class JDBatchParseService:
     """Batch JD parsing service for pending jobs."""
 
     def __init__(self, session: AsyncSession):
-        self.job_service = JobService(JobRepository(session))
+        self.structured_jd_service = StructuredJDService(JobRepository(session))
 
     async def fetch_pending_jobs(
         self,
@@ -30,7 +30,7 @@ class JDBatchParseService:
         exclude_job_ids: Collection[str] | None = None,
     ) -> list[Job]:
         """Fetch jobs that have HTML description but no structured JD yet."""
-        return await self.job_service.list_pending_jobs_for_jd_parse(
+        return await self.structured_jd_service.list_pending_jobs_for_parse(
             limit=limit,
             version_only=version_only,
             exclude_job_ids=exclude_job_ids,
@@ -68,7 +68,7 @@ class JDBatchParseService:
 
     async def persist_jobs(self, jobs: list[Job], parsed_items: list) -> None:
         """Persist parsed structured JD items for a batch of jobs."""
-        await self.job_service.persist_structured_jd_batch(
+        await self.structured_jd_service.persist_structured_jd_batch(
             jobs=jobs,
             parsed_items=parsed_items,
         )
@@ -79,7 +79,7 @@ class JDBatchParseService:
         parsed_items: list[BatchStructuredJDItem],
     ) -> None:
         """Load jobs by ID and persist a parsed batch."""
-        jobs = await self.job_service.list_jobs_by_ids(job_ids)
+        jobs = await self.structured_jd_service.repository.list_by_ids(job_ids)
         if len(jobs) != len(job_ids):
             missing_job_ids = sorted(set(job_ids) - {str(job.id) for job in jobs})
             raise JDParseServiceError(f"Missing jobs for persistence: {missing_job_ids}")

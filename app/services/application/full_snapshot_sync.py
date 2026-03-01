@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.contracts.sync import SourceSyncResult, SourceSyncStats
 from app.ingest.fetchers.base import BaseFetcher
 from app.ingest.mappers.base import BaseMapper
 from app.models import Job, JobStatus, Source, build_source_key
 from app.repositories.job import JobRepository
-from app.services.blob_storage import JobBlobManager, JobBlobPointers
+from app.services.infra.blob_storage import JobBlobManager, JobBlobPointers
 
 
 def _to_naive_utc(value: datetime | None) -> datetime | None:
@@ -25,27 +25,6 @@ def _now_naive_utc() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
-@dataclass
-class SourceSyncStats:
-    fetched_count: int = 0
-    mapped_count: int = 0
-    unique_count: int = 0
-    deduped_by_external_id: int = 0
-    inserted_count: int = 0
-    updated_count: int = 0
-    closed_count: int = 0
-    failed_count: int = 0
-
-
-@dataclass
-class SourceSyncResult:
-    source_id: str
-    source_key: str
-    ok: bool
-    stats: SourceSyncStats = field(default_factory=SourceSyncStats)
-    error: str | None = None
-
-
 class FullSnapshotSyncError(Exception):
     """Raised when one source snapshot cannot be fully reconciled."""
 
@@ -56,10 +35,11 @@ class FullSnapshotSyncService:
     def __init__(
         self,
         session: AsyncSession,
+        job_repository: JobRepository | None = None,
         blob_manager: JobBlobManager | None = None,
     ):
         self.session = session
-        self.job_repository = JobRepository(session)
+        self.job_repository = job_repository or JobRepository(session)
         self.blob_manager = blob_manager or JobBlobManager()
 
     async def sync_source(

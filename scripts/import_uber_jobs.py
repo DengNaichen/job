@@ -20,7 +20,7 @@ from app.core.database import engine
 from app.ingest.fetchers.uber import UberFetcher
 from app.ingest.mappers.uber import UberMapper
 from app.models import PlatformType, Source
-from app.services.full_snapshot_sync import FullSnapshotSyncService, SourceSyncResult
+from app.services.application.full_snapshot_sync import FullSnapshotSyncService, SourceSyncResult
 
 
 @dataclass
