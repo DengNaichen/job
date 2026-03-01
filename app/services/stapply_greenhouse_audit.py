@@ -81,7 +81,9 @@ def extract_greenhouse_identifier(url: str) -> str | None:
     return identifier or None
 
 
-def load_greenhouse_candidates(clone_path: Path) -> tuple[list[GreenhouseCandidate], GreenhouseCandidateSummary]:
+def load_greenhouse_candidates(
+    clone_path: Path,
+) -> tuple[list[GreenhouseCandidate], GreenhouseCandidateSummary]:
     candidates: list[GreenhouseCandidate] = []
     summary = GreenhouseCandidateSummary()
     seen_identifiers: set[str] = set()
@@ -177,7 +179,10 @@ def validate_candidate_name(candidate: GreenhouseCandidate) -> list[str]:
         reasons.append("name_looks_like_url")
     if name.isdigit():
         reasons.append("name_is_numeric_only")
-    if normalized == candidate.identifier.strip().casefold() and candidate.identifier.strip().isdigit():
+    if (
+        normalized == candidate.identifier.strip().casefold()
+        and candidate.identifier.strip().isdigit()
+    ):
         reasons.append("name_matches_numeric_identifier")
     return reasons
 
@@ -318,6 +323,7 @@ async def verify_greenhouse_candidates(
         timeout=timeout_seconds,
         headers={"User-Agent": "job-greenhouse-audit/1.0"},
     ) as client:
+
         async def run_one(candidate: GreenhouseCandidate) -> GreenhouseVerificationResult:
             async with semaphore:
                 return await verify_greenhouse_candidate(candidate, client=client, mapper=mapper)

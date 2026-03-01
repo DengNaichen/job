@@ -27,8 +27,14 @@ class TestSmartRecruitersMapper:
             "typeOfEmployment": {"label": "Full-time"},
             "jobAd": {
                 "sections": {
-                    "companyDescription": {"title": "Company Description", "text": "<p>About Visa</p>"},
-                    "jobDescription": {"title": "Job Description", "text": "<p>Own the roadmap</p>"},
+                    "companyDescription": {
+                        "title": "Company Description",
+                        "text": "<p>About Visa</p>",
+                    },
+                    "jobDescription": {
+                        "title": "Job Description",
+                        "text": "<p>Own the roadmap</p>",
+                    },
                 }
             },
         }
@@ -38,7 +44,10 @@ class TestSmartRecruitersMapper:
         assert result.source == "smartrecruiters"
         assert result.external_job_id == "744000111982085"
         assert result.title == "Director, Visa Pay - APAC"
-        assert result.apply_url == "https://jobs.smartrecruiters.com/Visa/744000111982085-director-visa-pay-apac?oga=true"
+        assert (
+            result.apply_url
+            == "https://jobs.smartrecruiters.com/Visa/744000111982085-director-visa-pay-apac?oga=true"
+        )
         assert result.location_text == "Singapore"
         assert result.department == "Product"
         assert result.team == "Product Management"
@@ -53,7 +62,10 @@ class TestSmartRecruitersMapper:
             "applyUrl": "https://apply.example/1",
             "jobAd": {
                 "sections": {
-                    "companyDescription": {"title": "Company Description", "text": "<p>About us</p>"},
+                    "companyDescription": {
+                        "title": "Company Description",
+                        "text": "<p>About us</p>",
+                    },
                     "jobDescription": {"title": "Job Description", "text": "<p>Build systems</p>"},
                     "qualifications": {"title": "Qualifications", "text": "5+ years<br>Python"},
                     "additionalInformation": {"title": "Additional Information", "text": ""},

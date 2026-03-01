@@ -152,7 +152,9 @@ async def migrate_job_blobs(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Backfill job HTML/raw blobs into storage")
-    parser.add_argument("--batch-size", type=int, default=100, help="Number of jobs scanned per batch")
+    parser.add_argument(
+        "--batch-size", type=int, default=100, help="Number of jobs scanned per batch"
+    )
     parser.add_argument("--dry-run", action="store_true", help="Only report what would be uploaded")
     parser.add_argument("--html-only", action="store_true", help="Only migrate description_html")
     parser.add_argument("--raw-only", action="store_true", help="Only migrate raw_payload")

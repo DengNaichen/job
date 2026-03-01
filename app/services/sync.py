@@ -51,7 +51,9 @@ PLATFORM_SYNC_HANDLERS: dict[PlatformType, PlatformSyncHandlers] = {
     PlatformType.GREENHOUSE: PlatformSyncHandlers(GreenhouseFetcher, GreenhouseMapper),
     PlatformType.LEVER: PlatformSyncHandlers(LeverFetcher, LeverMapper),
     PlatformType.ASHBY: PlatformSyncHandlers(AshbyFetcher, AshbyMapper),
-    PlatformType.SMARTRECRUITERS: PlatformSyncHandlers(SmartRecruitersFetcher, SmartRecruitersMapper),
+    PlatformType.SMARTRECRUITERS: PlatformSyncHandlers(
+        SmartRecruitersFetcher, SmartRecruitersMapper
+    ),
     PlatformType.EIGHTFOLD: PlatformSyncHandlers(EightfoldFetcher, EightfoldMapper),
     PlatformType.APPLE: PlatformSyncHandlers(AppleFetcher, AppleMapper),
     PlatformType.UBER: PlatformSyncHandlers(UberFetcher, UberMapper),

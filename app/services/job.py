@@ -131,9 +131,7 @@ class JobService:
 
         now = datetime.now(timezone.utc)
         now_naive = now.replace(tzinfo=None)
-        parsed_by_job_id = {
-            item.job_id: item.model_dump(mode="python") for item in parsed_items
-        }
+        parsed_by_job_id = {item.job_id: item.model_dump(mode="python") for item in parsed_items}
 
         for job in jobs:
             item_payload = parsed_by_job_id.get(str(job.id))
@@ -142,7 +140,11 @@ class JobService:
             job.structured_jd = build_structured_jd_storage_payload(item_payload)
             projection = build_structured_jd_projection(item_payload)
             job.sponsorship_not_available = str(projection["sponsorship_not_available"])
-            job.job_domain_raw = projection["job_domain_raw"] if isinstance(projection["job_domain_raw"], str) else None
+            job.job_domain_raw = (
+                projection["job_domain_raw"]
+                if isinstance(projection["job_domain_raw"], str)
+                else None
+            )
             job.job_domain_normalized = str(projection["job_domain_normalized"])
             job.min_degree_level = str(projection["min_degree_level"])
             job.min_degree_rank = int(projection["min_degree_rank"])

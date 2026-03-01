@@ -76,7 +76,12 @@ class TestAppleFetcher:
         search_route = respx.post("https://jobs.apple.com/api/v1/search").mock(
             return_value=Response(
                 200,
-                json={"res": {"totalRecords": 1, "searchResults": [{"positionId": "job-1", "postingTitle": "Specialist"}]}},
+                json={
+                    "res": {
+                        "totalRecords": 1,
+                        "searchResults": [{"positionId": "job-1", "postingTitle": "Specialist"}],
+                    }
+                },
             )
         )
         detail_route = respx.get("https://jobs.apple.com/api/v1/jobDetails/job-1").mock(
@@ -148,15 +153,27 @@ class TestTikTokFetcher:
     @pytest.mark.asyncio
     @respx.mock
     async def test_fetch_paginates_results(self) -> None:
-        route = respx.post("https://api.lifeattiktok.com/api/v1/public/supplier/search/job/posts").mock(
+        route = respx.post(
+            "https://api.lifeattiktok.com/api/v1/public/supplier/search/job/posts"
+        ).mock(
             side_effect=[
                 Response(
                     200,
-                    json={"data": {"count": 2, "job_post_list": [{"id": "1", "title": "Policy Manager"}]}},
+                    json={
+                        "data": {
+                            "count": 2,
+                            "job_post_list": [{"id": "1", "title": "Policy Manager"}],
+                        }
+                    },
                 ),
                 Response(
                     200,
-                    json={"data": {"count": 2, "job_post_list": [{"id": "2", "title": "Product Counsel"}]}},
+                    json={
+                        "data": {
+                            "count": 2,
+                            "job_post_list": [{"id": "2", "title": "Product Counsel"}],
+                        }
+                    },
                 ),
             ]
         )

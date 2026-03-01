@@ -44,7 +44,11 @@ async def run(args: argparse.Namespace) -> int:
         raise SystemExit(f"Clone path does not exist: {clone_path}")
 
     platform = parse_platform(args.platform)
-    output_path = Path(args.output).expanduser().resolve() if args.output else default_missing_report_path(platform).resolve()
+    output_path = (
+        Path(args.output).expanduser().resolve()
+        if args.output
+        else default_missing_report_path(platform).resolve()
+    )
 
     missing, summary = await find_missing_candidates(clone_path, platform)
     write_candidates_csv(output_path, missing)

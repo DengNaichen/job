@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.database import get_session
-from app.models import PlatformType, Source
+from app.models import PlatformType
 from app.repositories.source import SourceRepository
 from app.repositories.sync_run import SyncRunRepository
 from app.schemas.source import (
@@ -48,7 +48,7 @@ def get_source_service(session: AsyncSession = Depends(get_session)) -> SourceSe
     responses={
         409: {"model": ErrorResponse, "description": "Duplicate name or identifier"},
         422: {"description": "Validation error"},
-    }
+    },
 )
 async def create_source(
     source_in: SourceCreate,
@@ -62,25 +62,21 @@ async def create_source(
     try:
         source = await service.create_source(source_in)
         return SourceResponse(
-            success=True,
-            data=SourceRead.model_validate(source),
-            message="操作成功"
+            success=True, data=SourceRead.model_validate(source), message="操作成功"
         )
     except DuplicateNameError as e:
         return JSONResponse(
             status_code=409,
             content=ErrorResponse(
-                success=False,
-                error=ErrorDetail(code=e.code, message=e.message)
-            ).model_dump()
+                success=False, error=ErrorDetail(code=e.code, message=e.message)
+            ).model_dump(),
         )
     except DuplicateIdentifierError as e:
         return JSONResponse(
             status_code=409,
             content=ErrorResponse(
-                success=False,
-                error=ErrorDetail(code=e.code, message=e.message)
-            ).model_dump()
+                success=False, error=ErrorDetail(code=e.code, message=e.message)
+            ).model_dump(),
         )
 
 
@@ -102,9 +98,7 @@ async def list_sources(
     """
     sources = await service.list_sources(enabled=enabled, platform=platform)
     return SourceListResponse(
-        success=True,
-        data=[SourceRead.model_validate(s) for s in sources],
-        total=len(sources)
+        success=True, data=[SourceRead.model_validate(s) for s in sources], total=len(sources)
     )
 
 
@@ -132,7 +126,7 @@ async def list_source_slugs(
     response_model=SourceResponse,
     responses={
         404: {"model": ErrorResponse, "description": "Source not found"},
-    }
+    },
 )
 async def get_source(
     source_id: str,
@@ -142,17 +136,14 @@ async def get_source(
     try:
         source = await service.get_source(source_id)
         return SourceResponse(
-            success=True,
-            data=SourceRead.model_validate(source),
-            message="操作成功"
+            success=True, data=SourceRead.model_validate(source), message="操作成功"
         )
     except SourceNotFoundError as e:
         return JSONResponse(
             status_code=404,
             content=ErrorResponse(
-                success=False,
-                error=ErrorDetail(code=e.code, message=e.message)
-            ).model_dump()
+                success=False, error=ErrorDetail(code=e.code, message=e.message)
+            ).model_dump(),
         )
 
 
@@ -162,7 +153,7 @@ async def get_source(
     responses={
         404: {"model": ErrorResponse, "description": "Source not found"},
         409: {"model": ErrorResponse, "description": "Duplicate name or identifier"},
-    }
+    },
 )
 async def update_source(
     source_id: str,
@@ -177,33 +168,28 @@ async def update_source(
     try:
         source = await service.update_source(source_id, source_in)
         return SourceResponse(
-            success=True,
-            data=SourceRead.model_validate(source),
-            message="操作成功"
+            success=True, data=SourceRead.model_validate(source), message="操作成功"
         )
     except SourceNotFoundError as e:
         return JSONResponse(
             status_code=404,
             content=ErrorResponse(
-                success=False,
-                error=ErrorDetail(code=e.code, message=e.message)
-            ).model_dump()
+                success=False, error=ErrorDetail(code=e.code, message=e.message)
+            ).model_dump(),
         )
     except DuplicateNameError as e:
         return JSONResponse(
             status_code=409,
             content=ErrorResponse(
-                success=False,
-                error=ErrorDetail(code=e.code, message=e.message)
-            ).model_dump()
+                success=False, error=ErrorDetail(code=e.code, message=e.message)
+            ).model_dump(),
         )
     except DuplicateIdentifierError as e:
         return JSONResponse(
             status_code=409,
             content=ErrorResponse(
-                success=False,
-                error=ErrorDetail(code=e.code, message=e.message)
-            ).model_dump()
+                success=False, error=ErrorDetail(code=e.code, message=e.message)
+            ).model_dump(),
         )
 
 
@@ -213,7 +199,7 @@ async def update_source(
     responses={
         404: {"model": ErrorResponse, "description": "Source not found"},
         409: {"model": ErrorResponse, "description": "Has references"},
-    }
+    },
 )
 async def delete_source(
     source_id: str,
@@ -226,23 +212,18 @@ async def delete_source(
     """
     try:
         await service.delete_source(source_id)
-        return DeleteResponse(
-            success=True,
-            message="数据源已删除"
-        )
+        return DeleteResponse(success=True, message="数据源已删除")
     except SourceNotFoundError as e:
         return JSONResponse(
             status_code=404,
             content=ErrorResponse(
-                success=False,
-                error=ErrorDetail(code=e.code, message=e.message)
-            ).model_dump()
+                success=False, error=ErrorDetail(code=e.code, message=e.message)
+            ).model_dump(),
         )
     except HasReferencesError as e:
         return JSONResponse(
             status_code=409,
             content=ErrorResponse(
-                success=False,
-                error=ErrorDetail(code=e.code, message=e.message)
-            ).model_dump()
+                success=False, error=ErrorDetail(code=e.code, message=e.message)
+            ).model_dump(),
         )

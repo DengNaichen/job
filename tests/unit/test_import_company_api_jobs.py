@@ -79,7 +79,9 @@ async def test_import_apple_run_filters_by_slug_and_prints_summary(
             source_id=str(source.id),
             source_key="apple:apple",
             ok=True,
-            stats=SourceSyncStats(fetched_count=3, mapped_count=3, unique_count=3, inserted_count=2, updated_count=1),
+            stats=SourceSyncStats(
+                fetched_count=3, mapped_count=3, unique_count=3, inserted_count=2, updated_count=1
+            ),
         )
 
     monkeypatch.setattr(module, "_load_apple_sources", fake_load_apple_sources)
@@ -125,7 +127,9 @@ async def test_import_uber_reports_failed_sources(
             source_id=str(source.id),
             source_key="uber:uber",
             ok=True,
-            stats=SourceSyncStats(fetched_count=2, mapped_count=2, unique_count=2, inserted_count=1, updated_count=1),
+            stats=SourceSyncStats(
+                fetched_count=2, mapped_count=2, unique_count=2, inserted_count=1, updated_count=1
+            ),
         )
 
     monkeypatch.setattr(module, "_load_uber_sources", fake_load_uber_sources)

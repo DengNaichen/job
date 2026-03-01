@@ -98,8 +98,6 @@ class SyncRunRepository:
 
     async def has_any_for_source(self, *, source: str) -> bool:
         result = await self.session.exec(
-            select(SyncRun.id)
-            .where(SyncRun.source == source)
-            .limit(1)
+            select(SyncRun.id).where(SyncRun.source == source).limit(1)
         )
         return result.first() is not None

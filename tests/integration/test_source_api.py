@@ -11,9 +11,7 @@ Tests for MVP User Story 1 (T016):
 
 import asyncio
 
-import pytest
 from fastapi.testclient import TestClient
-from httpx import AsyncClient
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.database import engine
@@ -106,7 +104,10 @@ class TestCreateSource:
         assert response.status_code == 409
         data = response.json()
         assert data["success"] is False
-        assert "duplicate" in data["error"]["message"].lower() or "already exists" in data["error"]["message"].lower()
+        assert (
+            "duplicate" in data["error"]["message"].lower()
+            or "already exists" in data["error"]["message"].lower()
+        )
 
     def test_create_source_duplicate_name_with_whitespace_fails(self, client: TestClient):
         """Test that duplicate name with whitespace is rejected on same platform."""
@@ -333,7 +334,15 @@ class TestSourceAPIResponseFormat:
         assert isinstance(data["data"], dict)
 
         # Data should have expected fields
-        expected_fields = ["id", "name", "platform", "identifier", "enabled", "created_at", "updated_at"]
+        expected_fields = [
+            "id",
+            "name",
+            "platform",
+            "identifier",
+            "enabled",
+            "created_at",
+            "updated_at",
+        ]
         for field in expected_fields:
             assert field in data["data"], f"Missing field: {field}"
 

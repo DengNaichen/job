@@ -34,11 +34,15 @@ def build_sql_prefilter(
         )
         params.append(user_degree_rank)
 
-    return " AND ".join(clauses), params, {
-        "sponsorship_filter_applied": needs_sponsorship,
-        "degree_filter_applied": user_degree_rank >= 0,
-        "user_degree_rank": user_degree_rank,
-    }
+    return (
+        " AND ".join(clauses),
+        params,
+        {
+            "sponsorship_filter_applied": needs_sponsorship,
+            "degree_filter_applied": user_degree_rank >= 0,
+            "user_degree_rank": user_degree_rank,
+        },
+    )
 
 
 async def fetch_candidates(

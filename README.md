@@ -11,6 +11,47 @@ Job Service is a FastAPI-based job aggregation service. It ingests jobs from pub
 - Exposes REST APIs for `sources`, `jobs`, and `matching`
 - Includes a lightweight scheduled runner for local `cron` or future Cloud Run / Cloud Scheduler style execution
 
+## Developer Workflow
+
+Bootstrap the local environment:
+
+```bash
+./scripts/uv sync
+```
+
+or:
+
+```bash
+./scripts/bootstrap
+```
+
+Common engineering commands:
+
+```bash
+./scripts/lint
+./scripts/test
+./scripts/fmt
+```
+
+Enable local git hooks:
+
+```bash
+./scripts/install_hooks
+```
+
+The repository CI baseline runs:
+
+- `./scripts/lint`
+- `./scripts/test`
+
+Optional aliases are available through `make` if your local toolchain already
+has Command Line Tools configured:
+
+- `make bootstrap`
+- `make lint`
+- `make test`
+- `make fmt`
+
 ## Supported Sources
 
 ### ATS / platform-based sources

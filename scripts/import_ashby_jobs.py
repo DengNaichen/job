@@ -138,20 +138,26 @@ async def run(args: argparse.Namespace) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Import Ashby jobs for one or all enabled source slugs.")
+    parser = argparse.ArgumentParser(
+        description="Import Ashby jobs for one or all enabled source slugs."
+    )
     parser.add_argument(
         "--slug",
         default=None,
         help="Exact Source.identifier to import. Defaults to all enabled Ashby sources.",
     )
-    parser.add_argument("--limit", type=int, default=None, help="Limit number of sources when running all.")
+    parser.add_argument(
+        "--limit", type=int, default=None, help="Limit number of sources when running all."
+    )
     parser.add_argument(
         "--include-compensation",
         action=argparse.BooleanOptionalAction,
         default=False,
         help="Include compensation data from Ashby's public postings API.",
     )
-    parser.add_argument("--dry-run", action="store_true", help="Process all records but rollback writes.")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Process all records but rollback writes."
+    )
     return parser.parse_args()
 
 

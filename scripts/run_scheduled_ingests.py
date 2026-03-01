@@ -34,13 +34,9 @@ async def _load_candidate_sources(
         rows = await session.exec(statement)
         all_sources = list(rows.all())
 
-    supported_sources = [
-        source for source in all_sources
-        if source.platform in SUPPORTED_PLATFORMS
-    ]
+    supported_sources = [source for source in all_sources if source.platform in SUPPORTED_PLATFORMS]
     unsupported_sources = [
-        source for source in all_sources
-        if source.platform not in SUPPORTED_PLATFORMS
+        source for source in all_sources if source.platform not in SUPPORTED_PLATFORMS
     ]
     if limit is not None:
         supported_sources = supported_sources[:limit]
@@ -64,7 +60,10 @@ async def run(args: argparse.Namespace) -> int:
     if unsupported_sources:
         print(
             "warning_unsupported_sources="
-            + ",".join(build_source_key(source.platform, source.identifier) for source in unsupported_sources)
+            + ",".join(
+                build_source_key(source.platform, source.identifier)
+                for source in unsupported_sources
+            )
         )
         if args.identifier is not None and not sources:
             return 1
@@ -157,7 +156,9 @@ def parse_args() -> argparse.Namespace:
         help="Include full job content for platforms that support detail fetches.",
     )
     parser.add_argument("--dry-run", action="store_true", help="Run syncs but rollback job writes.")
-    parser.add_argument("--retry-attempts", type=int, default=3, help="Retry attempts per source sync.")
+    parser.add_argument(
+        "--retry-attempts", type=int, default=3, help="Retry attempts per source sync."
+    )
     return parser.parse_args()
 
 

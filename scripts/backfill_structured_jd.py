@@ -48,7 +48,9 @@ async def _parse_one(
     async with semaphore:
         try:
             parsed = await parse_jd(description, is_html=is_html, title=title)
-            return ParseResult(job_id=job_id, structured=parsed.model_dump(mode="python"), error=None)
+            return ParseResult(
+                job_id=job_id, structured=parsed.model_dump(mode="python"), error=None
+            )
         except Exception as exc:  # noqa: BLE001
             return ParseResult(job_id=job_id, structured=None, error=str(exc))
 
@@ -149,7 +151,11 @@ async def run(args: argparse.Namespace) -> None:
                 job.structured_jd = build_structured_jd_storage_payload(result.structured)
                 projection = build_structured_jd_projection(result.structured)
                 job.sponsorship_not_available = str(projection["sponsorship_not_available"])
-                job.job_domain_raw = projection["job_domain_raw"] if isinstance(projection["job_domain_raw"], str) else None
+                job.job_domain_raw = (
+                    projection["job_domain_raw"]
+                    if isinstance(projection["job_domain_raw"], str)
+                    else None
+                )
                 job.job_domain_normalized = str(projection["job_domain_normalized"])
                 job.min_degree_level = str(projection["min_degree_level"])
                 job.min_degree_rank = int(projection["min_degree_rank"])
@@ -184,8 +190,12 @@ async def run(args: argparse.Namespace) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Backfill structured_jd with concurrent single-job parsing")
-    parser.add_argument("--limit", type=int, default=5000, help="Target number of successfully parsed jobs")
+    parser = argparse.ArgumentParser(
+        description="Backfill structured_jd with concurrent single-job parsing"
+    )
+    parser.add_argument(
+        "--limit", type=int, default=5000, help="Target number of successfully parsed jobs"
+    )
     parser.add_argument("--chunk-size", type=int, default=20, help="DB fetch size per loop")
     parser.add_argument("--concurrency", type=int, default=20, help="Concurrent parse_jd calls")
     parser.add_argument(

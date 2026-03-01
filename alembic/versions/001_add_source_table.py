@@ -4,6 +4,7 @@ Revision ID: 001
 Create Date: 2026-02-25
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -30,9 +31,7 @@ def upgrade() -> None:
     op.create_index("ix_sources_name_normalized", "sources", ["name_normalized"], unique=True)
     op.create_index("ix_sources_enabled", "sources", ["enabled"])
     op.create_check_constraint(
-        "ck_sources_platform",
-        "sources",
-        "platform IN ('greenhouse', 'lever', 'workday')"
+        "ck_sources_platform", "sources", "platform IN ('greenhouse', 'lever', 'workday')"
     )
 
 

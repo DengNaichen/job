@@ -130,9 +130,11 @@ class MatchExperimentService:
         except Exception as exc:
             raise MatchQueryError() from exc
 
-        vector_filtered_rows, vector_threshold_summary = filter_match_candidates_by_min_cosine_score(
-            candidate_rows,
-            min_cosine_score=request.min_cosine_score,
+        vector_filtered_rows, vector_threshold_summary = (
+            filter_match_candidates_by_min_cosine_score(
+                candidate_rows,
+                min_cosine_score=request.min_cosine_score,
+            )
         )
         hard_filtered_rows, hard_filter_summary = hard_filter_match_candidates(
             vector_filtered_rows,
@@ -142,9 +144,7 @@ class MatchExperimentService:
             max_experience_gap=request.experience_buffer_years,
         )
         context_by_job_id = {
-            str(row["job_id"]): row
-            for row in hard_filtered_rows
-            if row.get("job_id") is not None
+            str(row["job_id"]): row for row in hard_filtered_rows if row.get("job_id") is not None
         }
 
         ranked = rerank_match_candidates(
@@ -196,8 +196,5 @@ class MatchExperimentService:
                 llm_rerank_summary=LLMRerankSummary.model_validate(llm_rerank_summary),
                 results_returned=len(top_results),
             ),
-            results=[
-                MatchResultItem.model_validate(item)
-                for item in top_results
-            ],
+            results=[MatchResultItem.model_validate(item) for item in top_results],
         )

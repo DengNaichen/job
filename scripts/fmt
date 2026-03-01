@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+./scripts/uv run ruff check --fix app tests scripts "$@"
+./scripts/uv run ruff format app tests scripts "$@"

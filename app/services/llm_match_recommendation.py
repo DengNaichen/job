@@ -206,7 +206,9 @@ def _extract_recent_work_history(user_data: dict[str, Any]) -> list[dict[str, An
             bullets_source = entry.get("achievements")
         if not isinstance(bullets_source, list):
             description = entry.get("description")
-            bullets_source = [description] if isinstance(description, str) and description.strip() else []
+            bullets_source = (
+                [description] if isinstance(description, str) and description.strip() else []
+            )
 
         item = {
             "title": _sanitize_free_text(entry.get("title"), max_chars=_MAX_TITLE_CHARS),
@@ -241,9 +243,15 @@ def _build_job_profile(context_row: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "title": _sanitize_free_text(context_row.get("title"), max_chars=_MAX_TITLE_CHARS),
-        "location_text": _sanitize_free_text(context_row.get("location_text"), max_chars=_MAX_TITLE_CHARS),
-        "employment_type": _sanitize_free_text(context_row.get("employment_type"), max_chars=_MAX_TITLE_CHARS),
-        "department": _sanitize_free_text(context_row.get("department"), max_chars=_MAX_TITLE_CHARS),
+        "location_text": _sanitize_free_text(
+            context_row.get("location_text"), max_chars=_MAX_TITLE_CHARS
+        ),
+        "employment_type": _sanitize_free_text(
+            context_row.get("employment_type"), max_chars=_MAX_TITLE_CHARS
+        ),
+        "department": _sanitize_free_text(
+            context_row.get("department"), max_chars=_MAX_TITLE_CHARS
+        ),
         "team": _sanitize_free_text(context_row.get("team"), max_chars=_MAX_TITLE_CHARS),
         "job_domain_normalized": str(context_row.get("job_domain_normalized") or "unknown"),
         "min_degree_level": str(context_row.get("min_degree_level") or "unknown"),
@@ -312,7 +320,11 @@ def get_llm_adjustment(recommendation: LLMRecommendationEnum | str | None) -> fl
 
     if recommendation is None:
         return 0.0
-    key = recommendation.value if isinstance(recommendation, LLMRecommendationEnum) else str(recommendation)
+    key = (
+        recommendation.value
+        if isinstance(recommendation, LLMRecommendationEnum)
+        else str(recommendation)
+    )
     return LLM_ADJUSTMENT_MAP.get(key, 0.0)
 
 

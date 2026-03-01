@@ -124,8 +124,7 @@ class JobRepository:
     ) -> list[Job]:
         """List jobs eligible for structured_jd extraction."""
         statement = select(Job).where(
-            (Job.description_html.is_not(None))
-            | (Job.description_plain.is_not(None))
+            (Job.description_html.is_not(None)) | (Job.description_plain.is_not(None))
         )
         if version_only:
             statement = statement.where(Job.structured_jd.is_not(None)).where(

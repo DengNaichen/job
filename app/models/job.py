@@ -37,12 +37,20 @@ class Job(SQLModel, table=True):
     employment_type: str | None = Field(default=None)
 
     description_html: str | None = Field(default=None)
-    description_html_key: str | None = Field(default=None, sa_column=Column(String(255), nullable=True))
-    description_html_hash: str | None = Field(default=None, sa_column=Column(String(64), nullable=True))
+    description_html_key: str | None = Field(
+        default=None, sa_column=Column(String(255), nullable=True)
+    )
+    description_html_hash: str | None = Field(
+        default=None, sa_column=Column(String(64), nullable=True)
+    )
     description_plain: str | None = Field(default=None)
-    embedding: list[float] | None = Field(default=None, sa_column=Column(Vector(1024), nullable=True))
+    embedding: list[float] | None = Field(
+        default=None, sa_column=Column(Vector(1024), nullable=True)
+    )
     embedding_model: str | None = Field(default=None, sa_column=Column(String(128), nullable=True))
-    embedding_updated_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    embedding_updated_at: datetime | None = Field(
+        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
 
     sponsorship_not_available: str = Field(default="unknown", index=True)
     job_domain_raw: str | None = Field(default=None)
@@ -62,7 +70,9 @@ class Job(SQLModel, table=True):
 
     # LLM 提取的结构化 JD 信息
     structured_jd: dict[str, Any] | None = Field(default=None, sa_column=Column(JSONB()))
-    structured_jd_updated_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    structured_jd_updated_at: datetime | None = Field(
+        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

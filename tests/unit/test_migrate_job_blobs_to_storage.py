@@ -146,7 +146,9 @@ async def test_migrate_job_blobs_uploads_and_updates_db(session: AsyncSession) -
 
 
 @pytest.mark.asyncio
-async def test_migrate_job_blobs_storage_failure_does_not_write_bad_pointer(session: AsyncSession) -> None:
+async def test_migrate_job_blobs_storage_failure_does_not_write_bad_pointer(
+    session: AsyncSession,
+) -> None:
     await _persist_job(
         session,
         _build_job(job_id="job-4", description_html="<p>Hello</p>", raw_payload={}),

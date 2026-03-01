@@ -13,7 +13,12 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.database import engine
-from app.ingest.fetchers import AshbyFetcher, GreenhouseFetcher, LeverFetcher, SmartRecruitersFetcher
+from app.ingest.fetchers import (
+    AshbyFetcher,
+    GreenhouseFetcher,
+    LeverFetcher,
+    SmartRecruitersFetcher,
+)
 from app.ingest.mappers import AshbyMapper, GreenhouseMapper, LeverMapper, SmartRecruitersMapper
 from app.models import PlatformType, Source, normalize_name
 
@@ -244,7 +249,10 @@ def validate_candidate_name(candidate: SourceCandidate) -> list[str]:
         reasons.append("name_looks_like_url")
     if name.isdigit():
         reasons.append("name_is_numeric_only")
-    if normalized == candidate.identifier.strip().casefold() and candidate.identifier.strip().isdigit():
+    if (
+        normalized == candidate.identifier.strip().casefold()
+        and candidate.identifier.strip().isdigit()
+    ):
         reasons.append("name_matches_numeric_identifier")
     return reasons
 
@@ -436,7 +444,9 @@ async def _verify_smartrecruiters_candidate(
         if not isinstance(content, list):
             content = []
 
-        total_found = SmartRecruitersFetcher._to_int_or_none(payload.get("totalFound")) or len(content)
+        total_found = SmartRecruitersFetcher._to_int_or_none(payload.get("totalFound")) or len(
+            content
+        )
         if total_found == 0 or not content:
             reasons.append("no_jobs_returned")
             return VerificationResult(

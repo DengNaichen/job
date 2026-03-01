@@ -26,9 +26,11 @@ LLM_TIMEOUT_JSON = 180
 # Token Usage Tracking
 # ============================================
 
+
 @dataclass
 class TokenUsage:
     """Track token usage across LLM calls."""
+
     total_prompt_tokens: int = 0
     total_completion_tokens: int = 0
     total_requests: int = 0
@@ -86,7 +88,9 @@ def _track_usage(kwargs: dict[str, Any], response: Any, start_time: float, end_t
             completion_tokens = getattr(usage, "completion_tokens", 0) or 0
             model = kwargs.get("model", "unknown")
             _token_usage.add_usage(model, prompt_tokens, completion_tokens)
-            logger.debug(f"Token usage: {model} - prompt={prompt_tokens}, completion={completion_tokens}")
+            logger.debug(
+                f"Token usage: {model} - prompt={prompt_tokens}, completion={completion_tokens}"
+            )
     except Exception as e:
         logger.warning(f"Failed to track token usage: {e}")
 
@@ -228,10 +232,22 @@ def _extract_text_parts(value: Any, depth: int = 0, max_depth: int = 10) -> list
 
 def _extract_choice_text(choice: Any) -> str | None:
     """Extract plain text from a LiteLLM choice object."""
-    message = getattr(choice, "message", None) if hasattr(choice, "message") else choice.get("message") if isinstance(choice, dict) else None
+    message = (
+        getattr(choice, "message", None)
+        if hasattr(choice, "message")
+        else choice.get("message")
+        if isinstance(choice, dict)
+        else None
+    )
 
     if message:
-        content = getattr(message, "content", None) if hasattr(message, "content") else message.get("content") if isinstance(message, dict) else None
+        content = (
+            getattr(message, "content", None)
+            if hasattr(message, "content")
+            else message.get("content")
+            if isinstance(message, dict)
+            else None
+        )
         if content:
             parts = _extract_text_parts(content)
             if parts:
@@ -242,10 +258,22 @@ def _extract_choice_text(choice: Any) -> str | None:
 
 def _extract_choice_content(choice: Any) -> Any:
     """Extract raw content from a LiteLLM choice object."""
-    message = getattr(choice, "message", None) if hasattr(choice, "message") else choice.get("message") if isinstance(choice, dict) else None
+    message = (
+        getattr(choice, "message", None)
+        if hasattr(choice, "message")
+        else choice.get("message")
+        if isinstance(choice, dict)
+        else None
+    )
     if not message:
         return None
-    return getattr(message, "content", None) if hasattr(message, "content") else message.get("content") if isinstance(message, dict) else None
+    return (
+        getattr(message, "content", None)
+        if hasattr(message, "content")
+        else message.get("content")
+        if isinstance(message, dict)
+        else None
+    )
 
 
 def _extract_json(content: str) -> str:
@@ -406,8 +434,7 @@ async def complete_json(
             logger.warning(f"JSON schema validation failed (attempt {attempt + 1}): {e}")
             if attempt < retries:
                 messages[-1]["content"] = (
-                    prompt
-                    + "\n\nIMPORTANT: Output ONLY valid JSON matching the required schema."
+                    prompt + "\n\nIMPORTANT: Output ONLY valid JSON matching the required schema."
                 )
                 continue
             raise ValueError(f"Failed schema validation after {retries + 1} attempts: {e}")
@@ -417,8 +444,13 @@ async def complete_json(
             logger.warning(f"LLM call failed (attempt {attempt + 1}): {e}")
             if attempt < retries:
                 err_text = str(e).lower()
-                if "ratelimit" in err_text or "rate limit" in err_text or "tpm" in err_text or "429" in err_text:
-                    await asyncio.sleep(min(2 ** attempt, 8))
+                if (
+                    "ratelimit" in err_text
+                    or "rate limit" in err_text
+                    or "tpm" in err_text
+                    or "429" in err_text
+                ):
+                    await asyncio.sleep(min(2**attempt, 8))
                 continue
             raise
 

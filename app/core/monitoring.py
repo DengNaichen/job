@@ -15,9 +15,7 @@ class RouteMetrics:
 
     def snapshot(self) -> dict[str, object]:
         avg_duration_ms = (
-            round(self.total_duration_ms / self.requests_total, 3)
-            if self.requests_total
-            else 0.0
+            round(self.total_duration_ms / self.requests_total, 3) if self.requests_total else 0.0
         )
         return {
             "requests_total": self.requests_total,
@@ -73,7 +71,9 @@ class HTTPMetricsTracker:
             route_metrics.requests_total += 1
             route_metrics.total_duration_ms += duration_ms
             route_metrics.max_duration_ms = max(route_metrics.max_duration_ms, duration_ms)
-            route_metrics.status_codes[status_key] = route_metrics.status_codes.get(status_key, 0) + 1
+            route_metrics.status_codes[status_key] = (
+                route_metrics.status_codes.get(status_key, 0) + 1
+            )
 
             if status_code >= 400:
                 self._error_requests_total += 1

@@ -7,7 +7,11 @@ import re
 from collections import Counter
 from typing import Any
 
-from app.schemas.structured_jd import degree_level_to_rank, normalize_degree_level, normalize_job_domain_name
+from app.schemas.structured_jd import (
+    degree_level_to_rank,
+    normalize_degree_level,
+    normalize_job_domain_name,
+)
 from app.services.jd_rules import infer_seniority_level
 
 _SKILL_TOKEN_RE = re.compile(r"[^a-z0-9]+")
@@ -158,8 +162,7 @@ def build_user_embedding_text(user_data: dict[str, Any], max_chars: int) -> str:
         f"{summary}\n\n"
         "Skills:\n"
         f"{skills_text}\n\n"
-        "Work Highlights:\n"
-        + "\n".join(f"- {b}" for b in bullets)
+        "Work Highlights:\n" + "\n".join(f"- {b}" for b in bullets)
     ).strip()
 
     if len(text) > max_chars:
@@ -178,11 +181,7 @@ def _normalize_skill_token(value: object) -> str:
 def _collect_skill_tokens(values: object) -> set[str]:
     if not isinstance(values, list):
         return set()
-    return {
-        token
-        for item in values
-        if (token := _normalize_skill_token(item))
-    }
+    return {token for item in values if (token := _normalize_skill_token(item))}
 
 
 def _parse_structured_jd_payload(value: object) -> dict[str, Any]:
@@ -296,7 +295,9 @@ def compute_domain_match_score(
         return 0.0
     if user_domain == job_domain:
         return 1.0
-    if job_domain in _ADJACENT_JOB_DOMAINS.get(user_domain, set()) or user_domain in _ADJACENT_JOB_DOMAINS.get(job_domain, set()):
+    if job_domain in _ADJACENT_JOB_DOMAINS.get(
+        user_domain, set()
+    ) or user_domain in _ADJACENT_JOB_DOMAINS.get(job_domain, set()):
         return 0.5
     return 0.0
 
@@ -380,11 +381,19 @@ def hard_filter_match_candidates(
             reasons.append("sponsorship")
 
         jd_min_degree_rank = to_int(row.get("min_degree_rank"), default=-1)
-        if jd_min_degree_rank >= 0 and user_degree_rank >= 0 and jd_min_degree_rank > user_degree_rank:
+        if (
+            jd_min_degree_rank >= 0
+            and user_degree_rank >= 0
+            and jd_min_degree_rank > user_degree_rank
+        ):
             reasons.append("degree")
 
         jd_years = to_optional_int(row.get("jd_experience_years"))
-        if jd_years is not None and user_years is not None and jd_years > user_years + max_experience_gap:
+        if (
+            jd_years is not None
+            and user_years is not None
+            and jd_years > user_years + max_experience_gap
+        ):
             reasons.append("experience")
 
         if reasons:
@@ -435,7 +444,9 @@ def rerank_match_candidates(
         preferred_skills = structured_jd.get("preferred_skills", [])
         job_seniority = structured_jd.get("seniority_level")
         if not isinstance(job_seniority, str) or not job_seniority.strip():
-            job_seniority = infer_seniority_level(str(row.get("title") or "").strip(), to_optional_int(jd_years))
+            job_seniority = infer_seniority_level(
+                str(row.get("title") or "").strip(), to_optional_int(jd_years)
+            )
 
         if jd_years is None:
             experience_gap = 0
