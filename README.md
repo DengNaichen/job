@@ -14,6 +14,47 @@ Job aggregation microservice.
 Default local DB connection:
 `postgresql+asyncpg://postgres:postgres@localhost:5434/job_db`
 
+## Developer Workflow
+
+Bootstrap the local environment:
+
+```bash
+./scripts/uv sync
+```
+
+or:
+
+```bash
+./scripts/bootstrap
+```
+
+Common engineering commands:
+
+```bash
+./scripts/lint
+./scripts/test
+./scripts/fmt
+```
+
+Enable local git hooks:
+
+```bash
+./scripts/install_hooks
+```
+
+The repository CI baseline runs:
+
+- `./scripts/lint`
+- `./scripts/test`
+
+Optional aliases are available through `make` if your local toolchain already
+has Command Line Tools configured:
+
+- `make bootstrap`
+- `make lint`
+- `make test`
+- `make fmt`
+
 ## Local Supabase (CLI)
 
 This repo now includes a local Supabase project under
