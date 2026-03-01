@@ -1,95 +1,236 @@
 # Job Service
 
-Job aggregation microservice.
+Job Service is a FastAPI-based job aggregation service. It ingests jobs from public ATS platforms and company-specific careers APIs, normalizes them into a common schema, stores them in PostgreSQL, and exposes APIs for source management, job retrieval, and experimental matching.
 
-## Local PostgreSQL (Docker)
+## What This Repo Does
 
-1. Start PostgreSQL:
-   `docker compose up -d postgres`
-2. Check container health:
-   `docker compose ps`
-3. Copy env template if needed:
-   `cp .env.example .env`
+- Ingests jobs from supported sources into a unified `Job` model
+- Reconciles same-source snapshots so missing jobs can be closed automatically after a successful full sync
+- Tracks source sync execution in `SyncRun`
+- Optionally offloads large fields like `description_html` and `raw_payload` to Supabase Storage
+- Exposes REST APIs for `sources`, `jobs`, and `matching`
+- Includes a lightweight scheduled runner for local `cron` or future Cloud Run / Cloud Scheduler style execution
 
-Default local DB connection:
-`postgresql+asyncpg://postgres:postgres@localhost:5434/job_db`
+## Supported Sources
 
-## Local Supabase (CLI)
+### ATS / platform-based sources
 
-This repo now includes a local Supabase project under
-[supabase/config.toml](/Users/nd/Developer/job/supabase/config.toml) with a
-private `job-blobs` bucket for blob storage.
+- `greenhouse`
+- `lever`
+- `ashby`
+- `smartrecruiters`
+- `eightfold`
+  Currently configured for:
+  - `microsoft`
+  - `nvidia`
 
-1. Start the local stack:
-   `npx supabase start`
-2. Run app commands against local Supabase without replacing your main `.env`:
-   `./scripts/with_local_supabase_env.sh <command>`
-3. Bootstrap this repo's schema into the local Supabase DB:
-   `./scripts/bootstrap_local_supabase_schema.sh`
+### Company API sources
 
-Current local Supabase ports for this repo:
+- `apple`
+- `uber`
+- `tiktok`
 
-- API: `http://127.0.0.1:55321`
-- DB: `postgresql+asyncpg://postgres:postgres@127.0.0.1:55322/postgres`
-- Studio: `http://127.0.0.1:55323`
-- Mailpit: `http://127.0.0.1:55324`
+### Not implemented or intentionally deferred
 
-Local blob storage overrides live in `.env.supabase.local`, which is gitignored.
-The helper script loads `.env` first, then overrides DB and Storage settings
-with the local Supabase values.
+- `workday`
+  Requires a dedicated API-based implementation.
+- `amazon`
+  Current API hard-caps search pagination at 10,000 results, which is unsafe for the current full-snapshot reconcile model.
 
-This repo does not yet use Supabase SQL migrations as the source of truth for
-fresh databases. After a local `supabase db reset`, rerun
-`./scripts/bootstrap_local_supabase_schema.sh`.
+## Architecture
 
-## Job Blob Offload
+The ingest path is intentionally layered:
 
-To reduce PostgreSQL table size and TOAST pressure, `job.description_html` and
-`job.raw_payload` now have external blob pointers in the `job` table:
+1. `Source`
+   One configured upstream source, keyed by `platform + identifier`
+2. `Fetcher`
+   Pulls raw jobs from an external ATS or company API
+3. `Mapper`
+   Converts raw payloads into the internal `JobCreate` schema
+4. `FullSnapshotSyncService`
+   Dedupes by `external_job_id`, upserts open jobs, and closes missing jobs after a successful full snapshot
+5. `SyncRun`
+   Records each source-level execution status and stats
+6. `run_scheduled_ingests.py`
+   Thin orchestration layer for scheduled source syncs with retry and overlap protection
+
+## Quick Start
+
+### 1. Install dependencies
+
+```bash
+./scripts/uv sync
+```
+
+### 2. Configure environment
+
+```bash
+cp .env.example .env
+```
+
+Minimum local setup:
+
+- `DATABASE_URL`
+
+Optional features:
+
+- `STORAGE_PROVIDER=supabase` and related storage vars for blob offload
+- embedding / LLM settings for structured JD parsing and matching
+
+### 3. Start PostgreSQL
+
+```bash
+docker compose up -d postgres
+docker compose ps
+```
+
+Default local database:
+
+```text
+postgresql+asyncpg://postgres:postgres@localhost:5434/job_db
+```
+
+### 4. Apply database migrations
+
+```bash
+./scripts/uv run alembic upgrade head
+```
+
+### 5. Start the API server
+
+```bash
+./scripts/uv run uvicorn app.main:app --reload
+```
+
+Useful URLs:
+
+- API docs: `http://127.0.0.1:8000/docs`
+- Health: `http://127.0.0.1:8000/health`
+- Metrics: `http://127.0.0.1:8000/metrics`
+
+## Core API Surface
+
+### Health and observability
+
+- `GET /health`
+- `GET /metrics`
+
+### Source management
+
+- `POST /api/v1/sources`
+- `GET /api/v1/sources`
+- `GET /api/v1/sources/slugs`
+- `GET /api/v1/sources/{source_id}`
+- `PATCH /api/v1/sources/{source_id}`
+- `DELETE /api/v1/sources/{source_id}`
+
+### Job CRUD
+
+- `GET /api/v1/jobs`
+- `GET /api/v1/jobs/{job_id}`
+- `POST /api/v1/jobs`
+- `PATCH /api/v1/jobs/{job_id}`
+- `DELETE /api/v1/jobs/{job_id}`
+
+### Experimental matching
+
+- `POST /api/v1/matching/recommendations`
+
+## Ingest Workflows
+
+### 1. Create sources
+
+Create sources through the Source API before importing jobs.
+
+Examples:
+
+```json
+{"name": "Stripe", "platform": "greenhouse", "identifier": "stripe"}
+```
+
+```json
+{"name": "Microsoft", "platform": "eightfold", "identifier": "microsoft"}
+```
+
+```json
+{"name": "Uber", "platform": "uber", "identifier": "uber"}
+```
+
+### 2. Run platform-specific import scripts
+
+Examples:
+
+```bash
+./scripts/uv run python scripts/import_greenhouse_jobs.py --slug stripe
+./scripts/uv run python scripts/import_eightfold_jobs.py --slug microsoft
+./scripts/uv run python scripts/import_apple_jobs.py --slug apple
+./scripts/uv run python scripts/import_uber_jobs.py --slug uber
+./scripts/uv run python scripts/import_tiktok_jobs.py --slug tiktok
+```
+
+All import scripts support `--dry-run`. Most also support `--include-content` and `--limit`.
+
+### 3. Run scheduled orchestration
+
+The scheduled runner is the preferred entrypoint for repeated source syncs:
+
+```bash
+./scripts/uv run python scripts/run_scheduled_ingests.py
+./scripts/uv run python scripts/run_scheduled_ingests.py --platform greenhouse
+./scripts/uv run python scripts/run_scheduled_ingests.py --identifier microsoft
+./scripts/uv run python scripts/run_scheduled_ingests.py --dry-run
+```
+
+Current behavior:
+
+- supported platforms only
+- source-level `SyncRun` records
+- source-level retry via `tenacity`
+- overlap guard for already-running sources
+- sequential execution
+- non-zero exit code if any source fails
+
+## Structured JD and Matching Pipelines
+
+This repo also includes downstream enrichment and matching utilities:
+
+- `scripts/backfill_structured_jd.py`
+- `scripts/batch_parse_jd.py`
+- `scripts/backfill_job_embeddings_gemini.py`
+- `scripts/match_experiment.py`
+
+These are separate from the raw ingest flow. A typical lifecycle is:
+
+1. ingest jobs
+2. backfill `structured_jd`
+3. backfill embeddings
+4. query recommendations through `/api/v1/matching/recommendations`
+
+## Blob Storage
+
+Large fields can be stored outside PostgreSQL in Supabase Storage:
+
+- `description_html`
+- `raw_payload`
+
+Pointer columns kept in PostgreSQL:
 
 - `description_html_key`
 - `description_html_hash`
 - `raw_payload_key`
 - `raw_payload_hash`
 
-Current phase keeps these fields in PostgreSQL:
-
-- `description_plain`
-- `structured_jd`
-- all filter/sort columns already used by matching and search
-
-Current phase keeps the legacy `description_html` and `raw_payload` columns in
-place for compatibility. New writes upload gzip-compressed blobs to Supabase
-Storage first and only then write the DB pointer fields. That ordering means:
-
-- the database should never point at a missing blob
-- a failed DB transaction can leave orphaned storage objects, which is acceptable
-  for this phase and easier to repair later
-
-Stable object keys are content-addressed:
-
-- `job-html/{sha256}.html.gz`
-- `job-raw/{sha256}.json.gz`
-
-### Blob Storage Config
-
-Add these environment variables when enabling blob storage:
+Required environment variables when enabling storage:
 
 - `STORAGE_PROVIDER=supabase`
-- `SUPABASE_STORAGE_BASE_URL=https://<project-ref>.supabase.co/storage/v1`
-- `SUPABASE_STORAGE_BUCKET=<bucket-name>`
-- `SUPABASE_STORAGE_SERVICE_KEY=<service-role-key>`
+- `SUPABASE_STORAGE_BASE_URL`
+- `SUPABASE_STORAGE_BUCKET`
+- `SUPABASE_STORAGE_SERVICE_KEY`
 
-If blob storage is not configured, the app can still start, but write paths and
-backfill scripts that need blob storage will fail with an explicit runtime
-error.
-
-### Backfill Existing Jobs
-
-After applying the schema migration, backfill existing rows:
+Backfill existing rows:
 
 ```bash
-PYTHONPATH=. .venv/bin/python scripts/migrate_job_blobs_to_storage.py --batch-size 100
+./scripts/uv run python scripts/migrate_job_blobs_to_storage.py --batch-size 100
 ```
 
 Useful modes:
@@ -98,115 +239,56 @@ Useful modes:
 - `--html-only`
 - `--raw-only`
 
-The backfill uploads missing blobs and writes the new key/hash columns, but it
-does not clear the legacy `description_html` or `raw_payload` columns yet.
+## Local Supabase
 
-### Phase 2 Cleanup
+This repo includes a local Supabase project for storage-backed development.
 
-Once reads have been fully moved to storage-backed helpers and the backfill has
-completed, phase 2 can clear legacy column bodies in batches:
+Start it with:
 
-1. backfill all missing blob pointers
-2. verify spot samples by reading from storage
-3. set `description_html = NULL` and/or `raw_payload = '{}'` for migrated rows
-4. monitor storage reads before considering column removal in a later migration
+```bash
+npx supabase start
+./scripts/with_local_supabase_env.sh <command>
+./scripts/bootstrap_local_supabase_schema.sh
+```
 
-## Embedding Setup (LiteLLM Generic, 1024)
+Default local ports:
 
-1. Ensure PostgreSQL runs with pgvector:
-   `docker compose up -d postgres`
-2. Add embedding config in `.env` (example for SiliconFlow CN + Qwen):
-   `EMBEDDING_PROVIDER=openai`
-   `EMBEDDING_API_BASE=https://api.siliconflow.cn/v1`
-   `EMBEDDING_API_KEY=...`
-   `EMBEDDING_MODEL=Qwen/Qwen3-Embedding-0.6B`
-   `EMBEDDING_DIM=1024`
-3. Apply migrations:
-   `PYTHONPATH=. .venv/bin/alembic upgrade head`
-4. Backfill job embeddings:
-   `PYTHONPATH=. .venv/bin/python scripts/backfill_job_embeddings_gemini.py --dim 1024 --batch-size 32 --concurrency 5`
+- API: `http://127.0.0.1:55321`
+- DB: `postgresql+asyncpg://postgres:postgres@127.0.0.1:55322/postgres`
+- Studio: `http://127.0.0.1:55323`
+- Mailpit: `http://127.0.0.1:55324`
+
+## Development
+
+### Run tests
+
+```bash
+./scripts/uv run pytest
+```
+
+### Run a smaller targeted suite
+
+```bash
+./scripts/uv run pytest tests/unit/test_sync_service.py tests/unit/test_run_scheduled_ingests.py
+```
+
+### Common scripts
+
+- `scripts/import_*.py`
+  Platform or company-specific ingest entrypoints
+- `scripts/run_scheduled_ingests.py`
+  Source-level orchestration runner
+- `scripts/backfill_structured_jd.py`
+  Structured JD backfill
+- `scripts/backfill_job_embeddings_gemini.py`
+  Embedding backfill
+- `scripts/migrate_job_blobs_to_storage.py`
+  Blob pointer backfill
 
 ## Roadmap
 
-Current snapshot as of 2026-02-28: public ATS ingestion is live for Greenhouse, Ashby, Lever, and SmartRecruiters. The database currently holds 35,795 jobs total: Greenhouse 18,117, Ashby 6,820, Lever 4,266, and SmartRecruiters 6,592. Source coverage currently includes 107 Ashby sources with jobs, 50 Lever sources with jobs, and 52 SmartRecruiters sources with jobs.
+The roadmap has been moved to [docs/ROADMAP.md](/Users/nd/Developer/job/docs/ROADMAP.md).
 
-### Phase 0: Core Models & Migrations
+Current sizing, source coverage, and cost notes live in [docs/SIZING.md](/Users/nd/Developer/job/docs/SIZING.md).
 
-- [x] Project structure (FastAPI + SQLModel + Alembic)
-- [x] Data models (Job, SyncRun)
-- [x] Alembic migration scripts (P0)
-- [x] Unique constraints (source + external_id) (P0)
-
-### Phase 1: Source Abstraction + Greenhouse End-to-End
-
-- [x] Source model + schemas (company list config) (P0)
-- [x] Greenhouse Fetcher & Mapper (P0)
-- [x] Source repository / service / CRUD API (P0)
-- [x] Single source sync / import flow (P0)
-
-### Phase 2: Repository + Dedup + SyncRun State
-
-- [x] JobRepository base CRUD + structured_jd persistence helpers (P1)
-- [x] JobRepository dedup queries (P1)
-- [x] Offload `description_html` / `raw_payload` blobs to Supabase Storage with DB key/hash pointers (P1)
-- [ ] SyncRunRepository (P1)
-- [x] Same-source dedup (external_id) (P1)
-- [x] Full snapshot reconcile for same-source ATS imports (Greenhouse / Ashby / Lever / SmartRecruiters; missing jobs close immediately after successful full sync) (P1)
-- [ ] Update SyncRun dedup stats (P2)
-- [ ] URL normalization tool (P2)
-- [ ] Content fingerprint generation (simhash/minhash) (P2)
-- [ ] DedupService implementation (P2)
-- [ ] Cross-source dedup (apply_url, fingerprint) (P2)
-- [ ] Index optimization (apply_url, fingerprint) (P3)
-
-### Phase 3: Scheduling & Retry (cron + SyncRun + Tenacity)
-
-Keep FastAPI API-only. Run scheduling and retries in a separate Python process.
-
-- [ ] SyncService orchestration on top of `FullSnapshotSyncService` + `SyncRun` (P1)
-- [ ] Scheduled ingest runner for local `cron` / platform cron (P1)
-- [ ] Source-level locking / overlap guard (P1)
-- [ ] Error handling & retry with `tenacity` (P2)
-
-### Phase 4: Additional Data Sources
-
-- [x] Lever (P1)
-- [x] Eightfold (Microsoft, NVIDIA) (P1)
-- [x] Apple Careers API (P2)
-- [x] Uber Careers API (P2)
-- [x] TikTok Careers API (P2)
-- [ ] Workday (requires API-based special handling) (P1)
-- [x] Ashby (P2)
-- [x] SmartRecruiters (P2)
-
-- [ ] Amazon Jobs API (P2, current API hard-caps search results at 10,000)
-- [ ] ~~Jobo API (P2, paid)~~
-- [ ] Recruitee (P3)
-- [ ] Workable (P3)
-- [ ] JobSpy (P3)
-
-### Phase 5: API & Monitoring
-
-- [x] Health check (P1)
-- [x] Source CRUD API endpoints (P1)
-- [x] Job CRUD API endpoints (P1)
-- [x] Matching / recommendation API (P1)
-- [x] Logging & monitoring (P2)
-
-### Phase 6: Matching & Ranking (Offline / Experimental)
-
-- [x] Structured JD extraction service (P1)
-- [x] Batch structured_jd backfill scripts (P1)
-- [x] Job embedding generation pipeline (P1)
-- [x] Offline matching pipeline: hard filters + vector recall + cosine threshold + deterministic rerank (P2)
-- [x] Experimental top-10 LLM enum recommendation rerank (P3)
-- [ ] Evaluation / benchmark harness (P2)
-- [ ] Production-ready matching service (P3)
-
-### Phase 7: Candidate Service & Productization
-
-- [ ] Candidate model design (reference other repos) (P2)
-- [ ] Candidate data ingestion / resume parsing (P2)
-- [ ] Stored candidate profiles / persistence (P2)
-- [ ] Comparison & recommendation features (P3)
-- [ ] UI integration for explanations and apply guidance (P3)
+Architecture diagrams live in [docs/architecture/README.md](/Users/nd/Developer/job/docs/architecture/README.md).

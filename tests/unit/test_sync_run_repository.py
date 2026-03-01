@@ -16,6 +16,8 @@ async def test_create_running_and_get_running_by_source(session) -> None:
 
     assert run.status == SyncRunStatus.running
     assert run.finished_at is None
+    assert run.started_at.tzinfo is None
+    assert run.created_at.tzinfo is None
     assert found is not None
     assert found.id == run.id
 
@@ -43,6 +45,7 @@ async def test_finish_updates_stats_and_error_summary(session) -> None:
 
     assert finished.status == SyncRunStatus.failed
     assert finished.finished_at is not None
+    assert finished.finished_at.tzinfo is None
     assert finished.error_summary == "fetch boom"
     assert finished.fetched_count == 5
     assert finished.deduped_by_external_id == 1
@@ -61,6 +64,8 @@ async def test_create_finished_creates_terminal_run(session) -> None:
 
     assert run.status == SyncRunStatus.failed
     assert run.finished_at is not None
+    assert run.started_at.tzinfo is None
+    assert run.finished_at.tzinfo is None
     assert run.error_summary == "unsupported platform"
 
 

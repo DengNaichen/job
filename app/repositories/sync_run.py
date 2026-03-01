@@ -9,8 +9,8 @@ from app.models import SyncRun, SyncRunStatus
 from app.services.full_snapshot_sync import SourceSyncStats
 
 
-def _now_utc() -> datetime:
-    return datetime.now(timezone.utc)
+def _now_naive_utc() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 def _apply_stats(run: SyncRun, stats: SourceSyncStats | None) -> None:
@@ -33,9 +33,12 @@ class SyncRunRepository:
         self.session = session
 
     async def create_running(self, *, source: str) -> SyncRun:
+        now = _now_naive_utc()
         run = SyncRun(
             source=source,
             status=SyncRunStatus.running,
+            started_at=now,
+            created_at=now,
         )
         self.session.add(run)
         await self.session.commit()
@@ -50,11 +53,14 @@ class SyncRunRepository:
         error_summary: str | None = None,
         stats: SourceSyncStats | None = None,
     ) -> SyncRun:
+        now = _now_naive_utc()
         run = SyncRun(
             source=source,
             status=status,
-            finished_at=_now_utc(),
+            started_at=now,
+            finished_at=now,
             error_summary=error_summary,
+            created_at=now,
         )
         _apply_stats(run, stats)
         self.session.add(run)
@@ -82,7 +88,7 @@ class SyncRunRepository:
         stats: SourceSyncStats | None = None,
     ) -> SyncRun:
         run.status = status
-        run.finished_at = _now_utc()
+        run.finished_at = _now_naive_utc()
         run.error_summary = error_summary
         _apply_stats(run, stats)
         self.session.add(run)
