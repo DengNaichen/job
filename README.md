@@ -133,9 +133,8 @@ postgresql+asyncpg://postgres:postgres@localhost:5434/job_db
 
 ### 4. Apply database migrations
 
-```bash
-./scripts/uv run alembic upgrade head
-```
+Database migrations are maintained in a local-only Alembic repo and are not published in this repository.
+Apply your local migrations before starting the API server.
 
 ### 5. Start the API server
 

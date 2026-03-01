@@ -7,6 +7,7 @@ node_modules
 /generated/prisma
 notebooks/
 artifacts/
+alembic/
 scripts/__pycache__/
 
 # Generated ATS audit and verification reports
@@ -21,6 +22,5 @@ __pycache__/
 *$py.class
 .pytest_cache/
 .venv/
-alembic/__pycache__/
 app/__pycache__/
 tests/__pycache__/
