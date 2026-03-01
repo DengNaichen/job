@@ -9,6 +9,8 @@ notebooks/
 artifacts/
 alembic/
 scripts/__pycache__/
+scripts/local/*
+!scripts/local/.gitkeep
 
 # Generated ATS audit and verification reports
 reports/*_missing_identifiers.csv
