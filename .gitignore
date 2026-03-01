@@ -7,7 +7,6 @@ node_modules
 /generated/prisma
 notebooks/
 artifacts/
-.alembic-local-git-backup/
 scripts/__pycache__/
 scripts/local/*
 !scripts/local/.gitkeep

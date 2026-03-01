@@ -133,8 +133,16 @@ postgresql+asyncpg://postgres:postgres@localhost:5434/job_db
 
 ### 4. Apply database migrations
 
-Database migrations are versioned in this repository under `alembic/`.
-Apply the repo migrations before starting the API server.
+Database migrations use the standard Alembic layout in this repository:
+
+- `alembic.ini`
+- `alembic/`
+
+Apply migrations before starting the API server:
+
+```bash
+./scripts/uv run alembic upgrade head
+```
 
 ### 5. Start the API server
 
