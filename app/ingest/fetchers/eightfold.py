@@ -1,4 +1,3 @@
-import asyncio
 from collections.abc import Mapping
 from typing import Any
 
@@ -97,9 +96,9 @@ class EightfoldFetcher(BaseFetcher):
         config: dict[str, str],
         summaries: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
-        semaphore = asyncio.Semaphore(self.DETAIL_CONCURRENCY)
-
-        async def fetch_detail(summary: dict[str, Any]) -> dict[str, Any]:
+        async def fetch_detail(
+            client: httpx.AsyncClient, summary: dict[str, Any]
+        ) -> dict[str, Any] | None:
             position_id = summary.get("id")
             params = {
                 "position_id": position_id,
@@ -107,29 +106,35 @@ class EightfoldFetcher(BaseFetcher):
                 "hl": "en",
             }
 
-            async with semaphore:
-                try:
-                    payload = await self.request_json_with_retry(
-                        client,
-                        url=f"{config['base_url']}{self.DETAIL_PATH}",
-                        params=params,
-                    )
-                except Exception:
-                    failed_summary = dict(summary)
-                    failed_summary["_detail_fetch_failed"] = True
-                    return failed_summary
+            try:
+                payload = await self.request_json_with_retry(
+                    client,
+                    url=f"{config['base_url']}{self.DETAIL_PATH}",
+                    params=params,
+                )
+            except Exception:
+                return None
 
             detail = payload.get("data")
             if not isinstance(detail, dict):
-                failed_summary = dict(summary)
-                failed_summary["_detail_fetch_failed"] = True
-                return failed_summary
+                return None
 
             merged = dict(summary)
             merged.update(detail)
             return merged
 
-        return await asyncio.gather(*(fetch_detail(summary) for summary in summaries))
+        def on_failure(summary: dict[str, Any]) -> dict[str, Any]:
+            failed = dict(summary)
+            failed["_detail_fetch_failed"] = True
+            return failed
+
+        return await self.fetch_details_concurrently(
+            client,
+            summaries,
+            fetch_detail=fetch_detail,
+            concurrency=self.DETAIL_CONCURRENCY,
+            on_failure=on_failure,
+        )
 
     @staticmethod
     def _extract_positions(data: Any) -> list[dict[str, Any]]:

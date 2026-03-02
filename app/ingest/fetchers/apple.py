@@ -1,4 +1,3 @@
-import asyncio
 from typing import Any
 
 import httpx
@@ -119,35 +118,39 @@ class AppleFetcher(BaseFetcher):
         client: httpx.AsyncClient,
         summaries: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
-        semaphore = asyncio.Semaphore(self.DETAIL_CONCURRENCY)
-
-        async def fetch_detail(summary: dict[str, Any]) -> dict[str, Any]:
+        async def fetch_detail(
+            client: httpx.AsyncClient, summary: dict[str, Any]
+        ) -> dict[str, Any] | None:
             position_id = summary.get("positionId")
             if not isinstance(position_id, str) or not position_id.strip():
-                failed_summary = dict(summary)
-                failed_summary["_detail_fetch_failed"] = True
-                return failed_summary
+                return None
 
-            async with semaphore:
-                try:
-                    payload = await self.request_json_with_retry(
-                        client,
-                        method="GET",
-                        url=f"{self.API_BASE}{self.DETAIL_PATH}/{position_id.strip()}",
-                    )
-                except Exception:
-                    failed_summary = dict(summary)
-                    failed_summary["_detail_fetch_failed"] = True
-                    return failed_summary
+            try:
+                payload = await self.request_json_with_retry(
+                    client,
+                    method="GET",
+                    url=f"{self.API_BASE}{self.DETAIL_PATH}/{position_id.strip()}",
+                )
+            except Exception:
+                return None
 
             detail = payload.get("res")
             if not isinstance(detail, dict):
-                failed_summary = dict(summary)
-                failed_summary["_detail_fetch_failed"] = True
-                return failed_summary
+                return None
 
             merged = dict(summary)
             merged.update(detail)
             return merged
 
-        return await asyncio.gather(*(fetch_detail(summary) for summary in summaries))
+        def on_failure(summary: dict[str, Any]) -> dict[str, Any]:
+            failed = dict(summary)
+            failed["_detail_fetch_failed"] = True
+            return failed
+
+        return await self.fetch_details_concurrently(
+            client,
+            summaries,
+            fetch_detail=fetch_detail,
+            concurrency=self.DETAIL_CONCURRENCY,
+            on_failure=on_failure,
+        )

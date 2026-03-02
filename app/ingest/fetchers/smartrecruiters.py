@@ -1,4 +1,3 @@
-import asyncio
 from typing import Any
 
 import httpx
@@ -84,29 +83,32 @@ class SmartRecruitersFetcher(BaseFetcher):
         slug: str,
         summaries: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
-        semaphore = asyncio.Semaphore(self.DETAIL_CONCURRENCY)
-
-        async def fetch_detail(summary: dict[str, Any]) -> dict[str, Any] | None:
+        async def fetch_detail(
+            client: httpx.AsyncClient, summary: dict[str, Any]
+        ) -> dict[str, Any] | None:
             detail_url = self._detail_url(summary, slug)
-            async with semaphore:
-                response = await self.request_with_graceful_retry(
-                    client,
-                    url=detail_url,
-                    retry_config=self.detail_retry_config,
-                )
-                if response is None:
-                    return None
+            response = await self.request_with_graceful_retry(
+                client,
+                url=detail_url,
+                retry_config=self.detail_retry_config,
+            )
+            if response is None:
+                return None
 
-                detail = response.json()
-                if not isinstance(detail, dict):
-                    return None
+            detail = response.json()
+            if not isinstance(detail, dict):
+                return None
 
-                merged = dict(summary)
-                merged.update(detail)
-                return merged
+            merged = dict(summary)
+            merged.update(detail)
+            return merged
 
-        details = await asyncio.gather(*(fetch_detail(summary) for summary in summaries))
-        return [detail for detail in details if detail is not None]
+        return await self.fetch_details_concurrently(
+            client,
+            summaries,
+            fetch_detail=fetch_detail,
+            concurrency=self.DETAIL_CONCURRENCY,
+        )
 
     @staticmethod
     def _detail_url(summary: dict[str, Any], slug: str) -> str:

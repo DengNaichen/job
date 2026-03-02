@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import asyncio
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -209,3 +210,43 @@ class BaseFetcher(ABC):
             return int(value)
         except (TypeError, ValueError):
             return None
+
+    # Default concurrency for detail fetching
+    DEFAULT_DETAIL_CONCURRENCY = 6
+
+    async def fetch_details_concurrently(
+        self,
+        client: httpx.AsyncClient,
+        summaries: list[dict[str, Any]],
+        *,
+        fetch_detail: Callable[[httpx.AsyncClient, dict[str, Any]], Awaitable[dict[str, Any] | None]],
+        concurrency: int | None = None,
+        on_failure: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
+    ) -> list[dict[str, Any]]:
+        """
+        Concurrently fetch details for multiple summaries.
+
+        Args:
+            client: HTTP client
+            summaries: List of summary dicts
+            fetch_detail: Async function to fetch detail for one summary
+            concurrency: Max concurrent requests (default: DEFAULT_DETAIL_CONCURRENCY)
+            on_failure: Function to handle failed fetches (receives summary, returns result)
+                       If None, failed fetches are filtered out
+
+        Returns:
+            List of merged summary+detail dicts
+        """
+        semaphore = asyncio.Semaphore(concurrency or self.DEFAULT_DETAIL_CONCURRENCY)
+
+        async def fetch_with_semaphore(summary: dict[str, Any]) -> dict[str, Any] | None:
+            async with semaphore:
+                result = await fetch_detail(client, summary)
+                if result is None and on_failure is not None:
+                    return on_failure(summary)
+                return result
+
+        results = await asyncio.gather(
+            *(fetch_with_semaphore(summary) for summary in summaries)
+        )
+        return [result for result in results if result is not None]
