@@ -247,6 +247,25 @@ class JobRepository:
         result = await self.session.exec(statement)
         return list(result.all())
 
+    async def list_jobs_missing_canonical_locations(
+        self,
+        last_id: str | None = None,
+        limit: int = 100,
+    ) -> list[Job]:
+        """List jobs that do not have any associated JobLocation links."""
+        from app.models.job_location import JobLocation
+
+        statement = (
+            select(Job)
+            .outerjoin(JobLocation, Job.id == JobLocation.job_id)
+            .where(JobLocation.job_id.is_(None))
+        )
+        if last_id:
+            statement = statement.where(Job.id > last_id)
+        statement = statement.order_by(Job.id).limit(limit)
+        result = await self.session.exec(statement)
+        return list(result.all())
+
     # ------------------------------------------------------------------ #
     # Embedding storage redesign helpers                                   #
     # ------------------------------------------------------------------ #

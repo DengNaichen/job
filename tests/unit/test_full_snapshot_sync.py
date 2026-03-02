@@ -371,11 +371,11 @@ async def test_full_snapshot_sync_persists_canonical_locations(session: AsyncSes
     # Verify Location models
     loc_rows = (await session.exec(select(Location))).all()
     assert len(loc_rows) == 2
-    loc_keys = {l.canonical_key for l in loc_rows}
+    loc_keys = {loc.canonical_key for loc in loc_rows}
     assert "us-ca-san-francisco" in loc_keys
     assert "ca" in loc_keys
 
     # Verify JobLocation links
     link_rows = (await session.exec(select(JobLocation))).all()
     assert len(link_rows) == 2
-    assert all(l.is_primary is True for l in link_rows)
+    assert all(link.is_primary is True for link in link_rows)
