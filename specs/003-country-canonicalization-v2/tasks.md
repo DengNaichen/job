@@ -76,13 +76,13 @@
 
 ### Tests for User Story 3
 
-- [ ] T017 [P] [US3] Update `tests/unit/test_match_query.py`, `tests/unit/test_match_schema.py`, and `tests/unit/test_match_service.py` so match-oriented rows and response models expect canonical alpha-2 country codes.
-- [ ] T018 [P] [US3] Update `tests/unit/test_llm_match_recommendation.py`, `tests/unit/test_match_experiment_script.py`, and `tests/integration/test_matching_api.py` to keep downstream payloads compatible once country codes are canonical and, if added in this increment, country filters flow through the matching stack.
+- [x] T017 [P] [US3] Update `tests/unit/test_match_query.py`, `tests/unit/test_match_schema.py`, and `tests/unit/test_match_service.py` so match-oriented rows and response models expect canonical alpha-2 country codes.
+- [x] T018 [P] [US3] Update `tests/unit/test_llm_match_recommendation.py`, `tests/unit/test_match_experiment_script.py`, and `tests/integration/test_matching_api.py` to keep downstream payloads compatible once country codes are canonical and, if added in this increment, country filters flow through the matching stack.
 
 ### Implementation for User Story 3
 
-- [ ] T019 [US3] Update `app/schemas/match.py`, `app/services/application/match_service.py`, `app/services/infra/match_query.py`, and `app/services/infra/llm_match_recommendation.py` so country-aware query code relies on `location_country_code` directly rather than reparsing `location_text`, and add optional country filter plumbing if the matching endpoint is the first rollout surface.
-- [ ] T020 [US3] Update `app/api/v1/matching.py`, `docs/architecture/README.md`, and `docs/ROADMAP.md` to document that v2 stops at canonical country normalization on `job` and explicitly defers reusable canonical location entities and split tables to v3.
+- [x] T019 [US3] Update `app/schemas/match.py`, `app/services/application/match_service.py`, `app/services/infra/match_query.py`, and `app/services/infra/llm_match_recommendation.py` so country-aware query code relies on `location_country_code` directly rather than reparsing `location_text`, and add optional country filter plumbing if the matching endpoint is the first rollout surface.
+- [x] T020 [US3] Update `app/api/v1/matching.py`, `docs/architecture/README.md`, and `docs/ROADMAP.md` to document that v2 stops at canonical country normalization on `job` and explicitly defers reusable canonical location entities and split tables to v3.
 
 **Checkpoint**: Canonical country data is consumable by query/read paths, while full canonical location modeling remains clearly deferred.
 
@@ -92,7 +92,7 @@
 
 **Purpose**: Validate the rollout end to end and record follow-up normalization gaps without broadening feature scope.
 
-- [ ] T021 [P] Run targeted test suites for changed paths with `./scripts/uv run pytest tests/unit/test_job_location.py tests/unit/ingest/mappers/test_company_apis.py tests/unit/ingest/mappers/test_smartrecruiters.py tests/unit/ingest/mappers/test_eightfold.py tests/unit/ingest/mappers/test_lever.py tests/unit/ingest/mappers/test_greenhouse.py tests/unit/ingest/mappers/test_ashby.py tests/unit/test_job_service.py tests/integration/test_job_api.py tests/unit/test_backfill_job_locations.py tests/unit/test_import_company_api_jobs.py tests/unit/test_import_greenhouse_jobs.py tests/unit/test_import_lever_jobs.py tests/unit/test_import_ashby_jobs.py tests/unit/test_import_smartrecruiters_jobs.py tests/unit/test_import_eightfold_jobs.py tests/unit/test_match_query.py tests/unit/test_match_schema.py tests/unit/test_match_service.py tests/unit/test_llm_match_recommendation.py tests/unit/test_match_experiment_script.py tests/integration/test_matching_api.py`.
+- [x] T021 [P] Run targeted test suites for changed paths with `./scripts/uv run pytest tests/unit/test_job_location.py tests/unit/ingest/mappers/test_company_apis.py tests/unit/ingest/mappers/test_smartrecruiters.py tests/unit/ingest/mappers/test_eightfold.py tests/unit/ingest/mappers/test_lever.py tests/unit/ingest/mappers/test_greenhouse.py tests/unit/ingest/mappers/test_ashby.py tests/unit/test_job_service.py tests/integration/test_job_api.py tests/unit/test_backfill_job_locations.py tests/unit/test_import_company_api_jobs.py tests/unit/test_import_greenhouse_jobs.py tests/unit/test_import_lever_jobs.py tests/unit/test_import_ashby_jobs.py tests/unit/test_import_smartrecruiters_jobs.py tests/unit/test_import_eightfold_jobs.py tests/unit/test_match_query.py tests/unit/test_match_schema.py tests/unit/test_match_service.py tests/unit/test_llm_match_recommendation.py tests/unit/test_match_experiment_script.py tests/integration/test_matching_api.py`.
 - [ ] T022 Do a manual dry run of `scripts/backfill_job_locations.py` against a small dataset and record which rows upgraded from raw names or weak codes to canonical codes and which ambiguous rows intentionally stayed null.
 - [ ] T023 Capture follow-up work in `docs/ROADMAP.md` or `specs/004-canonical-locations-v3/spec.md` for normalized location entities, multi-country link modeling, and any broader retrieval/filter rollout that should not block v2.
 
