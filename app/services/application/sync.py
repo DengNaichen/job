@@ -14,7 +14,6 @@ from app.repositories.sync_run import SyncRunRepository
 from app.services.application.full_snapshot_sync import FullSnapshotSyncService
 from app.services.application.sync_handlers import (
     PLATFORM_SYNC_HANDLERS,
-    SUPPORTED_PLATFORMS,
     PlatformSyncHandlers,
 )
 

@@ -65,7 +65,9 @@ class TestSourceServiceDelete:
             await service.delete_source(source_id)
 
     @pytest.mark.asyncio
-    async def test_delete_source_blocked_by_sync_run_with_source_id_only(self, session: AsyncSession):
+    async def test_delete_source_blocked_by_sync_run_with_source_id_only(
+        self, session: AsyncSession
+    ):
         """delete_source raises HasReferencesError when a sync run is linked via source_id
         (authoritative path — no legacy source string fallback involved)."""
         from app.models import PlatformType, Source
@@ -127,8 +129,6 @@ class TestSourceServiceDelete:
 
         with pytest.raises(HasReferencesError):
             await service.delete_source(source.id)
-
-
 
     @pytest.mark.asyncio
     async def test_update_source_platform_blocked_when_jobs_exist(self, session: AsyncSession):

@@ -5,15 +5,13 @@ Revises: 9c0a1f2d3b4c, a91d4c7e2b11, b2c3d4e5f6a7
 Create Date: 2026-03-01 23:00:14.517091
 
 """
-from typing import Sequence, Union
 
-from alembic import op
-import sqlalchemy as sa
+from typing import Sequence, Union
 
 
 # revision identifiers, used by Alembic.
-revision: str = '0dfac58c9441'
-down_revision: Union[str, Sequence[str], None] = ('9c0a1f2d3b4c', 'a91d4c7e2b11', 'b2c3d4e5f6a7')
+revision: str = "0dfac58c9441"
+down_revision: Union[str, Sequence[str], None] = ("9c0a1f2d3b4c", "a91d4c7e2b11", "b2c3d4e5f6a7")
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

@@ -20,6 +20,8 @@ class TikTokMapper(BaseMapper):
             normalized_apply_url=None,
             status="open",
             location_text=self._location_text(raw_job),
+            location_city=self._nested_label(raw_job.get("city_info")),
+            location_country_code=self._get_tiktok_country(raw_job),
             department=self._nested_label(raw_job.get("job_category")),
             team=self._nested_label(raw_job.get("department_info"))
             or self._nested_label(raw_job.get("job_subject")),
@@ -54,6 +56,18 @@ class TikTokMapper(BaseMapper):
 
         parts = [part for part in [city, country] if part]
         return ", ".join(parts) if parts else None
+
+    @classmethod
+    def _get_tiktok_country(cls, raw_job: dict[str, Any]) -> str | None:
+        city_info = raw_job.get("city_info")
+        if not isinstance(city_info, dict):
+            return None
+        parent = city_info.get("parent")
+        if isinstance(parent, dict):
+            parent_parent = parent.get("parent")
+            if isinstance(parent_parent, dict):
+                return cls._nested_label(parent_parent)
+        return None
 
     @classmethod
     def _description_text(cls, raw_job: dict[str, Any]) -> str | None:

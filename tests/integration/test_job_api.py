@@ -9,19 +9,15 @@ Covers:
 - GET /api/v1/jobs — list returns source_id on each item
 """
 
-import asyncio
-
 from fastapi.testclient import TestClient
-from sqlmodel.ext.asyncio.session import AsyncSession
-
-from app.core.database import engine
-from app.models import Job, build_source_key
 
 
 class TestCreateJob:
     """Integration tests for POST /api/v1/jobs endpoint."""
 
-    def _create_source(self, client: TestClient, name: str = "Job Test Source", identifier: str = "job-test-source") -> dict:
+    def _create_source(
+        self, client: TestClient, name: str = "Job Test Source", identifier: str = "job-test-source"
+    ) -> dict:
         """Helper: create a source and return its data dict."""
         response = client.post(
             "/api/v1/sources",
@@ -91,7 +87,9 @@ class TestCreateJob:
 class TestReadJob:
     """Integration tests for GET /api/v1/jobs and GET /api/v1/jobs/{job_id}."""
 
-    def _seed_job(self, client: TestClient, name: str, identifier: str, ext_id: str) -> tuple[dict, str]:
+    def _seed_job(
+        self, client: TestClient, name: str, identifier: str, ext_id: str
+    ) -> tuple[dict, str]:
         """Helper: create a source + job, return (job_data, source_id)."""
         source_resp = client.post(
             "/api/v1/sources",

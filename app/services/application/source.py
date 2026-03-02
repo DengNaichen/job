@@ -268,9 +268,7 @@ class SourceService:
 
         # Check sync-run references by authoritative source_id.
         if self.sync_run_repository is not None:
-            if await self.sync_run_repository.has_any_for_source_id(
-                source_id=str(source.id)
-            ):
+            if await self.sync_run_repository.has_any_for_source_id(source_id=str(source.id)):
                 raise HasReferencesError()
 
         # Check job references by authoritative source_id.
@@ -279,4 +277,3 @@ class SourceService:
                 raise HasReferencesError()
 
         await self.repository.delete(source)
-

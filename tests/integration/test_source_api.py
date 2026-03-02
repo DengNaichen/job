@@ -536,4 +536,3 @@ class TestMutateReferencedSource:
         error_payload = patch_response.json()
         assert error_payload["success"] is False
         assert error_payload["error"]["code"] == "HAS_MUTATION_BLOCK"
-

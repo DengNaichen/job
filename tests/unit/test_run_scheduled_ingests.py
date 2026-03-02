@@ -244,7 +244,9 @@ async def test_run_scheduled_ingests_warns_about_unsupported_sources(
 
         async def sync_source(self, *, source, include_content, dry_run, retry_attempts):  # noqa: ANN001
             _ = (include_content, dry_run, retry_attempts)
-            return _make_sync_run("greenhouse:airbnb", SyncRunStatus.success, source_id=str(source.id))
+            return _make_sync_run(
+                "greenhouse:airbnb", SyncRunStatus.success, source_id=str(source.id)
+            )
 
     monkeypatch.setattr(module, "_load_candidate_sources", fake_load_candidate_sources)
     monkeypatch.setattr(module, "SyncService", FakeSyncService)

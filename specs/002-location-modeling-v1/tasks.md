@@ -35,17 +35,17 @@
 
 ### Tests for User Story 1
 
-- [ ] T006 [P] [US1] Update `tests/test_mappers.py`, `tests/test_mappers_lever.py`, and `tests/test_mappers_ashby.py` to cover conservative parsing for text-heavy sources, including remote and workplace-type cases.
-- [ ] T007 [P] [US1] Update `tests/test_mappers_smartrecruiters.py`, `tests/test_mappers_company_apis.py`, and `tests/test_mappers_eightfold.py` to cover direct extraction of structured location data from payloads that already expose city/region/country-like fields.
-- [ ] T008 [P] [US1] Add focused unit coverage for the shared helper in `tests/unit/test_job_location.py`, including confidence ordering and remote-scope parsing behavior.
-- [ ] T009 [P] [US1] Update `tests/unit/test_job_service.py` for create/update behavior that now round-trips the new structured location fields.
+- [x] T006 [P] [US1] Update `tests/test_mappers.py`, `tests/test_mappers_lever.py`, and `tests/test_mappers_ashby.py` to cover conservative parsing for text-heavy sources, including remote and workplace-type cases.
+- [x] T007 [P] [US1] Update `tests/test_mappers_smartrecruiters.py`, `tests/test_mappers_company_apis.py`, and `tests/test_mappers_eightfold.py` to cover direct extraction of structured location data from payloads that already expose city/region/country-like fields.
+- [x] T008 [P] [US1] Add focused unit coverage for the shared helper in `tests/unit/test_job_location.py`, including confidence ordering and remote-scope parsing behavior.
+- [x] T009 [P] [US1] Update `tests/unit/test_job_service.py` for create/update behavior that now round-trips the new structured location fields.
 
 ### Implementation for User Story 1
 
-- [ ] T010 [US1] Update `app/ingest/mappers/smartrecruiters.py`, `app/ingest/mappers/apple.py`, `app/ingest/mappers/uber.py`, and `app/ingest/mappers/tiktok.py` to populate structured location fields from explicit source-native location structure.
-- [ ] T011 [US1] Update `app/ingest/mappers/eightfold.py`, `app/ingest/mappers/ashby.py`, `app/ingest/mappers/lever.py`, and `app/ingest/mappers/greenhouse.py` to use conservative text parsing and separate workplace-mode extraction from `employment_type`.
-- [ ] T012 [US1] Update `app/ingest/mappers/base.py` and any shared mapper plumbing needed so all mappers can emit the new location fields consistently via `JobCreate`.
-- [ ] T013 [US1] Update `app/services/application/job.py` and `app/api/v1/jobs.py` so direct job create/update paths accept and persist the structured location fields without dropping `location_text`.
+- [x] T010 [US1] Update `app/ingest/mappers/smartrecruiters.py`, `app/ingest/mappers/apple.py`, `app/ingest/mappers/uber.py`, and `app/ingest/mappers/tiktok.py` to populate structured location fields from explicit source-native location structure.
+- [x] T011 [US1] Update `app/ingest/mappers/eightfold.py`, `app/ingest/mappers/ashby.py`, `app/ingest/mappers/lever.py`, and `app/ingest/mappers/greenhouse.py` to use conservative text parsing and separate workplace-mode extraction from `employment_type`.
+- [x] T012 [US1] Update `app/ingest/mappers/base.py` and any shared mapper plumbing needed so all mappers can emit the new location fields consistently via `JobCreate`.
+- [x] T013 [US1] Update `app/services/application/job.py` and `app/api/v1/jobs.py` so direct job create/update paths accept and persist the structured location fields without dropping `location_text`.
 
 **Checkpoint**: New ingests persist a single structured location profile on `job`, with `location_text` retained for compatibility.
 

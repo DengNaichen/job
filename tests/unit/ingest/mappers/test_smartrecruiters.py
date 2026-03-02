@@ -94,6 +94,9 @@ class TestSmartRecruitersMapper:
 
         assert result.apply_url == "https://jobs.smartrecruiters.com/acme/1-engineer"
         assert result.location_text == "Montreal, QC, Canada"
+        assert result.location_city == "Montreal"
+        assert result.location_region == "QC"
+        assert result.location_country_code == "Canada"
         assert result.description_html is None
         assert result.description_plain is None
 

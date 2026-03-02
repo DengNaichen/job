@@ -17,7 +17,9 @@ class SyncRun(SQLModel, table=True):
     # Authoritative owner FK — nullable during migration window; enforced NOT NULL in second revision.
     source_id: str | None = Field(
         default=None,
-        sa_column=Column(String(36), ForeignKey("sources.id", ondelete="RESTRICT"), nullable=True, index=True),
+        sa_column=Column(
+            String(36), ForeignKey("sources.id", ondelete="RESTRICT"), nullable=True, index=True
+        ),
     )
     # Compatibility source key (legacy string). Preserved throughout migration.
     source: str = Field(index=True)

@@ -80,9 +80,7 @@ class JobRepository:
 
     async def source_id_reference_exists(self, source_id: str) -> bool:
         """Return True if any job row references the given source_id."""
-        result = await self.session.exec(
-            select(Job.id).where(Job.source_id == source_id).limit(1)
-        )
+        result = await self.session.exec(select(Job.id).where(Job.source_id == source_id).limit(1))
         return result.first() is not None
 
     # ------------------------------------------------------------------ #
@@ -109,9 +107,7 @@ class JobRepository:
 
     async def has_any_for_source(self, *, source: str) -> bool:
         """LEGACY-FALLBACK: return True if any job row uses the given legacy source key."""
-        result = await self.session.exec(
-            select(Job.id).where(Job.source == source).limit(1)
-        )
+        result = await self.session.exec(select(Job.id).where(Job.source == source).limit(1))
         return result.first() is not None
 
     async def list_jobs(
