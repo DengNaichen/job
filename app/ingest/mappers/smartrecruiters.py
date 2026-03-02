@@ -1,5 +1,4 @@
 import html
-from datetime import datetime
 from typing import Any
 
 from app.ingest.mappers.base import BaseMapper
@@ -57,7 +56,7 @@ class SmartRecruitersMapper(BaseMapper):
             employment_type=self._clean(self._get_label(raw_job, "typeOfEmployment")),
             description_html=description_html,
             description_plain=html_to_text(description_html) if description_html else None,
-            published_at=self._to_iso_or_none(raw_job.get("releasedDate")),
+            published_at=self._to_datetime_or_none(raw_job.get("releasedDate")),
             source_updated_at=None,
             raw_payload=raw_job,
         )
@@ -87,13 +86,6 @@ class SmartRecruitersMapper(BaseMapper):
             parts.append("\n".join(part for part in [title_html, text.strip()] if part))
 
         return "\n".join(parts) if parts else None
-
-    @staticmethod
-    def _clean(value: Any) -> str | None:
-        if not isinstance(value, str):
-            return None
-        stripped = value.strip()
-        return stripped if stripped else None
 
     @staticmethod
     def _get_location_text(raw_job: dict[str, Any]) -> str | None:
@@ -133,12 +125,3 @@ class SmartRecruitersMapper(BaseMapper):
             return None
         label = value.get("label")
         return label if isinstance(label, str) else None
-
-    @staticmethod
-    def _to_iso_or_none(value: Any) -> datetime | None:
-        if not value:
-            return None
-        try:
-            return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-        except (TypeError, ValueError):
-            return None

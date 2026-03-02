@@ -102,10 +102,3 @@ class TikTokMapper(BaseMapper):
             if cleaned:
                 return cleaned
         return None
-
-    @staticmethod
-    def _clean(value: Any) -> str | None:
-        if not isinstance(value, str):
-            return None
-        stripped = value.strip()
-        return stripped if stripped else None

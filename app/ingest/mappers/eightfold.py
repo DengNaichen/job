@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urljoin
 
@@ -9,8 +8,6 @@ from app.services.domain.job_location import extract_workplace_type, parse_locat
 
 class EightfoldMapper(BaseMapper):
     """Mapper for Eightfold raw job payloads."""
-
-    TIMESTAMP_MS_THRESHOLD = 100_000_000_000
 
     @property
     def source_name(self) -> str:
@@ -62,28 +59,3 @@ class EightfoldMapper(BaseMapper):
                 if cleaned:
                     return cleaned
         return None
-
-    @staticmethod
-    def _clean(value: Any) -> str | None:
-        if not isinstance(value, str):
-            return None
-        stripped = value.strip()
-        return stripped if stripped else None
-
-    @classmethod
-    def _to_datetime_or_none(cls, value: Any) -> datetime | None:
-        if value in (None, ""):
-            return None
-
-        try:
-            timestamp = float(value)
-        except (TypeError, ValueError):
-            return None
-
-        if timestamp > cls.TIMESTAMP_MS_THRESHOLD:
-            timestamp /= 1000.0
-
-        try:
-            return datetime.fromtimestamp(timestamp, timezone.utc)
-        except (OSError, OverflowError, ValueError):
-            return None

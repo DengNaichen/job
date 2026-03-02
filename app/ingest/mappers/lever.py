@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from typing import Any
 
 from app.ingest.mappers.base import BaseMapper
@@ -53,44 +52,8 @@ class LeverMapper(BaseMapper):
         )
 
     @staticmethod
-    def _clean(value: Any) -> str | None:
-        if not isinstance(value, str):
-            return None
-        stripped = value.strip()
-        return stripped if stripped else None
-
-    @staticmethod
     def _get_category(raw_job: dict[str, Any], key: str) -> Any:
         categories = raw_job.get("categories")
         if not isinstance(categories, dict):
             return None
         return categories.get(key)
-
-    @staticmethod
-    def _to_datetime_or_none(value: Any) -> datetime | None:
-        if value in (None, ""):
-            return None
-
-        if isinstance(value, (int, float)):
-            timestamp = float(value)
-        elif isinstance(value, str):
-            stripped = value.strip()
-            if not stripped:
-                return None
-            if stripped.isdigit():
-                timestamp = float(stripped)
-            else:
-                try:
-                    return datetime.fromisoformat(stripped.replace("Z", "+00:00"))
-                except (TypeError, ValueError):
-                    return None
-        else:
-            return None
-
-        if timestamp > 100_000_000_000:
-            timestamp /= 1000
-
-        try:
-            return datetime.fromtimestamp(timestamp, tz=timezone.utc)
-        except (OverflowError, OSError, ValueError):
-            return None

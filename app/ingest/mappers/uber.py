@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Any
 
 from app.ingest.mappers.base import BaseMapper
@@ -90,19 +89,3 @@ class UberMapper(BaseMapper):
                     if cleaned:
                         return cleaned
         return None
-
-    @staticmethod
-    def _clean(value: Any) -> str | None:
-        if not isinstance(value, str):
-            return None
-        stripped = value.strip()
-        return stripped if stripped else None
-
-    @staticmethod
-    def _to_datetime_or_none(value: Any) -> datetime | None:
-        if not value:
-            return None
-        try:
-            return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-        except (TypeError, ValueError):
-            return None
