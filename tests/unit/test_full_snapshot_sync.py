@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 
 from copy import deepcopy
@@ -83,6 +84,60 @@ class _InMemoryBlobStorage:
         return self.objects[key]
 
 
+class _SlowTrackingBlobStorage(_InMemoryBlobStorage):
+    def __init__(self, delay_seconds: float = 0.01):
+        super().__init__()
+        self.delay_seconds = delay_seconds
+        self.in_flight = 0
+        self.max_in_flight = 0
+
+    async def upload_if_missing(
+        self,
+        *,
+        key: str,
+        data: bytes,
+        content_type: str,
+        content_encoding: str = "gzip",
+    ) -> bool:
+        self.in_flight += 1
+        self.max_in_flight = max(self.max_in_flight, self.in_flight)
+        try:
+            await asyncio.sleep(self.delay_seconds)
+            return await super().upload_if_missing(
+                key=key,
+                data=data,
+                content_type=content_type,
+                content_encoding=content_encoding,
+            )
+        finally:
+            self.in_flight -= 1
+
+
+class _FailingBlobStorage(_InMemoryBlobStorage):
+    def __init__(self, *, fail_after_calls: int = 3):
+        super().__init__()
+        self.fail_after_calls = fail_after_calls
+        self.upload_calls = 0
+
+    async def upload_if_missing(
+        self,
+        *,
+        key: str,
+        data: bytes,
+        content_type: str,
+        content_encoding: str = "gzip",
+    ) -> bool:
+        self.upload_calls += 1
+        if self.upload_calls >= self.fail_after_calls:
+            raise RuntimeError("blob boom")
+        return await super().upload_if_missing(
+            key=key,
+            data=data,
+            content_type=content_type,
+            content_encoding=content_encoding,
+        )
+
+
 _SOURCE = Source(
     name="Airbnb",
     name_normalized="airbnb",
@@ -114,9 +169,13 @@ async def _all_jobs(session: AsyncSession) -> list[Job]:
 
 
 def _service(session: AsyncSession) -> FullSnapshotSyncService:
+    return _service_with_storage(session, _InMemoryBlobStorage())
+
+
+def _service_with_storage(session: AsyncSession, storage: Any) -> FullSnapshotSyncService:
     return FullSnapshotSyncService(
         session,
-        blob_manager=JobBlobManager(_InMemoryBlobStorage()),
+        blob_manager=JobBlobManager(storage),
     )
 
 
@@ -468,3 +527,43 @@ async def test_full_snapshot_sync_enriches_country_from_geonames_when_legacy_cou
     assert len(loc_rows) == 1
     assert loc_rows[0].country_code == "US"
     assert loc_rows[0].canonical_key == "us-california-san-francisco"
+
+
+@pytest.mark.asyncio
+async def test_full_snapshot_sync_blob_stage_bounded_to_16(session: AsyncSession) -> None:
+    storage = _SlowTrackingBlobStorage(delay_seconds=0.01)
+    service = _service_with_storage(session, storage)
+    source = _source()
+
+    result = await service.sync_source(
+        source=source,
+        fetcher=_FakeFetcher(_jobs([f"job-{i}" for i in range(40)])),
+        mapper=_FakeMapper(),
+    )
+
+    assert result.ok is True
+    # Outer sync stage is bounded to 16 jobs, and each job may upload 2 blobs in parallel.
+    assert storage.max_in_flight <= 32
+    assert storage.max_in_flight > 1
+
+
+@pytest.mark.asyncio
+async def test_full_snapshot_sync_blob_failure_rolls_back_under_parallelism(
+    session: AsyncSession,
+) -> None:
+    storage = _FailingBlobStorage(fail_after_calls=3)
+    service = _service_with_storage(session, storage)
+    source = _source()
+
+    result = await service.sync_source(
+        source=source,
+        fetcher=_FakeFetcher(_jobs([f"job-{i}" for i in range(20)])),
+        mapper=_FakeMapper(),
+    )
+
+    rows = await _all_jobs(session)
+
+    assert result.ok is False
+    assert result.error is not None
+    assert "blob boom" in result.error
+    assert rows == []

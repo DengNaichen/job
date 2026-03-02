@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timezone
 from typing import Any
 
@@ -29,6 +30,9 @@ def _to_naive_utc(value: datetime | None) -> datetime | None:
 
 def _now_naive_utc() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+_BLOB_SYNC_CONCURRENCY = 16
 
 
 class FullSnapshotSyncError(Exception):
@@ -99,23 +103,32 @@ class FullSnapshotSyncService:
             existing_map = {str(job.external_job_id): job for job in existing_rows}
 
             staged_jobs: list[Job] = []
-            for payload in unique_payloads:
-                existing = existing_map.get(str(payload["external_job_id"]))
-                if existing is None:
-                    job = self._build_new_job(payload, sync_started_at)
-                    await self.blob_manager.sync_job_blobs(job)
-                    staged_jobs.append(job)
-                    stats.inserted_count += 1
-                    continue
+            if unique_payloads:
+                prepared_results: list[tuple[Job, bool] | None] = [None] * len(unique_payloads)
+                semaphore = asyncio.Semaphore(_BLOB_SYNC_CONCURRENCY)
 
-                existing_pointers = JobBlobPointers.from_job(existing)
-                self._update_existing_job(existing, payload, sync_started_at)
-                await self.blob_manager.sync_job_blobs(
-                    existing,
-                    existing_pointers=existing_pointers,
-                )
-                staged_jobs.append(existing)
-                stats.updated_count += 1
+                async def _prepare(index: int, payload: dict[str, Any]) -> None:
+                    async with semaphore:
+                        prepared_results[index] = await self._prepare_job_and_sync_blobs(
+                            payload=payload,
+                            existing_map=existing_map,
+                            sync_started_at=sync_started_at,
+                        )
+
+                async with asyncio.TaskGroup() as tg:
+                    for index, payload in enumerate(unique_payloads):
+                        tg.create_task(_prepare(index, payload))
+
+                for prepared in prepared_results:
+                    if prepared is None:
+                        raise FullSnapshotSyncError("Blob sync worker did not return a result")
+
+                    job, inserted = prepared
+                    staged_jobs.append(job)
+                    if inserted:
+                        stats.inserted_count += 1
+                    else:
+                        stats.updated_count += 1
 
             if staged_jobs:
                 await self.job_repository.save_all_no_commit(staged_jobs)
@@ -176,8 +189,47 @@ class FullSnapshotSyncService:
                 source_key=source_key,
                 ok=False,
                 stats=stats,
-                error=str(exc),
+                error=self._format_sync_error(exc),
             )
+
+    async def _prepare_job_and_sync_blobs(
+        self,
+        *,
+        payload: dict[str, Any],
+        existing_map: dict[str, Job],
+        sync_started_at: datetime,
+    ) -> tuple[Job, bool]:
+        external_job_id = str(payload["external_job_id"])
+        existing = existing_map.get(external_job_id)
+        if existing is None:
+            job = self._build_new_job(payload, sync_started_at)
+            await self.blob_manager.sync_job_blobs(job)
+            return job, True
+
+        existing_pointers = JobBlobPointers.from_job(existing)
+        self._update_existing_job(existing, payload, sync_started_at)
+        await self.blob_manager.sync_job_blobs(
+            existing,
+            existing_pointers=existing_pointers,
+        )
+        return existing, False
+
+    @staticmethod
+    def _format_sync_error(exc: Exception) -> str:
+        if isinstance(exc, ExceptionGroup):
+            messages: list[str] = []
+            stack: list[BaseException] = list(exc.exceptions)
+            while stack:
+                current = stack.pop(0)
+                if isinstance(current, ExceptionGroup):
+                    stack.extend(current.exceptions)
+                    continue
+                message = str(current).strip()
+                if message and message not in messages:
+                    messages.append(message)
+            if messages:
+                return "; ".join(messages)
+        return str(exc)
 
     @staticmethod
     def _dedupe_by_external_job_id(mapped_payloads: list[dict[str, Any]]) -> list[dict[str, Any]]:
