@@ -95,8 +95,8 @@ Current live counts, source coverage, storage footprint, and enrichment cost not
 ## Phase 8: Post-MVP Architecture Cleanup
 
 - [x] Add `source_id` foreign key to `job` and `syncrun` as the authoritative owner key (FK to `sources.id`). Legacy `source` string is preserved as compatibility state. Physical rename of `source` → `source_key` is deferred.
-- [ ] Canonical locations v3: add `locations + job_locations` for reusable and multi-location jobs once v1/v2 justify normalized location entities (P3)
-- [ ] Migrate retrieval/read paths to normalized location links where multi-location coverage or canonical location reuse justify the extra complexity (P3)
+- [ ] Canonical locations v3: add `locations + job_locations` for reusable, multi-location, and explicit multi-country jobs once v1/v2 justify normalized location entities (P3)
+- [ ] Migrate retrieval/read paths to normalized location links where multi-location coverage, multi-country links, or canonical location reuse justify the extra complexity (P3)
 - [ ] Split hot vs cold job data: keep frequently queried fields hot, move large content blobs / payloads / vectors out of the main row where appropriate (P2)
 - [ ] Replace per-job ORM staging with batch-first ingest writes and bulk upsert paths (P1)
 - [ ] Parallelize / short-circuit blob sync so large sources stop paying one network round-trip chain per job (P1)
