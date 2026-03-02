@@ -6,7 +6,8 @@ import asyncio
 
 import pytest
 
-from app.services.infra.llm import add_usage, get_token_usage, snapshot_usage, start_usage_scope
+from app.services.infra.llm import get_token_usage
+from app.services.infra.llm.usage import add_usage, snapshot_usage, start_usage_scope
 
 
 def test_usage_defaults_to_global_tracker() -> None:
