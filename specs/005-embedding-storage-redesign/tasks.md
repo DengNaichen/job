@@ -89,9 +89,9 @@
 
 **Purpose**: Validate the redesign end to end and record the remaining cleanup boundary without broadening feature scope.
 
-- [ ] T016 [P] Run targeted test suites with `./scripts/uv run pytest tests/unit/test_embedding_service.py tests/unit/test_job_embedding_repository.py tests/unit/test_backfill_job_embeddings_gemini.py tests/unit/test_match_query.py tests/unit/test_match_service.py tests/unit/test_match_experiment_script.py tests/unit/test_match_schema.py tests/integration/test_matching_api.py`.
-- [ ] T017 Do a manual dry run of `scripts/backfill_job_embeddings_gemini.py` against a small dataset and record counts for migrated legacy vectors, regenerated active-target vectors, already-fresh skips, and missing-content failures.
-- [ ] T018 Capture explicit follow-up cleanup for physically removing legacy `job.embedding*` columns in `docs/ROADMAP.md` or a follow-up spec if rollout safety requires a later drop migration.
+- [x] T016 [P] Run targeted test suites with `./scripts/uv run pytest tests/unit/test_embedding_service.py tests/unit/test_job_embedding_repository.py tests/unit/test_backfill_job_embeddings_gemini.py tests/unit/test_match_query.py tests/unit/test_match_service.py tests/unit/test_match_experiment_script.py tests/unit/test_match_schema.py tests/integration/test_matching_api.py`.
+- [x] T017 Do a manual dry run of `scripts/backfill_job_embeddings_gemini.py` against a small dataset and record counts for migrated legacy vectors (0), regenerated active-target vectors (0 expected due to missing key), already-fresh skips (0), and missing-content failures (798 across total DB).
+- [x] T018 Capture explicit follow-up cleanup for physically removing legacy `job.embedding*` columns in `docs/ROADMAP.md` or a follow-up spec if rollout safety requires a later drop migration.
 
 ---
 
