@@ -161,6 +161,17 @@ Useful URLs:
 - Health: `http://127.0.0.1:8000/health`
 - Metrics: `http://127.0.0.1:8000/metrics`
 
+## Database Architecture
+
+Authoritative ownership and storage strategy:
+
+1. `Source`: Auth owner for sync runs and jobs (platform + identifier)
+2. `Job`: Hot job row (title, apply_url, status, location metadata)
+3. `JobEmbedding`: Dedicated vector storage with model/version isolation
+4. `SyncRun`: Execution metrics/status logs
+
+Legacy `job.embedding`, `job.embedding_model`, and `job.embedding_updated_at` columns are **deprecated** and preserved only as rollout compatibility. Both matching recall and new writes target `JobEmbedding`.
+
 ## Core API Surface
 
 ### Health and observability
@@ -256,8 +267,8 @@ These are separate from the raw ingest flow. A typical lifecycle is:
 
 1. ingest jobs
 2. backfill `structured_jd`
-3. backfill embeddings
-4. query recommendations through `/api/v1/matching/recommendations`
+3. backfill embeddings into the `job_embedding` store
+4. query recommendations through `/api/v1/matching/recommendations` (matching recall joins through `job_embedding`)
 
 ## Blob Storage
 

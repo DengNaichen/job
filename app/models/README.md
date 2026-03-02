@@ -8,6 +8,7 @@ This service contains three core models:
 
 - **Source** - Upstream source configuration, keyed by `platform + identifier`
 - **Job** - Job posting information, stores data fetched from external sources. Linked to Source via `source_id` (authoritative FK)
+- **JobEmbedding** - Dedicated persisted vector store for one job + active embedding target
 - **SyncRun** - Sync run records, tracks execution status of each sync task. Linked to Source via `source_id` (authoritative FK)
 
 ## Job Model
@@ -62,13 +63,32 @@ The system supports multi-level deduplication:
 | `location_text` | Work location (compatibility text for display) |
 | `location_city` | Structured city name |
 | `location_region` | Structured region (state/province) |
-| `location_country_code` | ISO Alpha-2 country code |
+| `location_country_code` | Canonical single-country ISO 3166-1 alpha-2 code |
 | `location_workplace_type` | Workplace type (`remote`, `hybrid`, `onsite`, `unknown`) |
 | `location_remote_scope` | Remote availability scope (e.g. "US Only") |
 | `department` | Department |
 | `team` | Team |
 | `employment_type` | Employment type (full-time, part-time, contract, etc.) |
 | `published_at` | Publication time |
+
+---
+
+## JobEmbedding Model
+
+Persisted embedding rows are isolated from `job` so model/version rollouts do not mutate the hot job row.
+
+| Field | Description |
+|-------|-------------|
+| `job_id` | FK to `job.id` |
+| `embedding_kind` | Retrieval purpose identifier (for this rollout: job description recall) |
+| `embedding_target_revision` | Explicit target revision for controlled cutovers |
+| `embedding_model` | Normalized model identity (for example `gemini/gemini-embedding-001`) |
+| `embedding_dim` | Vector dimension metadata for target isolation |
+| `embedding` | Persisted vector payload |
+| `content_fingerprint` | Content state used for stale/fresh detection |
+| `created_at` / `updated_at` | Lifecycle timestamps |
+
+One row is unique per `job_id + embedding_kind + embedding_target_revision + embedding_model + embedding_dim`.
 
 ---
 

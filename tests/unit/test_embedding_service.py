@@ -4,7 +4,13 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.services.infra.embedding import EmbeddingConfig, embed_texts, resolve_embedding_model_name
+from app.services.infra.embedding import (
+    EmbeddingConfig,
+    embed_texts,
+    normalize_embedding_model_identity,
+    resolve_active_job_embedding_target,
+    resolve_embedding_model_name,
+)
 
 
 def test_resolve_embedding_model_name() -> None:
@@ -14,6 +20,33 @@ def test_resolve_embedding_model_name() -> None:
 
     assert resolve_embedding_model_name(openai_cfg) == "Qwen/Qwen3-Embedding-8B"
     assert resolve_embedding_model_name(gemini_cfg) == "gemini/gemini-embedding-001"
+
+
+def test_normalize_embedding_model_identity() -> None:
+    """Normalization should stabilize provider/model identities."""
+    assert (
+        normalize_embedding_model_identity(provider="gemini", model="gemini-embedding-001")
+        == "gemini/gemini-embedding-001"
+    )
+    assert (
+        normalize_embedding_model_identity(
+            provider="openrouter",
+            model="openrouter/qwen/qwen3-embedding-8b",
+        )
+        == "openrouter/qwen/qwen3-embedding-8b"
+    )
+
+
+def test_resolve_active_job_embedding_target() -> None:
+    """Active target descriptor should carry normalized model identity and dimension."""
+    cfg = EmbeddingConfig(provider="gemini", model="gemini-embedding-001")
+
+    target = resolve_active_job_embedding_target(config=cfg, embedding_dim=1024)
+
+    assert target.embedding_kind == "job_description"
+    assert target.embedding_target_revision == 1
+    assert target.embedding_model == "gemini/gemini-embedding-001"
+    assert target.embedding_dim == 1024
 
 
 @pytest.mark.asyncio

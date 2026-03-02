@@ -40,7 +40,7 @@ class TestEightfoldMapper:
         assert result.location_text == "Toronto, ON, Canada"
         assert result.location_city == "Toronto"
         assert result.location_region == "ON"
-        assert result.location_country_code == "US"
+        assert result.location_country_code == "CA"
         assert result.location_workplace_type == WorkplaceType.remote
         assert result.department == "Engineering"
         assert result.team is None
