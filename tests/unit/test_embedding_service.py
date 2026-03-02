@@ -50,6 +50,26 @@ def test_resolve_active_job_embedding_target() -> None:
 
 
 @pytest.mark.asyncio
+async def test_embed_texts_empty_input_short_circuit(monkeypatch: pytest.MonkeyPatch) -> None:
+    """embed_texts should return early for empty input without provider calls."""
+    calls = {"count": 0}
+
+    async def fake_aembedding(**_kwargs):  # noqa: ANN003
+        calls["count"] += 1
+        return SimpleNamespace(data=[{"embedding": [0.1, 0.2]}])
+
+    monkeypatch.setattr("app.services.infra.embedding.litellm.aembedding", fake_aembedding)
+
+    vectors = await embed_texts(
+        [],
+        config=EmbeddingConfig(provider="openai", model="Qwen/Qwen3-Embedding-8B"),
+    )
+
+    assert vectors == []
+    assert calls["count"] == 0
+
+
+@pytest.mark.asyncio
 async def test_embed_texts_returns_vectors(monkeypatch: pytest.MonkeyPatch) -> None:
     """embed_texts should parse vectors from LiteLLM response."""
 
@@ -170,3 +190,42 @@ async def test_embed_texts_does_not_retry_non_transient_error(
         )
 
     assert calls["count"] == 1
+
+
+@pytest.mark.asyncio
+async def test_embed_texts_invalid_vector_count_has_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Vector count mismatch should include provider/model in raised error."""
+
+    async def fake_aembedding(**_kwargs):  # noqa: ANN003
+        return SimpleNamespace(data=[{"embedding": [0.1, 0.2]}])
+
+    monkeypatch.setattr("app.services.infra.embedding.litellm.aembedding", fake_aembedding)
+
+    with pytest.raises(ValueError, match="expected 2 vectors, got 1"):
+        await embed_texts(
+            ["a", "b"],
+            config=EmbeddingConfig(provider="openai", model="Qwen/Qwen3-Embedding-8B"),
+            retries=0,
+        )
+
+
+@pytest.mark.asyncio
+async def test_embed_texts_dimension_mismatch_has_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Dimension mismatch should fail with provider/model diagnostics."""
+
+    async def fake_aembedding(**_kwargs):  # noqa: ANN003
+        return SimpleNamespace(data=[{"embedding": [0.1, 0.2, 0.3]}])
+
+    monkeypatch.setattr("app.services.infra.embedding.litellm.aembedding", fake_aembedding)
+
+    with pytest.raises(ValueError, match="provider=openai; model=Qwen/Qwen3-Embedding-8B"):
+        await embed_texts(
+            ["a"],
+            config=EmbeddingConfig(provider="openai", model="Qwen/Qwen3-Embedding-8B"),
+            dimensions=2,
+            retries=0,
+        )
