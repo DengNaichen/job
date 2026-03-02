@@ -14,7 +14,6 @@ from app.repositories.sync_run import SyncRunRepository
 from app.services.application.full_snapshot_sync import FullSnapshotSyncService
 from app.services.application.sync_handlers import (
     PLATFORM_SYNC_HANDLERS,
-    SUPPORTED_PLATFORMS,
     PlatformSyncHandlers,
 )
 
@@ -46,10 +45,12 @@ class SyncService:
 
         async with AsyncSession(self.engine) as tracking_session:
             sync_run_repository = SyncRunRepository(tracking_session)
-            running = await sync_run_repository.get_running_by_source(source=source_key)
+            # Authoritative overlap check by source_id
+            running = await sync_run_repository.get_running_by_source_id(source_id=str(source.id))
             if running is not None:
                 return await sync_run_repository.create_finished(
                     source=source_key,
+                    source_id=str(source.id),
                     status=SyncRunStatus.failed,
                     error_summary="overlap: source already running",
                 )
@@ -57,11 +58,15 @@ class SyncService:
             if handlers is None:
                 return await sync_run_repository.create_finished(
                     source=source_key,
+                    source_id=str(source.id),
                     status=SyncRunStatus.failed,
                     error_summary=f"unsupported platform: {source.platform.value}",
                 )
 
-            sync_run = await sync_run_repository.create_running(source=source_key)
+            sync_run = await sync_run_repository.create_running(
+                source=source_key,
+                source_id=str(source.id),
+            )
             fetcher = handlers.fetcher_cls()
             mapper = handlers.mapper_cls()
             last_result: SourceSyncResult | None = None

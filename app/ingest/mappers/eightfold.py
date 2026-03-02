@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 
 from app.ingest.mappers.base import BaseMapper
 from app.schemas.job import JobCreate
+from app.services.domain.job_location import extract_workplace_type, parse_location_text
 
 
 class EightfoldMapper(BaseMapper):
@@ -16,6 +17,10 @@ class EightfoldMapper(BaseMapper):
         return "eightfold"
 
     def map(self, raw_job: dict[str, Any]) -> JobCreate:
+        location_text = self._pick_location(raw_job)
+        employment_type = self._clean(raw_job.get("workLocationOption"))
+        parsed_loc = parse_location_text(location_text)
+
         return JobCreate(
             source=self.source_name,
             external_job_id=str(raw_job["id"]),
@@ -23,10 +28,14 @@ class EightfoldMapper(BaseMapper):
             apply_url=self._build_apply_url(raw_job),
             normalized_apply_url=None,
             status="open",
-            location_text=self._pick_location(raw_job),
+            location_text=location_text,
+            location_city=parsed_loc.city,
+            location_region=parsed_loc.region,
+            location_country_code=parsed_loc.country_code,
+            location_workplace_type=extract_workplace_type([location_text, employment_type]),
             department=self._clean(raw_job.get("department")),
             team=None,
-            employment_type=self._clean(raw_job.get("workLocationOption")),
+            employment_type=employment_type,
             description_html=None,
             description_plain=self._clean(raw_job.get("jobDescription")),
             published_at=self._to_datetime_or_none(raw_job.get("postedTs")),

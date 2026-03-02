@@ -103,6 +103,10 @@ def _make_response(*, llm_enabled: bool) -> MatchResponse:
                     if llm_enabled
                     else "https://example.com/job-1",
                     "location_text": "Toronto, ON",
+                    "city": "Toronto",
+                    "region": "Ontario",
+                    "country_code": "CA",
+                    "workplace_type": "hybrid",
                     "department": "Analytics",
                     "team": "BI",
                     "employment_type": "full-time",
@@ -142,6 +146,10 @@ def _make_response(*, llm_enabled: bool) -> MatchResponse:
                     if llm_enabled
                     else "https://example.com/job-2",
                     "location_text": "Toronto, ON",
+                    "city": "Toronto",
+                    "region": "Ontario",
+                    "country_code": "CA",
+                    "workplace_type": "hybrid",
                     "department": "Analytics",
                     "team": "BI",
                     "employment_type": "full-time",

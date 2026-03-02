@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Column, Index, String, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.types import DateTime
 from sqlmodel import Field, SQLModel
@@ -15,13 +15,31 @@ class JobStatus(str, enum.Enum):
     closed = "closed"
 
 
+class WorkplaceType(str, enum.Enum):
+    remote = "remote"
+    hybrid = "hybrid"
+    onsite = "onsite"
+    unknown = "unknown"
+
+
 class Job(SQLModel, table=True):
     __table_args__ = (
         UniqueConstraint("source", "external_job_id", name="uq_job_source_external_job_id"),
         Index("ix_job_source_status_last_seen_at", "source", "status", "last_seen_at"),
+        # ix_job_source_id_status_last_seen_at is created by the Alembic migration (Phase 2).
+        # Do NOT re-declare it here — SQLModel.metadata.create_all (used in tests) would
+        # try to create it again and conflict with the migration-managed index.
     )
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    # Authoritative owner FK — nullable during migration window; enforced NOT NULL in second revision.
+    source_id: str | None = Field(
+        default=None,
+        sa_column=Column(
+            String(36), ForeignKey("sources.id", ondelete="RESTRICT"), nullable=True, index=True
+        ),
+    )
+    # Compatibility source key (legacy string). Preserved throughout migration; renamed in a future cleanup.
     source: str = Field(index=True)
     external_job_id: str = Field(index=True)
     title: str
@@ -32,6 +50,12 @@ class Job(SQLModel, table=True):
     status: JobStatus = Field(default=JobStatus.open, index=True)
 
     location_text: str | None = Field(default=None)
+    location_city: str | None = Field(default=None)
+    location_region: str | None = Field(default=None)
+    location_country_code: str | None = Field(default=None, index=True)
+    location_workplace_type: WorkplaceType = Field(default=WorkplaceType.unknown, index=True)
+    location_remote_scope: str | None = Field(default=None)
+
     department: str | None = Field(default=None)
     team: str | None = Field(default=None)
     employment_type: str | None = Field(default=None)

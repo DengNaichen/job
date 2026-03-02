@@ -21,6 +21,10 @@ class UberMapper(BaseMapper):
             normalized_apply_url=None,
             status="open",
             location_text=self._location_text(raw_job),
+            location_city=self._get_location_part(raw_job, "city"),
+            location_region=self._get_location_part(raw_job, "region"),
+            location_country_code=self._get_location_part(raw_job, "countryName")
+            or self._get_location_part(raw_job, "country"),
             department=self._clean(raw_job.get("department")),
             team=self._clean(raw_job.get("team")),
             employment_type=self._clean(raw_job.get("timeType")),
@@ -67,6 +71,23 @@ class UberMapper(BaseMapper):
             if part and part not in normalized:
                 normalized.append(part)
         return ", ".join(normalized) if normalized else None
+
+    @classmethod
+    def _get_location_part(cls, raw_job: dict[str, Any], key: str) -> str | None:
+        for loc_key in ("location", "allLocations"):
+            value = raw_job.get(loc_key)
+            if isinstance(value, dict):
+                cleaned = cls._clean(value.get(key))
+                if cleaned:
+                    return cleaned
+            elif isinstance(value, list):
+                for item in value:
+                    if not isinstance(item, dict):
+                        continue
+                    cleaned = cls._clean(item.get(key))
+                    if cleaned:
+                        return cleaned
+        return None
 
     @staticmethod
     def _clean(value: Any) -> str | None:

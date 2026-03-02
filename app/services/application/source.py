@@ -8,7 +8,8 @@ Provides business logic for Source operations including:
 
 from datetime import datetime, timezone
 
-from app.models import Source, PlatformType, build_source_key, normalize_name
+from app.models import Source, PlatformType, normalize_name
+from app.repositories.job import JobRepository
 from app.repositories.source import SourceRepository
 from app.repositories.sync_run import SyncRunRepository
 from app.schemas.source import SourceCreate, SourceUpdate
@@ -63,6 +64,16 @@ class HasReferencesError(SourceError):
         )
 
 
+class HasMutationBlockError(SourceError):
+    """Raised when platform or identifier update is blocked by existing job/sync-run references."""
+
+    def __init__(self):
+        super().__init__(
+            code="HAS_MUTATION_BLOCK",
+            message="该数据源有关联的职位或抓取记录，无法修改平台或标识符",
+        )
+
+
 class SourceService:
     """Service for Source business logic."""
 
@@ -70,9 +81,11 @@ class SourceService:
         self,
         repository: SourceRepository,
         sync_run_repository: SyncRunRepository | None = None,
+        job_repository: JobRepository | None = None,
     ):
         self.repository = repository
         self.sync_run_repository = sync_run_repository
+        self.job_repository = job_repository
 
     async def create_source(self, source_in: SourceCreate) -> Source:
         """
@@ -198,6 +211,15 @@ class SourceService:
         if "platform" in update_data:
             source.platform = target_platform
 
+        # Guard: block structural (platform/identifier) changes when jobs or sync runs reference source
+        if "platform" in update_data or "identifier" in update_data:
+            if self.job_repository is not None:
+                if await self.job_repository.source_id_reference_exists(str(source.id)):
+                    raise HasMutationBlockError()
+            if self.sync_run_repository is not None:
+                if await self.sync_run_repository.has_any_for_source_id(source_id=str(source.id)):
+                    raise HasMutationBlockError()
+
         # Handle identifier update / platform change collision
         if "identifier" in update_data or "platform" in update_data:
             new_identifier = update_data.get("identifier", source.identifier)
@@ -238,15 +260,20 @@ class SourceService:
 
         Raises:
             SourceNotFoundError: If source not found
-            HasReferencesError: If source has associated SyncRun records
+            HasReferencesError: If source has associated SyncRun or Job records
         """
         source = await self.repository.get_by_id(source_id)
         if not source:
             raise SourceNotFoundError()
 
+        # Check sync-run references by authoritative source_id.
         if self.sync_run_repository is not None:
-            source_key = build_source_key(source.platform, source.identifier)
-            if await self.sync_run_repository.has_any_for_source(source=source_key):
+            if await self.sync_run_repository.has_any_for_source_id(source_id=str(source.id)):
+                raise HasReferencesError()
+
+        # Check job references by authoritative source_id.
+        if self.job_repository is not None:
+            if await self.job_repository.source_id_reference_exists(str(source.id)):
                 raise HasReferencesError()
 
         await self.repository.delete(source)

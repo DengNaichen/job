@@ -83,17 +83,22 @@ has Command Line Tools configured:
 The ingest path is intentionally layered:
 
 1. `Source`
-   One configured upstream source, keyed by `platform + identifier`
+   One configured upstream source, keyed by `platform + identifier`. Each source has a UUID `id` that serves as the **authoritative owner key** (`source_id`) for jobs and sync runs.
 2. `Fetcher`
    Pulls raw jobs from an external ATS or company API
 3. `Mapper`
    Converts raw payloads into the internal `JobCreate` schema
 4. `FullSnapshotSyncService`
-   Dedupes by `external_job_id`, upserts open jobs, and closes missing jobs after a successful full snapshot
+   Dedupes by `external_job_id`, upserts open jobs, and closes missing jobs after a successful full snapshot. Ownership is keyed by `source_id` (FK to `sources.id`).
 5. `SyncRun`
-   Records each source-level execution status and stats
+   Records each source-level execution status and stats, linked to `sources` via `source_id`
 6. `run_scheduled_ingests.py`
    Thin orchestration layer for scheduled source syncs with retry and overlap protection
+
+> **Note on `source` string field**: Both `job.source` and `syncrun.source` retain the legacy
+> `platform:identifier` string (e.g. `greenhouse:airbnb`) as a **compatibility field**.
+> It is dual-written alongside `source_id` and preserved for backward-compatible reads.
+> `source_id` (FK to `sources.id`) is the authoritative owner key for all runtime behavior.
 
 ## Quick Start
 
@@ -133,8 +138,16 @@ postgresql+asyncpg://postgres:postgres@localhost:5434/job_db
 
 ### 4. Apply database migrations
 
-Database migrations are maintained in a local-only Alembic repo and are not published in this repository.
-Apply your local migrations before starting the API server.
+Database migrations use the standard Alembic layout in this repository:
+
+- `alembic.ini`
+- `alembic/`
+
+Apply migrations before starting the API server:
+
+```bash
+./scripts/uv run alembic upgrade head
+```
 
 ### 5. Start the API server
 

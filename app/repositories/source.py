@@ -77,6 +77,22 @@ class SourceRepository:
         result = await self.session.exec(statement)
         return _normalize_source_timestamps(result.first())
 
+    async def get_by_source_key(self, source_key: str) -> Source | None:
+        """
+        Resolve a legacy "platform:identifier" source key to a Source entity.
+
+        Splits on the first ':' to extract platform and identifier.
+        Returns None if the key is malformed or no matching source is found.
+        """
+        if ":" not in source_key:
+            return None
+        platform_str, identifier = source_key.split(":", 1)
+        try:
+            platform = PlatformType(platform_str.strip())
+        except ValueError:
+            return None
+        return await self.get_by_platform_and_identifier(platform, identifier)
+
     async def get_by_name_normalized(self, name_normalized: str) -> Source | None:
         """
         Backward-compatible lookup by normalized name only.

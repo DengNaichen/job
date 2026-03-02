@@ -11,11 +11,12 @@ class SyncRunBase(BaseModel):
 
 
 class SyncRunCreate(SyncRunBase):
-    pass
+    source_id: str | None = None  # Resolved from source entity during compatibility window
 
 
 class SyncRunRead(SyncRunBase):
     id: str
+    source_id: str | None  # Exposed during migration window; will be non-null after enforcement
     started_at: datetime
     finished_at: datetime | None
     fetched_count: int

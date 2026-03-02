@@ -77,6 +77,9 @@ Current live counts, source coverage, storage footprint, and enrichment cost not
 - [x] Experimental top-10 LLM enum recommendation rerank (P3)
 - [ ] Evaluation / benchmark harness (P2)
 - [ ] Retrieval redesign: move away from `JD-only` embedding as the main retrieval primitive (P2)
+- [x] Location modeling v1 on `job`: add structured fields for filtering/ranking while keeping `location_text` as compatibility/display text (P2)
+- [ ] Country canonicalization v2 on `job`: make `location_country_code` reliable for filtering, including remote single-country rules (P2)
+- [ ] Country-aware filtering: apply `location_country_code` + `location_workplace_type` in retrieval/filter pipelines (P2)
 - [ ] Hybrid retrieval: title / skills / domain / location / structured filters + optional vector recall (P2)
 - [ ] Embedding storage redesign: move vectors out of the hot `job` row and support model/version isolation (P2)
 - [ ] Production-ready matching service (P3)
@@ -91,9 +94,11 @@ Current live counts, source coverage, storage footprint, and enrichment cost not
 
 ## Phase 8: Post-MVP Architecture Cleanup
 
-- [ ] Add `source_id` foreign key to `job` and `syncrun`, keep `source_key` only as a stable natural-key/cache layer during migration (P1)
-- [ ] Normalize location modeling: move beyond `location_text` to structured location fields, then consider `locations + job_locations` if needed (P2)
+- [x] Add `source_id` foreign key to `job` and `syncrun` as the authoritative owner key (FK to `sources.id`). Legacy `source` string is preserved as compatibility state. Physical rename of `source` → `source_key` is deferred.
+- [ ] Canonical locations v3: add `locations + job_locations` for reusable and multi-location jobs once v1/v2 justify normalized location entities (P3)
+- [ ] Migrate retrieval/read paths to normalized location links where multi-location coverage or canonical location reuse justify the extra complexity (P3)
 - [ ] Split hot vs cold job data: keep frequently queried fields hot, move large content blobs / payloads / vectors out of the main row where appropriate (P2)
 - [ ] Replace per-job ORM staging with batch-first ingest writes and bulk upsert paths (P1)
 - [ ] Parallelize / short-circuit blob sync so large sources stop paying one network round-trip chain per job (P1)
 - [ ] Add smarter source scheduling: lower frequency for historically empty / low-yield sources and better treatment for oversized sources (P2)
+- [ ] Improve source-specific location parsing for low-confidence text-heavy sources (e.g., remote scope edge cases and missing locations) (P3)

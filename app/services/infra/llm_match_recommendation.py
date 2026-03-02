@@ -246,6 +246,14 @@ def _build_job_profile(context_row: dict[str, Any]) -> dict[str, Any]:
         "location_text": _sanitize_free_text(
             context_row.get("location_text"), max_chars=_MAX_TITLE_CHARS
         ),
+        "city": _sanitize_free_text(context_row.get("city"), max_chars=_MAX_TITLE_CHARS),
+        "region": _sanitize_free_text(context_row.get("region"), max_chars=_MAX_TITLE_CHARS),
+        "country_code": _sanitize_free_text(
+            context_row.get("country_code"), max_chars=_MAX_TITLE_CHARS
+        ),
+        "workplace_type": _sanitize_free_text(
+            context_row.get("workplace_type"), max_chars=_MAX_TITLE_CHARS
+        ),
         "employment_type": _sanitize_free_text(
             context_row.get("employment_type"), max_chars=_MAX_TITLE_CHARS
         ),

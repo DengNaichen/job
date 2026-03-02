@@ -10,6 +10,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.database import get_session
 from app.models import PlatformType
+from app.repositories.job import JobRepository
 from app.repositories.source import SourceRepository
 from app.repositories.sync_run import SyncRunRepository
 from app.schemas.source import (
@@ -29,6 +30,7 @@ from app.services.application.source import (
     DuplicateIdentifierError,
     SourceNotFoundError,
     HasReferencesError,
+    HasMutationBlockError,
 )
 
 router = APIRouter(prefix="/sources", tags=["sources"])
@@ -38,7 +40,8 @@ def get_source_service(session: AsyncSession = Depends(get_session)) -> SourceSe
     """Dependency injection for SourceService."""
     repository = SourceRepository(session)
     sync_run_repository = SyncRunRepository(session)
-    return SourceService(repository, sync_run_repository)
+    job_repository = JobRepository(session)
+    return SourceService(repository, sync_run_repository, job_repository)
 
 
 @router.post(
@@ -185,6 +188,13 @@ async def update_source(
             ).model_dump(),
         )
     except DuplicateIdentifierError as e:
+        return JSONResponse(
+            status_code=409,
+            content=ErrorResponse(
+                success=False, error=ErrorDetail(code=e.code, message=e.message)
+            ).model_dump(),
+        )
+    except HasMutationBlockError as e:
         return JSONResponse(
             status_code=409,
             content=ErrorResponse(

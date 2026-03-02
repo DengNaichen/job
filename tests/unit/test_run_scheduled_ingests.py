@@ -53,6 +53,7 @@ def _make_sync_run(
     source: str,
     status: SyncRunStatus,
     *,
+    source_id: str | None = None,
     fetched_count: int = 0,
     unique_count: int = 0,
     deduped_by_external_id: int = 0,
@@ -63,6 +64,7 @@ def _make_sync_run(
 ) -> SyncRun:
     return SyncRun(
         source=source,
+        source_id=source_id,
         status=status,
         fetched_count=fetched_count,
         unique_count=unique_count,
@@ -101,6 +103,7 @@ async def test_run_scheduled_ingests_reports_success_summary(
             return _make_sync_run(
                 "greenhouse:airbnb",
                 SyncRunStatus.success,
+                source_id=str(source.id),
                 fetched_count=5,
                 unique_count=4,
                 deduped_by_external_id=1,
@@ -159,11 +162,13 @@ async def test_run_scheduled_ingests_continues_on_failures_and_returns_nonzero(
                 return _make_sync_run(
                     "lever:stripe",
                     SyncRunStatus.failed,
+                    source_id=str(source.id),
                     error_summary="fetch boom",
                 )
             return _make_sync_run(
                 "greenhouse:airbnb",
                 SyncRunStatus.success,
+                source_id=str(source.id),
                 fetched_count=2,
                 unique_count=2,
                 inserted_count=1,
@@ -238,8 +243,10 @@ async def test_run_scheduled_ingests_warns_about_unsupported_sources(
             self.engine = engine
 
         async def sync_source(self, *, source, include_content, dry_run, retry_attempts):  # noqa: ANN001
-            _ = (source, include_content, dry_run, retry_attempts)
-            return _make_sync_run("greenhouse:airbnb", SyncRunStatus.success)
+            _ = (include_content, dry_run, retry_attempts)
+            return _make_sync_run(
+                "greenhouse:airbnb", SyncRunStatus.success, source_id=str(source.id)
+            )
 
     monkeypatch.setattr(module, "_load_candidate_sources", fake_load_candidate_sources)
     monkeypatch.setattr(module, "SyncService", FakeSyncService)

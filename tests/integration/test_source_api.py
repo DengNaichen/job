@@ -1,12 +1,18 @@
 """
 Integration tests for Source API endpoints.
 
-Tests for MVP User Story 1 (T016):
+Tests for MVP User Story 1 & T016:
 - POST /api/v1/sources - Create source
   - Success: create new source
   - Failure: duplicate name
   - Failure: unsupported platform
   - Failure: blank identifier
+- DELETE /api/v1/sources/{source_id}
+  - 409 Conflict when source has associated jobs
+  - 409 Conflict when source has associated sync runs
+- PATCH /api/v1/sources/{source_id}
+  - 409 Conflict when mutating platform on a referenced source
+  - 409 Conflict when mutating identifier on a referenced source
 """
 
 import asyncio
@@ -15,7 +21,7 @@ from fastapi.testclient import TestClient
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.database import engine
-from app.models import SyncRun, SyncRunStatus, build_source_key
+from app.models import Job, SyncRun, SyncRunStatus, build_source_key
 
 
 class TestCreateSource:
@@ -403,6 +409,7 @@ class TestDeleteSource:
                 session.add(
                     SyncRun(
                         source=build_source_key("greenhouse", "protected-source"),
+                        source_id=source_id,
                         status=SyncRunStatus.success,
                     )
                 )
@@ -416,3 +423,116 @@ class TestDeleteSource:
         error_payload = delete_response.json()
         assert error_payload["success"] is False
         assert error_payload["error"]["code"] == "HAS_REFERENCES"
+
+    def test_delete_source_with_jobs_fails(self, client: TestClient):
+        """Deleting a source referenced by jobs returns 409 Conflict."""
+        response = client.post(
+            "/api/v1/sources",
+            json={
+                "name": "Job Protected Source",
+                "platform": "greenhouse",
+                "identifier": "job-protected-source",
+            },
+        )
+        payload = response.json()["data"]
+        source_id = payload["id"]
+
+        async def seed_job() -> None:
+            async with AsyncSession(engine) as session:
+                session.add(
+                    Job(
+                        source=build_source_key("greenhouse", "job-protected-source"),
+                        source_id=source_id,
+                        external_job_id="ext-1",
+                        title="Test Job",
+                        apply_url="https://example.com/apply",
+                    )
+                )
+                await session.commit()
+
+        asyncio.run(seed_job())
+
+        delete_response = client.delete(f"/api/v1/sources/{source_id}")
+
+        assert delete_response.status_code == 409
+        error_payload = delete_response.json()
+        assert error_payload["success"] is False
+        assert error_payload["error"]["code"] == "HAS_REFERENCES"
+
+
+class TestMutateReferencedSource:
+    """Integration tests for 409 Conflict on platform/identifier mutation of referenced sources."""
+
+    def test_mutate_platform_on_referenced_source_fails(self, client: TestClient):
+        """Updating platform on a source with job references returns 409 Conflict."""
+        response = client.post(
+            "/api/v1/sources",
+            json={
+                "name": "Platform Blocked Source",
+                "platform": "greenhouse",
+                "identifier": "platform-blocked",
+            },
+        )
+        payload = response.json()["data"]
+        source_id = payload["id"]
+
+        async def seed_job() -> None:
+            async with AsyncSession(engine) as session:
+                session.add(
+                    Job(
+                        source=build_source_key("greenhouse", "platform-blocked"),
+                        source_id=source_id,
+                        external_job_id="ext-plat-1",
+                        title="Blocked Platform Job",
+                        apply_url="https://example.com/apply/plat",
+                    )
+                )
+                await session.commit()
+
+        asyncio.run(seed_job())
+
+        patch_response = client.patch(
+            f"/api/v1/sources/{source_id}",
+            json={"platform": "lever"},
+        )
+
+        assert patch_response.status_code == 409
+        error_payload = patch_response.json()
+        assert error_payload["success"] is False
+        assert error_payload["error"]["code"] == "HAS_MUTATION_BLOCK"
+
+    def test_mutate_identifier_on_referenced_source_fails(self, client: TestClient):
+        """Updating identifier on a source with sync run references returns 409 Conflict."""
+        response = client.post(
+            "/api/v1/sources",
+            json={
+                "name": "Identifier Blocked Source",
+                "platform": "greenhouse",
+                "identifier": "identifier-blocked",
+            },
+        )
+        payload = response.json()["data"]
+        source_id = payload["id"]
+
+        async def seed_sync_run() -> None:
+            async with AsyncSession(engine) as session:
+                session.add(
+                    SyncRun(
+                        source=build_source_key("greenhouse", "identifier-blocked"),
+                        source_id=source_id,
+                        status=SyncRunStatus.success,
+                    )
+                )
+                await session.commit()
+
+        asyncio.run(seed_sync_run())
+
+        patch_response = client.patch(
+            f"/api/v1/sources/{source_id}",
+            json={"identifier": "new-identifier"},
+        )
+
+        assert patch_response.status_code == 409
+        error_payload = patch_response.json()
+        assert error_payload["success"] is False
+        assert error_payload["error"]["code"] == "HAS_MUTATION_BLOCK"

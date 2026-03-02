@@ -2,6 +2,7 @@ import enum
 import uuid
 from datetime import datetime, timezone
 
+from sqlalchemy import Column, ForeignKey, String
 from sqlmodel import Field, SQLModel
 
 
@@ -13,6 +14,14 @@ class SyncRunStatus(str, enum.Enum):
 
 class SyncRun(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    # Authoritative owner FK — nullable during migration window; enforced NOT NULL in second revision.
+    source_id: str | None = Field(
+        default=None,
+        sa_column=Column(
+            String(36), ForeignKey("sources.id", ondelete="RESTRICT"), nullable=True, index=True
+        ),
+    )
+    # Compatibility source key (legacy string). Preserved throughout migration.
     source: str = Field(index=True)
     started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     finished_at: datetime | None = Field(default=None)

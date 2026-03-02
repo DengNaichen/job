@@ -73,6 +73,8 @@ async def test_sync_service_success_records_successful_run(
         rows = await _list_sync_runs(test_engine)
         assert len(rows) == 1
         assert rows[0].status == SyncRunStatus.success
+        # Phase 3: sync_run should be created with source_id
+        assert rows[0].source_id == str(source.id)  # type: ignore[attr-defined]
     finally:
         await test_engine.dispose()
 
@@ -173,7 +175,11 @@ async def test_sync_service_skips_overlap_without_running_snapshot(
 
         async with AsyncSession(test_engine) as session:
             repo = SyncRunRepository(session)
-            await repo.create_running(source=build_source_key(source.platform, source.identifier))
+            # Seed with source_id so the authoritative overlap check finds it
+            await repo.create_running(
+                source=build_source_key(source.platform, source.identifier),
+                source_id=str(source.id),
+            )
 
         called = {"value": False}
 

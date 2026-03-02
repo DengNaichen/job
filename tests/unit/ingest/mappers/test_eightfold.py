@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import pytest
 
 from app.ingest.mappers import EightfoldMapper
+from app.models.job import WorkplaceType
 
 
 class TestEightfoldMapper:
@@ -37,6 +38,10 @@ class TestEightfoldMapper:
         assert result.title == "Senior Software Engineer"
         assert result.apply_url == "https://apply.careers.microsoft.com/us/en/job/12345"
         assert result.location_text == "Toronto, ON, Canada"
+        assert result.location_city == "Toronto"
+        assert result.location_region == "ON"
+        assert result.location_country_code == "US"
+        assert result.location_workplace_type == WorkplaceType.remote
         assert result.department == "Engineering"
         assert result.team is None
         assert result.employment_type == "Up to 50% work from home"

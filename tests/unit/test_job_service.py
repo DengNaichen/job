@@ -4,12 +4,13 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from app.models import Job
+from app.models import Job, WorkplaceType
 from app.schemas.job import JobCreate, JobUpdate
 from app.schemas.structured_jd import BatchStructuredJDItem
 from app.services.application.job import (
     JobNotFoundError,
     JobService,
+    SourceResolutionError,
 )
 from app.services.application.structured_jd import (
     JobStructuredJDMappingError,
@@ -45,6 +46,8 @@ async def test_create_job() -> None:
     """create_job should map JobCreate into model and call repository.create."""
     repository = AsyncMock()
     created = _build_job()
+    created.location_city = "San Francisco"
+    created.location_workplace_type = WorkplaceType.onsite
     repository.create.return_value = created
     service = JobService(repository=repository)
 
@@ -53,11 +56,69 @@ async def test_create_job() -> None:
         external_job_id="123",
         title="Engineer",
         apply_url="https://example.com",
+        location_city="San Francisco",
+        location_workplace_type=WorkplaceType.onsite,
     )
     result = await service.create_job(payload)
 
     assert result == created
+    assert result.location_city == "San Francisco"
+    assert result.location_workplace_type == WorkplaceType.onsite
     repository.create.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_create_job_resolves_source_id_from_legacy_source() -> None:
+    """create_job should populate source_id from source_repository when source_id is absent."""
+    from app.models import PlatformType, Source
+
+    repository = AsyncMock()
+    source_repository = AsyncMock()
+    source = Source(
+        name="Greenhouse",
+        name_normalized="greenhouse",
+        platform=PlatformType.GREENHOUSE,
+        identifier="airbnb",
+    )
+    source_repository.get_by_source_key.return_value = source
+    created = _build_job()
+    created.source_id = str(source.id)
+    repository.create.return_value = created
+    service = JobService(repository=repository, source_repository=source_repository)
+
+    payload = JobCreate(
+        source="greenhouse:airbnb",
+        external_job_id="123",
+        title="Engineer",
+        apply_url="https://example.com",
+    )
+    result = await service.create_job(payload)
+
+    assert result.source_id == str(source.id)
+    source_repository.get_by_source_key.assert_awaited_once_with("greenhouse:airbnb")
+    repository.create.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_create_job_fails_when_source_cannot_be_resolved() -> None:
+    """create_job should raise SourceResolutionError when source key does not resolve."""
+    repository = AsyncMock()
+    source_repository = AsyncMock()
+    source_repository.get_by_source_key.return_value = None
+    service = JobService(repository=repository, source_repository=source_repository)
+
+    payload = JobCreate(
+        source="greenhouse:unknown-company",
+        external_job_id="123",
+        title="Engineer",
+        apply_url="https://example.com",
+    )
+
+    with pytest.raises(SourceResolutionError) as exc_info:
+        await service.create_job(payload)
+
+    assert exc_info.value.source_key == "greenhouse:unknown-company"
+    repository.create.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -70,7 +131,9 @@ async def test_update_job_updates_timestamp() -> None:
     repository.update.return_value = job
     service = JobService(repository=repository)
 
-    updated = await service.update_job("job-1", JobUpdate(title="Senior Engineer"))
+    updated = await service.update_job(
+        "job-1", JobUpdate(title="Senior Engineer", location_city="San Jose")
+    )
 
     previous_updated_at_naive = (
         previous_updated_at.replace(tzinfo=None)
@@ -78,6 +141,7 @@ async def test_update_job_updates_timestamp() -> None:
         else previous_updated_at
     )
     assert updated.title == "Senior Engineer"
+    assert updated.location_city == "San Jose"
     assert updated.updated_at >= previous_updated_at_naive
     repository.update.assert_awaited_once_with(job)
 

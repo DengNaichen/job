@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Any
 
 from app.ingest.mappers.base import BaseMapper
+from app.models.job import WorkplaceType
 from app.schemas.job import JobCreate
 from app.services.infra.html_utils import html_to_text
 
@@ -33,6 +34,10 @@ class SmartRecruitersMapper(BaseMapper):
             normalized_apply_url=None,
             status="open",
             location_text=self._clean(self._get_location_text(raw_job)),
+            location_city=self._clean(self._get_location_field(raw_job, "city")),
+            location_region=self._clean(self._get_location_field(raw_job, "region")),
+            location_country_code=self._clean(self._get_location_field(raw_job, "country")),
+            location_workplace_type=self._get_workplace_type(raw_job),
             department=self._clean(self._get_label(raw_job, "department")),
             team=self._clean(self._get_label(raw_job, "function")),
             employment_type=self._clean(self._get_label(raw_job, "typeOfEmployment")),
@@ -92,6 +97,20 @@ class SmartRecruitersMapper(BaseMapper):
             if isinstance(value, str) and value.strip():
                 parts.append(value.strip())
         return ", ".join(parts) if parts else None
+
+    @staticmethod
+    def _get_location_field(raw_job: dict[str, Any], key: str) -> str | None:
+        location = raw_job.get("location")
+        if not isinstance(location, dict):
+            return None
+        return location.get(key)
+
+    @staticmethod
+    def _get_workplace_type(raw_job: dict[str, Any]) -> WorkplaceType:
+        location = raw_job.get("location")
+        if isinstance(location, dict) and str(location.get("remote")).lower() == "true":
+            return WorkplaceType.remote
+        return WorkplaceType.unknown
 
     @staticmethod
     def _get_label(raw_job: dict[str, Any], key: str) -> str | None:

@@ -76,13 +76,17 @@ class _InMemoryBlobStorage:
         return self.objects[key]
 
 
+_SOURCE = Source(
+    name="Airbnb",
+    name_normalized="airbnb",
+    platform=PlatformType.GREENHOUSE,
+    identifier="airbnb",
+)
+
+
 def _source() -> Source:
-    return Source(
-        name="Airbnb",
-        name_normalized="airbnb",
-        platform=PlatformType.GREENHOUSE,
-        identifier="airbnb",
-    )
+    """Return the singleton test source (stable UUID across all calls within this module)."""
+    return _SOURCE
 
 
 def _jobs(ids: list[str]) -> list[dict[str, object]]:
@@ -112,8 +116,9 @@ def _service(session: AsyncSession) -> FullSnapshotSyncService:
 @pytest.mark.asyncio
 async def test_full_snapshot_sync_first_import_inserts_all_rows(session: AsyncSession) -> None:
     service = _service(session)
+    source = _source()
     result = await service.sync_source(
-        source=_source(),
+        source=source,
         fetcher=_FakeFetcher(_jobs(["A", "B", "C"])),
         mapper=_FakeMapper(),
     )
@@ -128,6 +133,8 @@ async def test_full_snapshot_sync_first_import_inserts_all_rows(session: AsyncSe
     assert result.stats.closed_count == 0
     assert [row.external_job_id for row in rows] == ["A", "B", "C"]
     assert all(row.source == "greenhouse:airbnb" for row in rows)
+    # Phase 3: source_id must be dual-written alongside legacy source string
+    assert all(row.source_id == str(source.id) for row in rows)
     assert all(row.status == JobStatus.open for row in rows)
     assert all(row.description_html_key for row in rows)
     assert all(row.raw_payload_key for row in rows)

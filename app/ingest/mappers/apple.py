@@ -22,6 +22,9 @@ class AppleMapper(BaseMapper):
             normalized_apply_url=None,
             status="open",
             location_text=self._location_text(raw_job),
+            location_city=self._get_location_part(raw_job, "city"),
+            location_region=self._get_location_part(raw_job, "stateProvince"),
+            location_country_code=self._get_location_part(raw_job, "countryName"),
             department=self._team_name(raw_job),
             team=None,
             employment_type=None,
@@ -59,6 +62,19 @@ class AppleMapper(BaseMapper):
             text = ", ".join(part for part in parts if part)
             if text:
                 return text
+        return None
+
+    @classmethod
+    def _get_location_part(cls, raw_job: dict[str, Any], key: str) -> str | None:
+        locations = raw_job.get("locations")
+        if not isinstance(locations, list):
+            return None
+        for location in locations:
+            if not isinstance(location, dict):
+                continue
+            cleaned = cls._clean(location.get(key))
+            if cleaned:
+                return cleaned
         return None
 
     @classmethod
