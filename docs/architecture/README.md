@@ -76,8 +76,8 @@ flowchart LR
     PG --> JD
     JD --> PG
     PG --> EMB
-    EMB --> PG
-    PG --> RET
+    EMB --> PG[PostgreSQL: job_embedding]
+    PG[PostgreSQL: job_embedding] --> RET
     RET --> MATCH
 ```
 
@@ -156,8 +156,16 @@ flowchart LR
     description_html_key
     raw_payload
     raw_payload_key
-    structured_jd
-    embedding"]
+    structured_jd"]
+
+    JE["job_embedding
+    ---
+    id PK
+    job_id FK → job.id
+    embedding_kind
+    embedding_model
+    embedding_dim
+    embedding vector"]
 
     R["syncrun
     ---
@@ -174,6 +182,7 @@ flowchart LR
 
     S -->|source_id FK| J
     S -->|source_id FK| R
+    J -->|job_id FK| JE
 ```
 
 ## 4. Target Database Direction
@@ -218,8 +227,10 @@ erDiagram
     JOB_EMBEDDING {
         uuid id PK
         uuid job_id FK
-        string model
-        int dim
+        string embedding_kind
+        int embedding_target_revision
+        string embedding_model
+        int embedding_dim
         vector embedding
         datetime updated_at
     }
@@ -271,7 +282,7 @@ The likely target design is:
 
 - structured filters first
 - vector recall as an optional recall layer, not the only retrieval primitive
-- embeddings stored outside the hot `job` row
+- embeddings stored in dedicated `job_embedding` table with active target resolution
 
 ```mermaid
 flowchart LR

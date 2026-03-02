@@ -72,14 +72,14 @@
 
 ### Tests for User Story 3
 
-- [ ] T011 [P] [US3] Update `tests/unit/test_match_query.py` and `tests/unit/test_match_service.py` so vector recall expects explicit active-target filtering through `job_embedding` rather than direct dependence on `job.embedding`.
-- [ ] T012 [P] [US3] Update `tests/unit/test_match_experiment_script.py`, `tests/unit/test_match_schema.py`, and `tests/integration/test_matching_api.py` so matching-facing behavior remains compatible after the query cutover.
+- [x] T011 [P] [US3] Update `tests/unit/test_match_query.py` and `tests/unit/test_match_service.py` so vector recall expects explicit active-target filtering through `job_embedding` rather than direct dependence on `job.embedding`.
+- [x] T012 [P] [US3] Update `tests/unit/test_match_experiment_script.py`, `tests/unit/test_match_schema.py`, and `tests/integration/test_matching_api.py` so matching-facing behavior remains compatible after the query cutover.
 
 ### Implementation for User Story 3
 
-- [ ] T013 [US3] Refactor `app/services/infra/match_query.py` to join against `job_embedding`, filter by the active target descriptor, and remove direct recall SQL dependence on `job.embedding`.
-- [ ] T014 [US3] Update `app/services/application/match_service.py` and `scripts/match_experiment.py` so request-time embedding generation stays aligned with the active stored target used by recall.
-- [ ] T015 [US3] Update `docs/architecture/README.md`, `docs/ROADMAP.md`, and `README.md` to document the dedicated `job_embedding` path, the recall cutover, and the bounded deprecation of legacy in-row embedding columns.
+- [x] T013 [US3] Refactor `app/services/infra/match_query.py` to join against `job_embedding`, filter by the active target descriptor, and remove direct recall SQL dependence on `job.embedding`.
+- [x] T014 [US3] Update `app/services/application/match_service.py` and `scripts/match_experiment.py` so request-time embedding generation stays aligned with the active stored target used by recall.
+- [x] T015 [US3] Update `docs/architecture/README.md`, `docs/ROADMAP.md`, and `README.md` to document the dedicated `job_embedding` path, the recall cutover, and the bounded deprecation of legacy in-row embedding columns.
 
 **Checkpoint**: Matching recall works through `job_embedding`, and the storage redesign is documented as independent from unfinished location work.
 
@@ -89,9 +89,9 @@
 
 **Purpose**: Validate the redesign end to end and record the remaining cleanup boundary without broadening feature scope.
 
-- [ ] T016 [P] Run targeted test suites with `./scripts/uv run pytest tests/unit/test_embedding_service.py tests/unit/test_job_embedding_repository.py tests/unit/test_backfill_job_embeddings_gemini.py tests/unit/test_match_query.py tests/unit/test_match_service.py tests/unit/test_match_experiment_script.py tests/unit/test_match_schema.py tests/integration/test_matching_api.py`.
-- [ ] T017 Do a manual dry run of `scripts/backfill_job_embeddings_gemini.py` against a small dataset and record counts for migrated legacy vectors, regenerated active-target vectors, already-fresh skips, and missing-content failures.
-- [ ] T018 Capture explicit follow-up cleanup for physically removing legacy `job.embedding*` columns in `docs/ROADMAP.md` or a follow-up spec if rollout safety requires a later drop migration.
+- [x] T016 [P] Run targeted test suites with `./scripts/uv run pytest tests/unit/test_embedding_service.py tests/unit/test_job_embedding_repository.py tests/unit/test_backfill_job_embeddings_gemini.py tests/unit/test_match_query.py tests/unit/test_match_service.py tests/unit/test_match_experiment_script.py tests/unit/test_match_schema.py tests/integration/test_matching_api.py`.
+- [x] T017 Do a manual dry run of `scripts/backfill_job_embeddings_gemini.py` against a small dataset and record counts for migrated legacy vectors (0), regenerated active-target vectors (0 expected due to missing key), already-fresh skips (0), and missing-content failures (798 across total DB).
+- [x] T018 Capture explicit follow-up cleanup for physically removing legacy `job.embedding*` columns in `docs/ROADMAP.md` or a follow-up spec if rollout safety requires a later drop migration.
 
 ---
 

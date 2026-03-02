@@ -12,6 +12,7 @@ from app.services.application.match_service import (
     MatchExperimentService,
     MatchQueryError,
 )
+from app.services.infra.embedding import EmbeddingTargetDescriptor
 from app.services.infra.llm import LLMConfig
 
 
@@ -87,6 +88,8 @@ async def test_match_service_run_returns_typed_response_without_llm(
 
     async def fake_fetch_candidates(*args, **kwargs):  # noqa: ANN002, ANN003
         _ = (args, kwargs)
+        assert "embedding_kind" in kwargs
+        assert "embedding_model" in kwargs
         return [
             _make_candidate("job-1", 0.88),
             _make_candidate("job-2", 0.83),
@@ -99,6 +102,15 @@ async def test_match_service_run_returns_typed_response_without_llm(
     )
     monkeypatch.setattr(
         "app.services.application.match_service.get_embedding_config", lambda: SimpleNamespace()
+    )
+    monkeypatch.setattr(
+        "app.services.application.match_service.resolve_active_job_embedding_target",
+        lambda **_: EmbeddingTargetDescriptor(
+            embedding_kind="job_description",
+            embedding_target_revision=1,
+            embedding_model="test-model",
+            embedding_dim=3,
+        ),
     )
     monkeypatch.setattr("app.services.application.match_service.embed_text", fake_embed_text)
     monkeypatch.setattr("app.services.infra.match_query.fetch_candidates", fake_fetch_candidates)
@@ -131,6 +143,8 @@ async def test_match_service_run_applies_llm_rerank(
 
     async def fake_fetch_candidates(*args, **kwargs):  # noqa: ANN002, ANN003
         _ = (args, kwargs)
+        assert "embedding_kind" in kwargs
+        assert "embedding_model" in kwargs
         return [
             _make_candidate("job-1", 0.88),
             _make_candidate("job-2", 0.83),
@@ -189,6 +203,15 @@ async def test_match_service_run_applies_llm_rerank(
     monkeypatch.setattr(
         "app.services.application.match_service.get_embedding_config", lambda: SimpleNamespace()
     )
+    monkeypatch.setattr(
+        "app.services.application.match_service.resolve_active_job_embedding_target",
+        lambda **_: EmbeddingTargetDescriptor(
+            embedding_kind="job_description",
+            embedding_target_revision=1,
+            embedding_model="test-model",
+            embedding_dim=3,
+        ),
+    )
     monkeypatch.setattr("app.services.application.match_service.embed_text", fake_embed_text)
     monkeypatch.setattr("app.services.infra.match_query.fetch_candidates", fake_fetch_candidates)
     monkeypatch.setattr(
@@ -235,6 +258,15 @@ async def test_match_service_run_wraps_query_errors(
     monkeypatch.setattr(
         "app.services.application.match_service.get_embedding_config", lambda: SimpleNamespace()
     )
+    monkeypatch.setattr(
+        "app.services.application.match_service.resolve_active_job_embedding_target",
+        lambda **_: EmbeddingTargetDescriptor(
+            embedding_kind="job_description",
+            embedding_target_revision=1,
+            embedding_model="test-model",
+            embedding_dim=3,
+        ),
+    )
     monkeypatch.setattr("app.services.application.match_service.embed_text", fake_embed_text)
 
     with pytest.raises(MatchQueryError):
@@ -264,6 +296,15 @@ async def test_match_service_run_fails_fast_when_llm_not_configured(
     )
     monkeypatch.setattr(
         "app.services.application.match_service.get_embedding_config", lambda: SimpleNamespace()
+    )
+    monkeypatch.setattr(
+        "app.services.application.match_service.resolve_active_job_embedding_target",
+        lambda **_: EmbeddingTargetDescriptor(
+            embedding_kind="job_description",
+            embedding_target_revision=1,
+            embedding_model="test-model",
+            embedding_dim=3,
+        ),
     )
     monkeypatch.setattr("app.services.application.match_service.embed_text", fake_embed_text)
     monkeypatch.setattr("app.services.infra.match_query.fetch_candidates", fake_fetch_candidates)

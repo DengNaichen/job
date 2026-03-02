@@ -120,5 +120,29 @@ async def test_fetch_candidates_keeps_match_constraints_and_fields() -> None:
     assert "sponsorship_not_available <> 'yes'" in fake_conn.query
     assert "LIMIT $4" in fake_conn.query
     assert fake_conn.params == ("[0.1,0.2]", "US", 2, 25)
+        prefilter_sql="j.sponsorship_not_available <> 'yes' AND j.location_country_code = $6",
+        prefilter_params=["US"],
+        embedding_kind="job_description",
+        embedding_target_revision=1,
+        embedding_model="gemini/gemini-embedding-001",
+        embedding_dim=1024,
+    )
+
+    assert fake_conn.query is not None
+    assert "je.embedding IS NOT NULL" in fake_conn.query
+    assert "j.location_country_code AS country_code" in fake_conn.query
+    assert "COALESCE(j.structured_jd_version, 0) >= 3" in fake_conn.query
+    assert "j.sponsorship_not_available <> 'yes'" in fake_conn.query
+    assert "JOIN job_embedding je ON j.id = je.job_id" in fake_conn.query
+    assert "LIMIT $7" in fake_conn.query
+    assert fake_conn.params == (
+        "[0.1,0.2]",
+        "job_description",
+        1,
+        "gemini/gemini-embedding-001",
+        1024,
+        "US",
+        25,
+    )
     assert rows[0]["job_id"] == "job-1"
     assert rows[0]["country_code"] == "CA"

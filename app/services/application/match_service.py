@@ -26,7 +26,11 @@ from app.services.domain.matching import (
     rerank_match_candidates,
     to_int,
 )
-from app.services.infra.embedding import embed_text, get_embedding_config
+from app.services.infra.embedding import (
+    embed_text,
+    get_embedding_config,
+    resolve_active_job_embedding_target,
+)
 from app.services.infra.llm_match_recommendation import LLMMatchReranker
 from app.services.infra.match_query import MatchCandidateGateway
 from app.services.infra.match_query import (
@@ -125,12 +129,20 @@ class MatchExperimentService:
             preferred_country_code=request.preferred_country_code,
         )
 
+        active_target = resolve_active_job_embedding_target(
+            config=self.embedding_config_provider(),
+            embedding_dim=settings.embedding_dim,
+        )
         try:
             candidate_rows = await self.candidate_gateway.fetch_candidates(
                 user_vec_literal=user_vec_literal,
                 top_k=request.top_k,
                 prefilter_sql=sql_prefilter,
                 prefilter_params=sql_prefilter_params,
+                embedding_kind=active_target.embedding_kind,
+                embedding_target_revision=active_target.embedding_target_revision,
+                embedding_model=active_target.embedding_model,
+                embedding_dim=active_target.embedding_dim,
             )
         except Exception as exc:  # noqa: BLE001
             raise MatchQueryError() from exc
