@@ -39,7 +39,7 @@ class TestSourceServiceDelete:
 
     @pytest.mark.asyncio
     async def test_delete_source_with_sync_runs_raises_has_references(self, session: AsyncSession):
-        from app.models import PlatformType, Source, build_source_key
+        from app.models import PlatformType, Source
         from app.repositories.source import SourceRepository
         from app.repositories.sync_run import SyncRunRepository
         from app.services.application.source import HasReferencesError, SourceService
@@ -57,7 +57,6 @@ class TestSourceServiceDelete:
         )
         source_id = source.id
         await sync_run_repo.create_running(
-            source=build_source_key(source.platform, source.identifier),
             source_id=str(source_id),
         )
 
@@ -89,7 +88,6 @@ class TestSourceServiceDelete:
         source_id = source.id  # capture before create_running commits and expires the session
         # Create sync run with source_id ONLY — no legacy source string match.
         await sync_run_repo.create_running(
-            source="greenhouse:vercel",
             source_id=str(source_id),
         )
 
@@ -117,7 +115,6 @@ class TestSourceServiceDelete:
         )
         # Direct-insert a job with source_id pointing at this source
         job = Job(
-            source="greenhouse:acme",
             source_id=str(source.id),
             external_job_id="job-42",
             title="SWE",
@@ -152,7 +149,6 @@ class TestSourceServiceDelete:
         )
         # Insert a job tied to this source
         job = Job(
-            source="greenhouse:betacorp",
             source_id=str(source.id),
             external_job_id="j-1",
             title="Dev",

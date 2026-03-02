@@ -20,8 +20,7 @@ Job posting table with multi-source aggregation and intelligent deduplication.
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | UUID | Primary key |
-| `source_id` | UUID FK | **Authoritative owner key** — FK to `sources.id`. Non-null after enforcement migration. |
-| `source` | str | Legacy compatibility key (e.g. `greenhouse:airbnb`). Dual-written alongside `source_id`. |
+| `source_id` | UUID FK | **Authoritative owner key** — FK to `sources.id`. |
 | `external_job_id` | str | Job ID from external system |
 | `title` | str | Job title |
 | `apply_url` | str | Application URL |
@@ -33,7 +32,6 @@ The system supports multi-level deduplication:
 | Field | Purpose |
 |-------|---------|
 | `source_id` + `external_job_id` | **Authoritative** unique identity within one source |
-| `source` + `external_job_id` | Legacy unique constraint (compatibility) |
 | `normalized_apply_url` | Cross-source URL deduplication |
 | `content_fingerprint` | Content hash for detecting job content changes |
 | `dedupe_group_id` | Custom deduplication group for advanced dedup logic |
@@ -60,12 +58,7 @@ The system supports multi-level deduplication:
 
 | Field | Description |
 |-------|-------------|
-| `location_text` | Work location (compatibility text for display) |
-| `location_city` | Structured city name |
-| `location_region` | Structured region (state/province) |
-| `location_country_code` | Canonical single-country ISO 3166-1 alpha-2 code |
-| `location_workplace_type` | Workplace type (`remote`, `hybrid`, `onsite`, `unknown`) |
-| `location_remote_scope` | Remote availability scope (e.g. "US Only") |
+| `locations` / `job_locations` | Authoritative structured location storage (city/region/country + workplace metadata). Raw display text lives in `job_locations.source_raw`. |
 | `department` | Department |
 | `team` | Team |
 | `employment_type` | Employment type (full-time, part-time, contract, etc.) |
@@ -101,8 +94,7 @@ Sync task record table, tracks execution status and statistics of each sync oper
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | UUID | Primary key |
-| `source_id` | UUID FK | **Authoritative owner key** — FK to `sources.id`. Non-null after enforcement migration. |
-| `source` | str | Legacy compatibility key (e.g. `greenhouse:airbnb`). Dual-written alongside `source_id`. |
+| `source_id` | UUID FK | **Authoritative owner key** — FK to `sources.id`. |
 | `status` | enum | `running` / `success` / `failed` |
 | `started_at` | datetime | Start time |
 | `finished_at` | datetime | End time (nullable) |
@@ -135,7 +127,7 @@ Deduplication breakdown:
 
 1. **Preserve Raw Data** - `raw_payload` stays available during transition while the large body can move to object storage
 2. **Complete Timestamps** - `ingested_at`, `last_seen_at`, `source_updated_at` support full timeline tracking
-3. **Authoritative Source Ownership** - `source_id` (FK to `sources.id`) is the authoritative owner key for job and sync-run records. The legacy `source` string (`platform:identifier`) is dual-written as a compatibility field.
+3. **Authoritative Source Ownership** - `source_id` (FK to `sources.id`) is the owner key for job and sync-run records.
 4. **Same-Source Reconcile** - Full snapshot sync uses `source_id` to upsert and close missing jobs
 5. **Layered Deduplication** - Same-source dedup is the current foundation; cross-source URL/content dedup remains a later phase
 6. **Observability** - `SyncRun` provides detailed sync statistics for monitoring and troubleshooting

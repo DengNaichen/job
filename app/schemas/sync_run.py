@@ -6,7 +6,8 @@ from app.models import SyncRunStatus
 
 
 class SyncRunBase(BaseModel):
-    source: str
+    # Deprecated compatibility key. Persisted owner is `source_id`.
+    source: str | None = None
     status: SyncRunStatus = SyncRunStatus.running
 
 

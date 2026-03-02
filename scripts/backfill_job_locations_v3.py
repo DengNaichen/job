@@ -25,6 +25,10 @@ from app.services.domain.job_location import (
 logger = logging.getLogger(__name__)
 
 
+def _job_attr(job: Job, field: str, default: object = None) -> object:
+    return getattr(job, field, default)
+
+
 async def apply_backfill_to_job_v3(session: AsyncSession, job: Job) -> bool:
     """
     Apply v3 canonical location backfill to a job in-place.
@@ -45,7 +49,9 @@ async def apply_backfill_to_job_v3(session: AsyncSession, job: Job) -> bool:
     }
 
     # 1. Try to extract using the mapper (High Confidence)
-    mapper = MAPPERS.get(job.source) if job.source else None
+    source_key = _job_attr(job, "source")
+    source_platform = source_key if isinstance(source_key, str) else None
+    mapper = MAPPERS.get(source_platform) if source_platform else None
     if mapper and job.raw_payload:
         try:
             mapped = mapper.map(job.raw_payload)
@@ -63,35 +69,49 @@ async def apply_backfill_to_job_v3(session: AsyncSession, job: Job) -> bool:
 
     # 2. Fallback to heuristic interpretation
     if not structured_locations:
-        has_existing_city_region = bool(job.location_city or job.location_region)
+        existing_city = _job_attr(job, "location_city")
+        existing_region = _job_attr(job, "location_region")
+        existing_country = _job_attr(job, "location_country_code")
+        existing_remote_scope = _job_attr(job, "location_remote_scope")
+
+        has_existing_city_region = bool(existing_city or existing_region)
         from app.services.domain.country_normalization import is_canonical_country_code
 
-        current_canonical_country = is_canonical_country_code(job.location_country_code)
+        current_canonical_country = is_canonical_country_code(
+            existing_country if isinstance(existing_country, str) else None
+        )
 
         # If we already have strong data, we should just canonicalize what we have
         # instead of overwriting it via an imperfect text parse
         if has_existing_city_region or current_canonical_country:
             loc = StructuredLocation(
-                city=job.location_city,
-                region=job.location_region,
-                country_code=job.location_country_code,
-                workplace_type=job.location_workplace_type,
-                remote_scope=job.location_remote_scope,
+                city=existing_city if isinstance(existing_city, str) else None,
+                region=existing_region if isinstance(existing_region, str) else None,
+                country_code=existing_country if isinstance(existing_country, str) else None,
+                workplace_type=_job_attr(job, "location_workplace_type", WorkplaceType.unknown),
+                remote_scope=existing_remote_scope if isinstance(existing_remote_scope, str) else None,
             )
             # still attempt to patch country if it's missing or non-canonical but we have text
-            if not current_canonical_country and job.location_text:
-                parsed = parse_location_text(job.location_text)
+            location_text = _job_attr(job, "location_text")
+            if (
+                not current_canonical_country
+                and isinstance(location_text, str)
+                and location_text
+            ):
+                parsed = parse_location_text(location_text)
                 if parsed.country_code:
                     loc.country_code = parsed.country_code
                 if loc.workplace_type == WorkplaceType.unknown:
                     loc.workplace_type = parsed.workplace_type
             structured_locations.append(loc)
-        elif job.location_text:
-            parsed = parse_location_text(job.location_text)
-            structured_locations.append(parsed)
-        elif job.location_remote_scope:
-            parsed = parse_location_text(f"Remote - {job.location_remote_scope}")
-            structured_locations.append(parsed)
+        else:
+            location_text = _job_attr(job, "location_text")
+            if isinstance(location_text, str) and location_text:
+                parsed = parse_location_text(location_text)
+                structured_locations.append(parsed)
+            elif existing_remote_scope:
+                parsed = parse_location_text(f"Remote - {existing_remote_scope}")
+                structured_locations.append(parsed)
 
     changed = False
 
@@ -129,10 +149,10 @@ async def apply_backfill_to_job_v3(session: AsyncSession, job: Job) -> bool:
             changed = True
 
         if is_primary:
-            old_city = job.location_city
-            old_region = job.location_region
-            old_country = job.location_country_code
-            old_workplace = job.location_workplace_type
+            old_city = _job_attr(job, "location_city")
+            old_region = _job_attr(job, "location_region")
+            old_country = _job_attr(job, "location_country_code")
+            old_workplace = _job_attr(job, "location_workplace_type")
 
             sync_primary_to_job(
                 job=job,
@@ -142,10 +162,10 @@ async def apply_backfill_to_job_v3(session: AsyncSession, job: Job) -> bool:
             )
 
             if (
-                job.location_city != old_city
-                or job.location_region != old_region
-                or job.location_country_code != old_country
-                or job.location_workplace_type != old_workplace
+                _job_attr(job, "location_city") != old_city
+                or _job_attr(job, "location_region") != old_region
+                or _job_attr(job, "location_country_code") != old_country
+                or _job_attr(job, "location_workplace_type") != old_workplace
             ):
                 changed = True
 

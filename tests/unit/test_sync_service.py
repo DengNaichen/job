@@ -177,7 +177,6 @@ async def test_sync_service_skips_overlap_without_running_snapshot(
             repo = SyncRunRepository(session)
             # Seed with source_id so the authoritative overlap check finds it
             await repo.create_running(
-                source=build_source_key(source.platform, source.identifier),
                 source_id=str(source.id),
             )
 

@@ -95,10 +95,9 @@ The ingest path is intentionally layered:
 6. `run_scheduled_ingests.py`
    Thin orchestration layer for scheduled source syncs with retry and overlap protection
 
-> **Note on `source` string field**: Both `job.source` and `syncrun.source` retain the legacy
-> `platform:identifier` string (e.g. `greenhouse:airbnb`) as a **compatibility field**.
-> It is dual-written alongside `source_id` and preserved for backward-compatible reads.
-> `source_id` (FK to `sources.id`) is the authoritative owner key for all runtime behavior.
+> **Note on source ownership key**: Runtime ownership is now keyed only by `source_id`
+> (FK to `sources.id`) on both `job` and `syncrun`. Legacy string columns were removed
+> in migration `f7a8b9c0d1e2_drop_legacy_source_columns`.
 
 ## Quick Start
 

@@ -21,8 +21,6 @@ class SyncRun(SQLModel, table=True):
             String(36), ForeignKey("sources.id", ondelete="RESTRICT"), nullable=True, index=True
         ),
     )
-    # Compatibility source key (legacy string). Preserved throughout migration.
-    source: str = Field(index=True)
     started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     finished_at: datetime | None = Field(default=None)
     status: SyncRunStatus

@@ -1,5 +1,11 @@
+import pytest
+
 from app.models.job import Job, WorkplaceType
 from scripts.backfill_job_locations import apply_backfill_to_job
+
+pytestmark = pytest.mark.skip(
+    reason="Legacy `job.location_*` columns were removed; use normalized location backfill tests."
+)
 
 
 def test_apply_backfill_high_confidence():

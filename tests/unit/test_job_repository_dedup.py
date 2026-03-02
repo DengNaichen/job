@@ -6,20 +6,38 @@ import pytest
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models import Job, JobStatus
+from app.models import Job, JobStatus, PlatformType, Source
 from app.repositories.job import JobRepository
+
+
+def _parse_source_key(source_key: str) -> tuple[PlatformType, str]:
+    platform, identifier = source_key.split(":", 1)
+    return PlatformType(platform), identifier
+
+
+async def _create_source(session: AsyncSession, source_key: str, name: str) -> Source:
+    platform, identifier = _parse_source_key(source_key)
+    source = Source(
+        name=name,
+        name_normalized=name.lower(),
+        platform=platform,
+        identifier=identifier,
+    )
+    session.add(source)
+    await session.flush()
+    return source
 
 
 def _make_job(
     *,
-    source: str,
+    source_id: str,
     external_job_id: str,
     status: JobStatus = JobStatus.open,
     last_seen_at: datetime | None = None,
 ) -> Job:
     ts = last_seen_at or datetime.now(timezone.utc)
     return Job(
-        source=source,
+        source_id=source_id,
         external_job_id=external_job_id,
         title=f"Job {external_job_id}",
         apply_url=f"https://example.com/{external_job_id}",
@@ -35,9 +53,13 @@ def _make_job(
 async def test_list_by_source_and_external_ids_filters_to_same_source(
     session: AsyncSession,
 ) -> None:
-    target = _make_job(source="greenhouse:airbnb", external_job_id="123")
-    other_source = _make_job(source="greenhouse:stripe", external_job_id="123")
-    other_id = _make_job(source="greenhouse:airbnb", external_job_id="456")
+    airbnb_source = await _create_source(session, "greenhouse:airbnb", "Airbnb")
+    stripe_source = await _create_source(session, "greenhouse:stripe", "Stripe")
+    airbnb_source_id = str(airbnb_source.id)
+    stripe_source_id = str(stripe_source.id)
+    target = _make_job(source_id=airbnb_source_id, external_job_id="123")
+    other_source = _make_job(source_id=stripe_source_id, external_job_id="123")
+    other_id = _make_job(source_id=airbnb_source_id, external_job_id="456")
     session.add(target)
     session.add(other_source)
     session.add(other_id)
@@ -50,7 +72,7 @@ async def test_list_by_source_and_external_ids_filters_to_same_source(
     )
 
     assert [row.external_job_id for row in rows] == ["123"]
-    assert rows[0].source == "greenhouse:airbnb"
+    assert rows[0].source_id == airbnb_source_id
 
 
 @pytest.mark.asyncio
@@ -58,24 +80,26 @@ async def test_bulk_close_missing_for_source_only_closes_stale_open_rows(
     session: AsyncSession,
 ) -> None:
     cutoff = datetime.now(timezone.utc)
+    airbnb_source = await _create_source(session, "greenhouse:airbnb", "Airbnb")
+    stripe_source = await _create_source(session, "greenhouse:stripe", "Stripe")
     stale_open = _make_job(
-        source="greenhouse:airbnb",
+        source_id=str(airbnb_source.id),
         external_job_id="stale-open",
         last_seen_at=cutoff - timedelta(hours=1),
     )
     fresh_open = _make_job(
-        source="greenhouse:airbnb",
+        source_id=str(airbnb_source.id),
         external_job_id="fresh-open",
         last_seen_at=cutoff + timedelta(minutes=5),
     )
     stale_closed = _make_job(
-        source="greenhouse:airbnb",
+        source_id=str(airbnb_source.id),
         external_job_id="stale-closed",
         status=JobStatus.closed,
         last_seen_at=cutoff - timedelta(hours=1),
     )
     other_source = _make_job(
-        source="greenhouse:stripe",
+        source_id=str(stripe_source.id),
         external_job_id="other-source",
         last_seen_at=cutoff - timedelta(hours=1),
     )

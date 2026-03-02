@@ -23,18 +23,36 @@ class JobLocationRepository:
         location_id: str,
         is_primary: bool = False,
         source_raw: str | None = None,
+        workplace_type: str = "unknown",
+        remote_scope: str | None = None,
     ) -> JobLocation:
         """Link a job to a location. Idempotent."""
-        statement = select(JobLocation).where(
-            JobLocation.job_id == job_id, JobLocation.location_id == location_id
-        )
-        result = await self.session.exec(statement)
-        existing = result.first()
+        links = await self.list_by_job_id(job_id)
+
+        # Keep one-primary-per-job invariant stable before setting/creating a primary link.
+        if is_primary:
+            primary_changed = False
+            for link in links:
+                if link.is_primary and link.location_id != location_id:
+                    link.is_primary = False
+                    self.session.add(link)
+                    primary_changed = True
+            if primary_changed:
+                await self.session.flush()
+
+        existing = next((link for link in links if link.location_id == location_id), None)
 
         if existing:
-            if existing.is_primary != is_primary or existing.source_raw != source_raw:
+            if (
+                existing.is_primary != is_primary
+                or existing.source_raw != source_raw
+                or existing.workplace_type != workplace_type
+                or existing.remote_scope != remote_scope
+            ):
                 existing.is_primary = is_primary
                 existing.source_raw = source_raw
+                existing.workplace_type = workplace_type
+                existing.remote_scope = remote_scope
                 self.session.add(existing)
             return existing
 
@@ -43,6 +61,8 @@ class JobLocationRepository:
             location_id=location_id,
             is_primary=is_primary,
             source_raw=source_raw,
+            workplace_type=workplace_type,
+            remote_scope=remote_scope,
         )
         self.session.add(job_loc)
         return job_loc

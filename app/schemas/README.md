@@ -24,7 +24,7 @@ Input when creating a job:
     "apply_url": "https://example.com/apply",
     "normalized_apply_url": "https://example.com/apply",  # optional
     "status": "open",  # optional, default: open
-    "location_text": "San Francisco",  # optional legacy display fallback
+    "location_text": "San Francisco",  # optional deprecated ingest hint (not persisted on `job`)
     "location_city": "San Francisco",  # optional
     "location_region": "CA",  # optional
     "location_country_code": "US",  # optional canonical single-country ISO 3166-1 alpha-2 code
@@ -71,7 +71,7 @@ Input when updating a job (all fields optional):
 {
     "title": "Staff Engineer",  # optional
     "status": "closed",  # optional
-    "location_text": "Remote",  # optional
+    "location_text": "Remote",  # optional deprecated compatibility field (ignored on persistence)
     ...
 }
 ```

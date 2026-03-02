@@ -4,23 +4,17 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from app.models import JobStatus, WorkplaceType
-from app.schemas.location import LocationRead
+from app.schemas.location import JobLocationRead
 
 
 class JobBase(BaseModel):
-    source: str
+    # Deprecated compatibility key. Persisted owner is `source_id`.
+    source: str | None = Field(default=None, deprecated=True)
     external_job_id: str
     title: str
     apply_url: str
     normalized_apply_url: str | None = None
     status: JobStatus = JobStatus.open
-
-    location_text: str | None = None
-    location_city: str | None = None
-    location_region: str | None = None
-    location_country_code: str | None = None
-    location_workplace_type: WorkplaceType = WorkplaceType.unknown
-    location_remote_scope: str | None = None
 
     department: str | None = None
     team: str | None = None
@@ -47,6 +41,19 @@ class JobCreate(JobBase):
     structured_jd: dict[str, Any] | None = None
     structured_jd_updated_at: datetime | None = None
 
+    # Deprecated compatibility field. Used as ingest hint only; not persisted on `job`.
+    location_text: str | None = Field(default=None, deprecated=True)
+
+    # Deprecated legacy structured location fields.
+    location_city: str | None = Field(default=None, deprecated=True)
+    location_region: str | None = Field(default=None, deprecated=True)
+    location_country_code: str | None = Field(default=None, deprecated=True)
+    location_workplace_type: WorkplaceType = Field(
+        default=WorkplaceType.unknown,
+        deprecated=True,
+    )
+    location_remote_scope: str | None = Field(default=None, deprecated=True)
+
     # New normalized location hints (User Story 1)
     location_hints: list[dict[str, Any]] = Field(default_factory=list)
 
@@ -66,8 +73,12 @@ class JobRead(JobBase):
     raw_payload_key: str | None
     raw_payload_hash: str | None
 
+    # Deprecated compatibility field.
+    # Value is hydrated from primary job_location.source_raw when available.
+    location_text: str | None = Field(default=None, deprecated=True)
+
     # New normalized locations
-    locations: list["LocationRead"] = []
+    locations: list["JobLocationRead"] = []
 
     sponsorship_not_available: str
     job_domain_raw: str | None
@@ -92,12 +103,13 @@ class JobUpdate(BaseModel):
     dedupe_group_id: str | None = None
     title: str | None = None
     status: JobStatus | None = None
-    location_text: str | None = None
-    location_city: str | None = None
-    location_region: str | None = None
-    location_country_code: str | None = None
-    location_workplace_type: WorkplaceType | None = None
-    location_remote_scope: str | None = None
+    # Deprecated compatibility field. Ignored by persistence layer.
+    location_text: str | None = Field(default=None, deprecated=True)
+    location_city: str | None = Field(default=None, deprecated=True)
+    location_region: str | None = Field(default=None, deprecated=True)
+    location_country_code: str | None = Field(default=None, deprecated=True)
+    location_workplace_type: WorkplaceType | None = Field(default=None, deprecated=True)
+    location_remote_scope: str | None = Field(default=None, deprecated=True)
     department: str | None = None
     team: str | None = None
     employment_type: str | None = None

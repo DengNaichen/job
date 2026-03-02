@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models import Job, JobEmbedding, JobStatus
+from app.models import Job, JobEmbedding, JobStatus, Location, PlatformType, Source
 from app.models.job_location import JobLocation
 
 
@@ -39,18 +39,34 @@ class JobRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    @staticmethod
+    def _split_source_key(source_key: str) -> tuple[PlatformType, str] | None:
+        if ":" not in source_key:
+            return None
+        platform_str, identifier = source_key.split(":", 1)
+        platform_str = platform_str.strip().lower()
+        identifier = identifier.strip()
+        if not platform_str or not identifier:
+            return None
+        try:
+            return PlatformType(platform_str), identifier
+        except ValueError:
+            return None
+
     async def create(self, job: Job) -> Job:
         """Create a new job."""
+        job_id = str(job.id)
         self.session.add(job)
         await self.session.commit()
-        await self.session.refresh(job)
-        return job
+        reloaded = await self.get_by_id(job_id)
+        return reloaded or job
 
     async def get_by_id(self, job_id: str) -> Job | None:
         """Get a job by ID."""
         statement = (
             select(Job)
             .where(Job.id == job_id)
+            .options(selectinload(Job.source_record))
             .options(selectinload(Job.job_locations).selectinload(JobLocation.location))
         )
         result = await self.session.exec(statement)
@@ -63,6 +79,7 @@ class JobRepository:
         statement = (
             select(Job)
             .where(Job.id.in_(job_ids))
+            .options(selectinload(Job.source_record))
             .options(selectinload(Job.job_locations).selectinload(JobLocation.location))
         )
         result = await self.session.execute(statement)
@@ -127,21 +144,38 @@ class JobRepository:
         source: str,
         external_job_ids: list[str],
     ) -> list[Job]:
-        """Get jobs for one same-source snapshot keyed by external_job_id."""
+        """Compatibility helper: source-key lookup mapped to authoritative source_id."""
         if not external_job_ids:
             return []
 
+        parsed = self._split_source_key(source)
+        if parsed is None:
+            return []
+        platform, identifier = parsed
+
         result = await self.session.exec(
-            select(Job).where(
-                Job.source == source,
+            select(Job)
+            .join(Source, Source.id == Job.source_id)
+            .where(
+                Source.platform == platform,
+                Source.identifier == identifier,
                 Job.external_job_id.in_(external_job_ids),
             )
         )
         return list(result.all())
 
     async def has_any_for_source(self, *, source: str) -> bool:
-        """LEGACY-FALLBACK: return True if any job row uses the given legacy source key."""
-        result = await self.session.exec(select(Job.id).where(Job.source == source).limit(1))
+        """Compatibility helper: source-key lookup mapped to authoritative source_id."""
+        parsed = self._split_source_key(source)
+        if parsed is None:
+            return False
+        platform, identifier = parsed
+        result = await self.session.exec(
+            select(Job.id)
+            .join(Source, Source.id == Job.source_id)
+            .where(Source.platform == platform, Source.identifier == identifier)
+            .limit(1)
+        )
         return result.first() is not None
 
     async def list_jobs(
@@ -155,6 +189,7 @@ class JobRepository:
             select(Job)
             .offset(skip)
             .limit(limit)
+            .options(selectinload(Job.source_record))
             .options(selectinload(Job.job_locations).selectinload(JobLocation.location))
         )
         if status is not None:
@@ -164,10 +199,11 @@ class JobRepository:
 
     async def update(self, job: Job) -> Job:
         """Update an existing job."""
+        job_id = str(job.id)
         self.session.add(job)
         await self.session.commit()
-        await self.session.refresh(job)
-        return job
+        reloaded = await self.get_by_id(job_id)
+        return reloaded or job
 
     async def save_all(self, jobs: list[Job]) -> None:
         """Save a batch of existing jobs in one commit."""
@@ -191,11 +227,22 @@ class JobRepository:
         seen_at_before: datetime,
         updated_at: datetime,
     ) -> int:
-        """LEGACY-FALLBACK: close stale open jobs for a source string not seen in this snapshot."""
+        """Compatibility helper: close by source-key via authoritative source_id."""
+        parsed = self._split_source_key(source)
+        if parsed is None:
+            return 0
+        platform, identifier = parsed
+        source_id_result = await self.session.exec(
+            select(Source.id).where(Source.platform == platform, Source.identifier == identifier).limit(1)
+        )
+        source_id = source_id_result.first()
+        if source_id is None:
+            return 0
+
         result = await self.session.exec(
             update(Job)
             .where(
-                Job.source == source,
+                Job.source_id == str(source_id),
                 Job.status == JobStatus.open,
                 Job.last_seen_at < seen_at_before,
             )
@@ -254,10 +301,12 @@ class JobRepository:
         last_id: str | None = None,
         limit: int = 100,
     ) -> list[Job]:
-        """List jobs whose location_country_code is null or clearly not a canonical alpha-2 code."""
-        # This targets rows needing country repair (null or raw names like "United States")
-        statement = select(Job).where(
-            or_(Job.location_country_code.is_(None), func.length(Job.location_country_code) != 2)  # type: ignore
+        """List jobs whose primary canonical location is missing or lacks a country code."""
+        statement = (
+            select(Job)
+            .outerjoin(JobLocation, and_(Job.id == JobLocation.job_id, JobLocation.is_primary.is_(True)))
+            .outerjoin(Location, Location.id == JobLocation.location_id)
+            .where(or_(JobLocation.job_id.is_(None), Location.country_code.is_(None)))
         )
         if last_id:
             statement = statement.where(Job.id > last_id)

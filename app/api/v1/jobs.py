@@ -6,8 +6,9 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.orm.attributes import instance_state
 
 from app.core.database import get_session
-from app.models import Job, JobStatus
+from app.models import Job, JobStatus, build_source_key
 from app.repositories.job import JobRepository
+from app.schemas.location import JobLocationRead
 from app.repositories.source import SourceRepository
 from app.schemas.job import JobCreate, JobRead, JobUpdate
 from app.services.application.job import JobNotFoundError, JobService, SourceResolutionError
@@ -26,10 +27,24 @@ def _map_job_to_read(job: Job) -> JobRead:
     """Helper to map a Job model to JobRead, injecting explicitly loaded locations."""
     data = job.model_dump()
     state = instance_state(job)
+    source_record = state.dict.get("source_record")
+    if source_record is not None:
+        data["source"] = build_source_key(source_record.platform, source_record.identifier)
+    else:
+        data["source"] = None
+
     if "job_locations" in state.dict:
-        data["locations"] = [link.location.model_dump() for link in state.dict["job_locations"]]
+        links = state.dict["job_locations"]
+        data["locations"] = [JobLocationRead.model_validate(link).model_dump() for link in links]
+        primary = next((link for link in links if link.is_primary), None)
+        data["location_text"] = (
+            primary.source_raw.strip()
+            if primary and isinstance(primary.source_raw, str) and primary.source_raw.strip()
+            else None
+        )
     else:
         data["locations"] = []
+        data["location_text"] = None
     return JobRead.model_validate(data)
 
 

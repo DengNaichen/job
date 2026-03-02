@@ -8,7 +8,7 @@ from app.contracts.sync import SourceSyncResult
 from app.core.database import engine as default_engine
 from app.ingest.fetchers.base import BaseFetcher
 from app.ingest.mappers.base import BaseMapper
-from app.models import PlatformType, Source, SyncRun, SyncRunStatus, build_source_key
+from app.models import PlatformType, Source, SyncRun, SyncRunStatus
 from app.repositories.job import JobRepository
 from app.repositories.sync_run import SyncRunRepository
 from app.services.application.full_snapshot_sync import FullSnapshotSyncService
@@ -40,7 +40,6 @@ class SyncService:
         dry_run: bool = False,
         retry_attempts: int = 3,
     ) -> SyncRun:
-        source_key = build_source_key(source.platform, source.identifier)
         handlers = self._resolve_handlers(source.platform)
 
         async with AsyncSession(self.engine) as tracking_session:
@@ -49,7 +48,6 @@ class SyncService:
             running = await sync_run_repository.get_running_by_source_id(source_id=str(source.id))
             if running is not None:
                 return await sync_run_repository.create_finished(
-                    source=source_key,
                     source_id=str(source.id),
                     status=SyncRunStatus.failed,
                     error_summary="overlap: source already running",
@@ -57,14 +55,12 @@ class SyncService:
 
             if handlers is None:
                 return await sync_run_repository.create_finished(
-                    source=source_key,
                     source_id=str(source.id),
                     status=SyncRunStatus.failed,
                     error_summary=f"unsupported platform: {source.platform.value}",
                 )
 
             sync_run = await sync_run_repository.create_running(
-                source=source_key,
                 source_id=str(source.id),
             )
             fetcher = handlers.fetcher_cls()
