@@ -44,6 +44,7 @@ def build_match_request_from_args(
         llm_top_n=args.llm_top_n,
         llm_concurrency=args.llm_concurrency,
         max_user_chars=args.max_user_chars,
+        preferred_country_code=args.preferred_country_code,
         user_json=str(user_path),
     )
 
@@ -104,6 +105,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--max-user-chars", type=int, default=12000, help="Max chars for user embedding text"
+    )
+    parser.add_argument(
+        "--preferred-country-code",
+        default=None,
+        help="ISO 3166-1 alpha-2 country code for filtering",
     )
     parser.add_argument("--output", default=None, help="Optional output JSON file path")
     return parser.parse_args()

@@ -24,6 +24,7 @@ def _build_response() -> MatchResponse:
                 "sql_prefilter": {
                     "sponsorship_filter_applied": False,
                     "degree_filter_applied": True,
+                    "preferred_country_code": None,
                     "user_degree_rank": 2,
                 },
                 "candidates_after_sql_prefilter": 3,

@@ -22,12 +22,18 @@ def build_sql_prefilter(
     start_index: int,
     needs_sponsorship: bool,
     user_degree_rank: int,
+    preferred_country_code: str | None = None,
 ) -> tuple[str, list[object], dict[str, Any]]:
     clauses: list[str] = []
     params: list[object] = []
 
     if needs_sponsorship:
         clauses.append("sponsorship_not_available <> 'yes'")
+
+    if preferred_country_code:
+        placeholder = f"${start_index + len(params)}"
+        clauses.append(f"location_country_code = {placeholder}")
+        params.append(preferred_country_code)
 
     if user_degree_rank >= 0:
         placeholder = f"${start_index + len(params)}"
@@ -42,6 +48,7 @@ def build_sql_prefilter(
         {
             "sponsorship_filter_applied": needs_sponsorship,
             "degree_filter_applied": user_degree_rank >= 0,
+            "preferred_country_code": preferred_country_code,
             "user_degree_rank": user_degree_rank,
         },
     )
@@ -72,10 +79,10 @@ async def fetch_candidates(
             title,
             apply_url,
             location_text,
-            city,
-            region,
-            country_code,
-            workplace_type,
+            location_city AS city,
+            location_region AS region,
+            location_country_code AS country_code,
+            location_workplace_type AS workplace_type,
             department,
             team,
             employment_type,

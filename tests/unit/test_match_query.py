@@ -39,19 +39,22 @@ def test_vector_literal_formats_values() -> None:
     assert vector_literal([0.1, 0.2, 0.3]) == "[0.100000000,0.200000000,0.300000000]"
 
 
-def test_build_sql_prefilter_with_sponsorship_and_degree() -> None:
+def test_build_sql_prefilter_with_country_sponsorship_and_degree() -> None:
     sql, params, summary = build_sql_prefilter(
         start_index=2,
         needs_sponsorship=True,
         user_degree_rank=3,
+        preferred_country_code="US",
     )
 
     assert "sponsorship_not_available <> 'yes'" in sql
+    assert "location_country_code = $2" in sql
     assert "min_degree_rank" in sql
-    assert params == [3]
+    assert params == ["US", 3]
     assert summary == {
         "sponsorship_filter_applied": True,
         "degree_filter_applied": True,
+        "preferred_country_code": "US",
         "user_degree_rank": 3,
     }
 
@@ -68,6 +71,7 @@ def test_build_sql_prefilter_omits_degree_when_unknown() -> None:
     assert summary == {
         "sponsorship_filter_applied": False,
         "degree_filter_applied": False,
+        "preferred_country_code": None,
         "user_degree_rank": -1,
     }
 
@@ -105,14 +109,16 @@ async def test_fetch_candidates_keeps_match_constraints_and_fields() -> None:
         fake_conn,
         user_vec_literal="[0.1,0.2]",
         top_k=25,
-        prefilter_sql="sponsorship_not_available <> 'yes'",
-        prefilter_params=[2],
+        prefilter_sql="sponsorship_not_available <> 'yes' AND location_country_code = $2",
+        prefilter_params=["US", 2],
     )
 
+    assert fake_conn.query is not None
     assert "embedding IS NOT NULL" in fake_conn.query
+    assert "location_country_code AS country_code" in fake_conn.query
     assert "COALESCE(structured_jd_version, 0) >= 3" in fake_conn.query
     assert "sponsorship_not_available <> 'yes'" in fake_conn.query
-    assert "LIMIT $3" in fake_conn.query
-    assert fake_conn.params == ("[0.1,0.2]", 2, 25)
+    assert "LIMIT $4" in fake_conn.query
+    assert fake_conn.params == ("[0.1,0.2]", "US", 2, 25)
     assert rows[0]["job_id"] == "job-1"
-    assert rows[0]["structured_jd"]["required_skills"] == ["Python"]
+    assert rows[0]["country_code"] == "CA"
