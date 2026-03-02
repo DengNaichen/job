@@ -7,7 +7,7 @@ from typing import Any
 import litellm
 
 from .config import _normalize_api_base, get_embedding_config, resolve_embedding_model_name
-from .parsing import _extract_vector
+from .parsing import extract_vectors_from_response
 from .types import EmbeddingConfig
 
 EMBEDDING_TIMEOUT = 120
@@ -90,6 +90,24 @@ def _is_transient_error(exc: Exception) -> bool:
     return any(hint in message for hint in _TRANSIENT_MESSAGE_HINTS)
 
 
+def _parse_vectors(
+    *,
+    response: Any,
+    config: EmbeddingConfig,
+    model_name: str,
+    expected_count: int,
+    expected_dimensions: int | None = None,
+) -> list[list[float]]:
+    try:
+        return extract_vectors_from_response(
+            response,
+            expected_count=expected_count,
+            expected_dimensions=expected_dimensions,
+        )
+    except ValueError as exc:
+        raise ValueError(f"{exc}; provider={config.provider}; model={model_name}") from exc
+
+
 async def embed_texts(
     texts: list[str],
     *,
@@ -116,10 +134,13 @@ async def embed_texts(
         )
         try:
             response = await litellm.aembedding(**kwargs)
-            data = getattr(response, "data", None)
-            if not isinstance(data, list):
-                raise ValueError("Invalid embedding response: missing data list")
-            return [_extract_vector(item) for item in data]
+            return _parse_vectors(
+                response=response,
+                config=config,
+                model_name=model_name,
+                expected_count=len(texts),
+                expected_dimensions=active_dimensions,
+            )
         except Exception as exc:
             error_to_handle: Exception = exc
             if active_dimensions is not None and _is_dimensions_unsupported_error(exc):
@@ -132,10 +153,12 @@ async def embed_texts(
                         dimensions=None,
                     )
                     response = await litellm.aembedding(**fallback_kwargs)
-                    data = getattr(response, "data", None)
-                    if not isinstance(data, list):
-                        raise ValueError("Invalid embedding response: missing data list")
-                    return [_extract_vector(item) for item in data]
+                    return _parse_vectors(
+                        response=response,
+                        config=config,
+                        model_name=model_name,
+                        expected_count=len(texts),
+                    )
                 except Exception as fallback_exc:
                     error_to_handle = fallback_exc
 
