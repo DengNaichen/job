@@ -34,16 +34,16 @@
 
 ### Tests for User Story 1
 
-- [ ] T005 [P] [US1] Expand `tests/unit/test_job_location.py` to cover explicit country alias mapping, canonical code output, ambiguous abbreviations such as `CA`, single-country remote scope, multi-country remote scope, and supranational-region cases.
-- [ ] T006 [P] [US1] Update `tests/unit/ingest/mappers/test_company_apis.py` and `tests/unit/ingest/mappers/test_smartrecruiters.py` so structured source-native country fields normalize to canonical alpha-2 codes instead of raw names.
-- [ ] T007 [P] [US1] Update `tests/unit/ingest/mappers/test_eightfold.py`, `tests/unit/ingest/mappers/test_lever.py`, `tests/unit/ingest/mappers/test_greenhouse.py`, and `tests/unit/ingest/mappers/test_ashby.py` to cover conservative text inference for one clear country and null outputs for ambiguous multi-country cases.
-- [ ] T008 [P] [US1] Update `tests/unit/test_job_service.py` and `tests/integration/test_job_api.py` if needed so direct create/update and read paths continue to round-trip canonical country codes without reverting to display names.
+- [x] T005 [P] [US1] Expand `tests/unit/test_job_location.py` to cover explicit country alias mapping, canonical code output, ambiguous abbreviations such as `CA`, single-country remote scope, multi-country remote scope, and supranational-region cases.
+- [x] T006 [P] [US1] Update `tests/unit/ingest/mappers/test_company_apis.py` and `tests/unit/ingest/mappers/test_smartrecruiters.py` so structured source-native country fields normalize to canonical alpha-2 codes instead of raw names.
+- [x] T007 [P] [US1] Update `tests/unit/ingest/mappers/test_eightfold.py`, `tests/unit/ingest/mappers/test_lever.py`, `tests/unit/ingest/mappers/test_greenhouse.py`, and `tests/unit/ingest/mappers/test_ashby.py` to cover conservative text inference for one clear country and null outputs for ambiguous multi-country cases.
+- [x] T008 [P] [US1] Update `tests/unit/test_job_service.py` and `tests/integration/test_job_api.py` if needed so direct create/update and read paths continue to round-trip canonical country codes without reverting to display names.
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Update `app/ingest/mappers/apple.py`, `app/ingest/mappers/smartrecruiters.py`, `app/ingest/mappers/uber.py`, and `app/ingest/mappers/tiktok.py` to normalize explicit source-native country fields through the shared country helper.
-- [ ] T010 [US1] Update `app/ingest/mappers/eightfold.py`, `app/ingest/mappers/lever.py`, `app/ingest/mappers/greenhouse.py`, and `app/ingest/mappers/ashby.py` to use conservative text and remote-scope normalization, preserving null for ambiguous multi-country or region-only cases.
-- [ ] T011 [US1] Update `app/ingest/mappers/base.py` and any shared mapper plumbing needed so mappers stop hand-writing raw country strings into `location_country_code` and instead funnel through one canonical normalization path.
+- [x] T009 [US1] Update `app/ingest/mappers/apple.py`, `app/ingest/mappers/smartrecruiters.py`, `app/ingest/mappers/uber.py`, and `app/ingest/mappers/tiktok.py` to normalize explicit source-native country fields through the shared country helper.
+- [x] T010 [US1] Update `app/ingest/mappers/eightfold.py`, `app/ingest/mappers/lever.py`, `app/ingest/mappers/greenhouse.py`, and `app/ingest/mappers/ashby.py` to use conservative text and remote-scope normalization, preserving null for ambiguous multi-country or region-only cases.
+- [x] T011 [US1] Update `app/ingest/mappers/base.py` and any shared mapper plumbing needed so mappers stop hand-writing raw country strings into `location_country_code` and instead funnel through one canonical normalization path.
 
 **Checkpoint**: New ingests write canonical country codes for high-confidence single-country cases and keep ambiguous cases null without losing compatibility text.
 

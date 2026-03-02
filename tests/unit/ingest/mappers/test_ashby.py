@@ -93,6 +93,7 @@ class TestAshbyMapper:
         result = mapper.map(raw_job)
 
         assert result.location_text is None
+        assert result.location_country_code is None
         assert result.department is None
         assert result.team is None
         assert result.employment_type is None
@@ -112,3 +113,46 @@ class TestAshbyMapper:
         assert result.title == "Engineer"
         assert result.apply_url == "https://jobs.ashbyhq.com/example/job-1/application"
         assert result.location_text == "Remote"
+
+    def test_map_single_country_text_infers_canonical_code(self, mapper):
+        """Location text with a single clear country infers canonical alpha-2."""
+        raw_job = {
+            "id": "job-single",
+            "title": "Designer",
+            "applyUrl": "https://jobs.ashbyhq.com/example/job-single/application",
+            "location": "Berlin, Germany",
+        }
+
+        result = mapper.map(raw_job)
+
+        assert result.location_country_code == "DE"
+        assert result.location_city == "Berlin"
+
+    def test_map_ambiguous_multi_country_returns_null(self, mapper):
+        """Multi-country or region text should not produce a country code."""
+        raw_job = {
+            "id": "job-multi",
+            "title": "Engineer",
+            "applyUrl": "https://jobs.ashbyhq.com/example/job-multi/application",
+            "location": "Remote - EMEA",
+        }
+
+        result = mapper.map(raw_job)
+
+        assert result.location_country_code is None
+
+    def test_map_remote_single_country_scope(self, mapper):
+        """Remote with a single-country scope infers canonical code."""
+        raw_job = {
+            "id": "job-remote-ca",
+            "title": "Engineer",
+            "applyUrl": "https://jobs.ashbyhq.com/example/job-remote-ca/application",
+            "location": "Remote - Canada",
+        }
+
+        result = mapper.map(raw_job)
+
+        assert result.location_country_code == "CA"
+        from app.models.job import WorkplaceType
+
+        assert result.location_workplace_type == WorkplaceType.remote

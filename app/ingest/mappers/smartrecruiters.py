@@ -36,7 +36,9 @@ class SmartRecruitersMapper(BaseMapper):
             location_text=self._clean(self._get_location_text(raw_job)),
             location_city=self._clean(self._get_location_field(raw_job, "city")),
             location_region=self._clean(self._get_location_field(raw_job, "region")),
-            location_country_code=self._clean(self._get_location_field(raw_job, "country")),
+            location_country_code=self.normalize_country_field(
+                self._get_location_field(raw_job, "country")
+            ),
             location_workplace_type=self._get_workplace_type(raw_job),
             department=self._clean(self._get_label(raw_job, "department")),
             team=self._clean(self._get_label(raw_job, "function")),

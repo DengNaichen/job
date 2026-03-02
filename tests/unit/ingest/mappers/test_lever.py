@@ -35,6 +35,7 @@ class TestLeverMapper:
         assert result.title == "Senior Software Engineer"
         assert result.apply_url == "https://jobs.lever.co/example/job-123/apply"
         assert result.location_text == "San Francisco, CA"
+        assert result.location_country_code == "US"
         assert result.department == "Engineering"
         assert result.team == "Platform"
         assert result.employment_type == "Full-time"
@@ -84,6 +85,7 @@ class TestLeverMapper:
         result = mapper.map(raw_job)
 
         assert result.location_text is None
+        assert result.location_country_code is None
         assert result.department is None
         assert result.team is None
         assert result.employment_type is None
@@ -123,3 +125,46 @@ class TestLeverMapper:
         assert result.apply_url == "https://jobs.lever.co/example/job-1/apply"
         assert result.location_text == "Remote"
         assert result.department == "Engineering"
+
+    def test_map_single_country_text_produces_canonical_code(self, mapper):
+        """Location text with a clear single country infers canonical alpha-2."""
+        raw_job = {
+            "id": "job-country",
+            "text": "Product Designer",
+            "applyUrl": "https://jobs.lever.co/example/job-country/apply",
+            "categories": {"location": "London, United Kingdom"},
+        }
+
+        result = mapper.map(raw_job)
+
+        assert result.location_country_code == "GB"
+        assert result.location_city == "London"
+
+    def test_map_ambiguous_location_returns_null_country(self, mapper):
+        """Location text that does not resolve to one country returns null."""
+        raw_job = {
+            "id": "job-ambiguous",
+            "text": "Staff Engineer",
+            "applyUrl": "https://jobs.lever.co/example/job-ambiguous/apply",
+            "categories": {"location": "EMEA"},
+        }
+
+        result = mapper.map(raw_job)
+
+        assert result.location_country_code is None
+
+    def test_map_remote_single_country_scope(self, mapper):
+        """Remote with a single-country scope infers canonical code."""
+        raw_job = {
+            "id": "job-remote",
+            "text": "Engineer",
+            "applyUrl": "https://jobs.lever.co/example/job-remote/apply",
+            "categories": {"location": "Remote - Canada"},
+        }
+
+        result = mapper.map(raw_job)
+
+        assert result.location_country_code == "CA"
+        from app.models.job import WorkplaceType
+
+        assert result.location_workplace_type == WorkplaceType.remote

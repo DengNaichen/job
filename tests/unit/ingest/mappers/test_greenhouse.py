@@ -30,6 +30,7 @@ class TestGreenhouseMapper:
         assert result.title == "Senior Software Engineer"
         assert result.apply_url == "https://boards.greenhouse.io/example/jobs/123456"
         assert result.location_text == "San Francisco, CA"
+        assert result.location_country_code == "US"
         assert result.status == "open"
 
     def test_map_with_department(self, mapper):
@@ -144,6 +145,7 @@ class TestGreenhouseMapper:
         assert result.title == "Engineer"
         assert result.apply_url == "https://example.com/job/1"
         assert result.location_text is None
+        assert result.location_country_code is None
         assert result.department is None
 
     def test_map_with_whitespace(self, mapper):
@@ -158,3 +160,46 @@ class TestGreenhouseMapper:
 
         assert result.title == "Engineer"
         assert result.apply_url == "https://example.com/job/1"
+
+    def test_map_single_country_text_infers_canonical_code(self, mapper):
+        """Location text with a clear single country infers canonical alpha-2."""
+        raw_job = {
+            "id": 2,
+            "title": "PM",
+            "absolute_url": "https://example.com/job/2",
+            "location": {"name": "London, United Kingdom"},
+        }
+
+        result = mapper.map(raw_job)
+
+        assert result.location_country_code == "GB"
+        assert result.location_city == "London"
+
+    def test_map_ambiguous_text_returns_null_country(self, mapper):
+        """Ambiguous region text does not produce a country code."""
+        raw_job = {
+            "id": 3,
+            "title": "Analyst",
+            "absolute_url": "https://example.com/job/3",
+            "location": {"name": "EMEA"},
+        }
+
+        result = mapper.map(raw_job)
+
+        assert result.location_country_code is None
+
+    def test_map_remote_single_country_scope(self, mapper):
+        """Remote with a single-country scope infers canonical code."""
+        raw_job = {
+            "id": 4,
+            "title": "Engineer",
+            "absolute_url": "https://example.com/job/4",
+            "location": {"name": "Remote - Germany"},
+        }
+
+        result = mapper.map(raw_job)
+
+        assert result.location_country_code == "DE"
+        from app.models.job import WorkplaceType
+
+        assert result.location_workplace_type == WorkplaceType.remote

@@ -23,8 +23,10 @@ class UberMapper(BaseMapper):
             location_text=self._location_text(raw_job),
             location_city=self._get_location_part(raw_job, "city"),
             location_region=self._get_location_part(raw_job, "region"),
-            location_country_code=self._get_location_part(raw_job, "countryName")
-            or self._get_location_part(raw_job, "country"),
+            location_country_code=self.normalize_country_field(
+                self._get_location_part(raw_job, "countryName")
+                or self._get_location_part(raw_job, "country")
+            ),
             department=self._clean(raw_job.get("department")),
             team=self._clean(raw_job.get("team")),
             employment_type=self._clean(raw_job.get("timeType")),

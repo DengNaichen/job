@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from app.schemas.job import JobCreate
+from app.services.domain.country_normalization import normalize_country
 
 
 class BaseMapper(ABC):
@@ -54,3 +55,16 @@ class BaseMapper(ABC):
             JobCreate in standard format
         """
         pass
+
+    @staticmethod
+    def normalize_country_field(raw_value: str | None) -> str | None:
+        """Normalize a raw country string from an explicit source-native country field
+        to a canonical ISO 3166-1 alpha-2 code.
+
+        Returns the canonical code for high-confidence single-country inputs,
+        or None for ambiguous, multi-country, or unrecognized values.
+        """
+        if not raw_value or not isinstance(raw_value, str) or not raw_value.strip():
+            return None
+        result = normalize_country(raw_value.strip(), is_explicit_field=True)
+        return result.country_code

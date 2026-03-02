@@ -24,7 +24,9 @@ class AppleMapper(BaseMapper):
             location_text=self._location_text(raw_job),
             location_city=self._get_location_part(raw_job, "city"),
             location_region=self._get_location_part(raw_job, "stateProvince"),
-            location_country_code=self._get_location_part(raw_job, "countryName"),
+            location_country_code=self.normalize_country_field(
+                self._get_location_part(raw_job, "countryName")
+            ),
             department=self._team_name(raw_job),
             team=None,
             employment_type=None,
