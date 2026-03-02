@@ -439,6 +439,7 @@ async def test_full_snapshot_sync_persists_canonical_locations(session: AsyncSes
 
 
 @pytest.mark.asyncio
+<<<<<<< HEAD
 async def test_full_snapshot_sync_falls_back_to_legacy_location_fields_when_hints_missing(
     session: AsyncSession,
 ) -> None:
