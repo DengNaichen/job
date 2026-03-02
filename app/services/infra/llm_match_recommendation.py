@@ -18,13 +18,8 @@ from app.services.domain.matching import (
     infer_user_seniority_level,
     to_optional_int,
 )
-from app.services.infra.llm import (
-    LLMConfig,
-    complete_json,
-    get_llm_config,
-    snapshot_usage,
-    start_usage_scope,
-)
+from app.services.infra.llm import LLMConfig, complete_json, get_llm_config
+from app.services.infra.llm.usage import snapshot_usage, start_usage_scope
 
 logger = logging.getLogger(__name__)
 

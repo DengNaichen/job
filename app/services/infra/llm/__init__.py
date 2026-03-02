@@ -8,7 +8,7 @@ from .client import (
 )
 from .config import get_llm_config
 from .types import LLMConfig, TokenUsage
-from .usage import add_usage, get_token_usage, snapshot_usage, start_usage_scope
+from .usage import get_token_usage
 
 __all__ = [
     "LLM_TIMEOUT_COMPLETION",
@@ -16,10 +16,7 @@ __all__ = [
     "LLM_TIMEOUT_JSON",
     "LLMConfig",
     "TokenUsage",
-    "add_usage",
     "complete_json",
     "get_llm_config",
     "get_token_usage",
-    "snapshot_usage",
-    "start_usage_scope",
 ]

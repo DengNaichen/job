@@ -26,6 +26,95 @@ LLM_TIMEOUT_HEALTH_CHECK = 30
 LLM_TIMEOUT_COMPLETION = 120
 LLM_TIMEOUT_JSON = 180
 
+_RETRY_JSON_HINT = "\n\nIMPORTANT: Output ONLY a valid JSON object. Start with { and end with }."
+_RETRY_SCHEMA_HINT = "\n\nIMPORTANT: Output ONLY valid JSON matching the required schema."
+
+
+def _build_messages(prompt: str, system_prompt: str | None) -> list[dict[str, str]]:
+    json_system = (
+        system_prompt or ""
+    ) + "\n\nYou must respond with valid JSON only. No explanations, no markdown."
+    return [
+        {"role": "system", "content": json_system},
+        {"role": "user", "content": prompt},
+    ]
+
+
+def _supports_response_schema(
+    *,
+    response_schema: type[BaseModel] | None,
+    model_name: str,
+    provider: str,
+) -> bool:
+    if response_schema is None:
+        return False
+    try:
+        return bool(
+            litellm.supports_response_schema(
+                model=model_name,
+                custom_llm_provider=provider,
+            )
+        )
+    except Exception:  # noqa: BLE001
+        logger.debug(
+            "Failed to detect response schema support for model=%s provider=%s",
+            model_name,
+            provider,
+            exc_info=True,
+        )
+        return False
+
+
+def _build_completion_kwargs(
+    *,
+    config: LLMConfig,
+    model_name: str,
+    messages: list[dict[str, str]],
+    max_tokens: int,
+    attempt: int,
+    use_json_mode: bool,
+    response_schema: type[BaseModel] | None,
+    supports_schema_response: bool,
+) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        "model": model_name,
+        "messages": messages,
+        "custom_llm_provider": config.provider,
+        "max_tokens": max_tokens,
+        "api_key": config.api_key,
+        "api_base": _normalize_api_base(config.provider, config.api_base),
+        "timeout": LLM_TIMEOUT_JSON,
+    }
+    if _supports_temperature(config.provider, model_name):
+        temperatures = [0.1, 0.3, 0.5, 0.7]
+        kwargs["temperature"] = temperatures[min(attempt, len(temperatures) - 1)]
+
+    if response_schema is not None and supports_schema_response:
+        kwargs["response_format"] = response_schema
+    elif use_json_mode:
+        kwargs["response_format"] = {"type": "json_object"}
+
+    return kwargs
+
+
+def _track_response_usage(model_name: str, response: Any) -> None:
+    usage = getattr(response, "usage", None)
+    if not usage:
+        return
+    prompt_tokens = getattr(usage, "prompt_tokens", 0) or 0
+    completion_tokens = getattr(usage, "completion_tokens", 0) or 0
+    add_usage(model_name, prompt_tokens, completion_tokens)
+
+
+def _is_rate_limit_error(error: Exception) -> bool:
+    err_text = str(error).lower()
+    return (
+        "ratelimit" in err_text
+        or "rate limit" in err_text
+        or "tpm" in err_text
+        or "429" in err_text
+    )
+
 
 async def complete_json(
     prompt: str,
@@ -40,60 +129,30 @@ async def complete_json(
         config = get_llm_config()
 
     model_name = _get_model_name(config)
-
-    json_system = (
-        system_prompt or ""
-    ) + "\n\nYou must respond with valid JSON only. No explanations, no markdown."
-    messages = [
-        {"role": "system", "content": json_system},
-        {"role": "user", "content": prompt},
-    ]
+    messages = _build_messages(prompt, system_prompt)
 
     use_json_mode = _supports_json_mode(config.provider, config.model)
-    supports_response_schema = False
-    if response_schema is not None:
-        try:
-            supports_response_schema = litellm.supports_response_schema(
-                model=model_name,
-                custom_llm_provider=config.provider,
-            )
-        except Exception:  # noqa: BLE001
-            logger.debug(
-                "Failed to detect response schema support for model=%s provider=%s",
-                model_name,
-                config.provider,
-                exc_info=True,
-            )
+    supports_schema_response = _supports_response_schema(
+        response_schema=response_schema,
+        model_name=model_name,
+        provider=config.provider,
+    )
 
     last_error = None
     for attempt in range(retries + 1):
         try:
-            kwargs: dict[str, Any] = {
-                "model": model_name,
-                "messages": messages,
-                "custom_llm_provider": config.provider,
-                "max_tokens": max_tokens,
-                "api_key": config.api_key,
-                "api_base": _normalize_api_base(config.provider, config.api_base),
-                "timeout": LLM_TIMEOUT_JSON,
-            }
-            if _supports_temperature(config.provider, model_name):
-                temperatures = [0.1, 0.3, 0.5, 0.7]
-                kwargs["temperature"] = temperatures[min(attempt, len(temperatures) - 1)]
-
-            if response_schema is not None and supports_response_schema:
-                kwargs["response_format"] = response_schema
-            elif use_json_mode:
-                kwargs["response_format"] = {"type": "json_object"}
-
+            kwargs = _build_completion_kwargs(
+                config=config,
+                model_name=model_name,
+                messages=messages,
+                max_tokens=max_tokens,
+                attempt=attempt,
+                use_json_mode=use_json_mode,
+                response_schema=response_schema,
+                supports_schema_response=supports_schema_response,
+            )
             response = await litellm.acompletion(**kwargs)
-
-            # Track token usage
-            usage = getattr(response, "usage", None)
-            if usage:
-                prompt_tokens = getattr(usage, "prompt_tokens", 0) or 0
-                completion_tokens = getattr(usage, "completion_tokens", 0) or 0
-                add_usage(model_name, prompt_tokens, completion_tokens)
+            _track_response_usage(model_name, response)
 
             content = _extract_choice_text(response.choices[0])
             if not content:
@@ -115,10 +174,7 @@ async def complete_json(
             last_error = exc
             logger.warning("JSON parse failed (attempt %s): %s", attempt + 1, exc)
             if attempt < retries:
-                messages[-1]["content"] = (
-                    prompt
-                    + "\n\nIMPORTANT: Output ONLY a valid JSON object. Start with { and end with }."
-                )
+                messages[-1]["content"] = prompt + _RETRY_JSON_HINT
                 continue
             raise ValueError(f"Failed to parse JSON after {retries + 1} attempts: {exc}")
 
@@ -126,9 +182,7 @@ async def complete_json(
             last_error = exc
             logger.warning("JSON schema validation failed (attempt %s): %s", attempt + 1, exc)
             if attempt < retries:
-                messages[-1]["content"] = (
-                    prompt + "\n\nIMPORTANT: Output ONLY valid JSON matching the required schema."
-                )
+                messages[-1]["content"] = prompt + _RETRY_SCHEMA_HINT
                 continue
             raise ValueError(f"Failed schema validation after {retries + 1} attempts: {exc}")
 
@@ -136,13 +190,7 @@ async def complete_json(
             last_error = exc
             logger.warning("LLM call failed (attempt %s): %s", attempt + 1, exc)
             if attempt < retries:
-                err_text = str(exc).lower()
-                if (
-                    "ratelimit" in err_text
-                    or "rate limit" in err_text
-                    or "tpm" in err_text
-                    or "429" in err_text
-                ):
+                if _is_rate_limit_error(exc):
                     await asyncio.sleep(min(2**attempt, 8))
                 continue
             raise
