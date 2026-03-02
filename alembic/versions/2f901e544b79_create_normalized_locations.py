@@ -5,6 +5,7 @@ Revises: c8e4f9a1b2c3
 Create Date: 2026-03-02 02:35:51.741573
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -13,8 +14,8 @@ from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
-revision: str = '2f901e544b79'
-down_revision: Union[str, Sequence[str], None] = 'c8e4f9a1b2c3'
+revision: str = "2f901e544b79"
+down_revision: Union[str, Sequence[str], None] = "c8e4f9a1b2c3"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -34,10 +35,16 @@ def upgrade() -> None:
         sa.Column("geonames_id", sa.Integer(), nullable=True),
         sa.Column("source_data", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column(
-            "created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
         ),
         sa.Column(
-            "updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
         ),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -51,7 +58,10 @@ def upgrade() -> None:
         sa.Column("is_primary", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("source_raw", sa.Text(), nullable=True),
         sa.Column(
-            "created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
         ),
         sa.ForeignKeyConstraint(["job_id"], ["job.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["location_id"], ["locations.id"], ondelete="RESTRICT"),

@@ -1,5 +1,13 @@
-from app.models.job import WorkplaceType
-from app.services.domain.job_location import extract_workplace_type, parse_location_text
+from app.models.job import Job, WorkplaceType
+from app.services.domain.job_location import (
+    StructuredLocation,
+    extract_workplace_type,
+    parse_location_text,
+    sync_job_location,
+    sync_primary_to_job,
+)
+from sqlmodel.ext.asyncio.session import AsyncSession
+import pytest
 
 
 def test_extract_workplace_type():
@@ -158,3 +166,87 @@ class TestSupranationalRegionCases:
         loc = parse_location_text("Remote - North America")
         assert loc.workplace_type == WorkplaceType.remote
         assert loc.country_code is None
+
+
+# ---------------------------------------------------------------------------
+# US1: Database-backed sync tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_sync_job_location_idempotency(session: AsyncSession):
+    # Setup job
+    job = Job(
+        source="lever",
+        external_job_id="test-123",
+        title="Software Engineer",
+        apply_url="https://example.com",
+    )
+    session.add(job)
+    await session.commit()
+    await session.refresh(job)
+
+    structured = StructuredLocation(
+        city="San Francisco",
+        region="CA",
+        country_code="US",
+        workplace_type=WorkplaceType.onsite,
+    )
+
+    # First sync
+    loc1 = await sync_job_location(
+        session=session,
+        job_id=job.id,
+        structured=structured,
+        is_primary=True,
+        source_raw="San Francisco, CA",
+    )
+
+    assert loc1.canonical_key == "us-ca-san-francisco"
+
+    # Second sync (identical)
+    loc2 = await sync_job_location(
+        session=session,
+        job_id=job.id,
+        structured=structured,
+        is_primary=True,
+        source_raw="San Francisco, CA",
+    )
+
+    assert loc1.id == loc2.id
+
+
+@pytest.mark.asyncio
+async def test_sync_primary_to_job_compatibility(session: AsyncSession):
+    job = Job(
+        source="lever",
+        external_job_id="test-456",
+        title="Data Scientist",
+        apply_url="https://example.com",
+    )
+
+    structured = StructuredLocation(
+        city="Seattle",
+        region="WA",
+        country_code="US",
+        workplace_type=WorkplaceType.hybrid,
+    )
+
+    # Sync to DB first to get Location object
+    location = await sync_job_location(
+        session=session,
+        job_id="dummy",  # Not linked to real job yet in this test part
+        structured=structured,
+        is_primary=True,
+    )
+
+    sync_primary_to_job(
+        job=job,
+        location=location,
+        workplace_type=structured.workplace_type,
+    )
+
+    assert job.location_city == "Seattle"
+    assert job.location_region == "WA"
+    assert job.location_country_code == "US"
+    assert job.location_workplace_type == WorkplaceType.hybrid

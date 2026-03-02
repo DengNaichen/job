@@ -49,6 +49,9 @@ class JobCreate(JobBase):
     structured_jd: dict[str, Any] | None = None
     structured_jd_updated_at: datetime | None = None
 
+    # New normalized location hints (User Story 1)
+    location_hints: list[dict[str, Any]] = Field(default_factory=list)
+
 
 class JobRead(JobBase):
     id: str

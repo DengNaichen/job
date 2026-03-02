@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import ClassVar
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, String, UniqueConstraint, text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, UniqueConstraint, text
 from sqlmodel import Field, SQLModel
 
 
@@ -20,7 +20,9 @@ class JobLocation(SQLModel, table=True):
         sa_column=Column(String(36), ForeignKey("job.id", ondelete="CASCADE"), nullable=False)
     )
     location_id: str = Field(
-        sa_column=Column(String(36), ForeignKey("locations.id", ondelete="RESTRICT"), nullable=False)
+        sa_column=Column(
+            String(36), ForeignKey("locations.id", ondelete="RESTRICT"), nullable=False
+        )
     )
     is_primary: bool = Field(
         default=False, sa_column=Column(Boolean, server_default=text("false"), nullable=False)

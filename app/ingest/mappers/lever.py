@@ -30,6 +30,18 @@ class LeverMapper(BaseMapper):
             location_region=parsed_loc.region,
             location_country_code=parsed_loc.country_code,
             location_workplace_type=extract_workplace_type([location_text, commitment]),
+            location_remote_scope=parsed_loc.remote_scope,
+            location_hints=[
+                {
+                    "city": parsed_loc.city,
+                    "region": parsed_loc.region,
+                    "country_code": parsed_loc.country_code,
+                    "workplace_type": extract_workplace_type([location_text, commitment]),
+                    "remote_scope": parsed_loc.remote_scope,
+                }
+            ]
+            if location_text
+            else [],
             department=self._clean(self._get_category(raw_job, "department")),
             team=self._clean(self._get_category(raw_job, "team")),
             employment_type=commitment,

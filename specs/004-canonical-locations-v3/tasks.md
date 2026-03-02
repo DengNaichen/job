@@ -36,16 +36,16 @@
 
 ### Tests for User Story 1
 
-- [ ] T007 [P] [US1] Add canonicalization/primary-rule unit coverage in `tests/unit/services/domain/test_canonical_location.py` and extend `tests/unit/test_job_location.py` for multi-location, remote-scope, and deterministic tie-break cases.
-- [ ] T008 [P] [US1] Extend mapper and sync coverage in `tests/unit/ingest/mappers/test_company_apis.py`, `tests/unit/ingest/mappers/test_smartrecruiters.py`, `tests/unit/ingest/mappers/test_eightfold.py`, `tests/unit/ingest/mappers/test_lever.py`, `tests/unit/ingest/mappers/test_greenhouse.py`, and `tests/unit/ingest/mappers/test_ashby.py` for candidate-location extraction inputs.
-- [ ] T009 [P] [US1] Extend ingest transaction coverage in `tests/unit/test_full_snapshot_sync.py`, `tests/unit/test_job_service.py`, and `tests/integration/test_job_api.py` to assert location reuse, one-primary behavior, and compatibility-field alignment.
+- [x] T007 [P] [US1] Add canonicalization/primary-rule unit coverage in `tests/unit/services/domain/test_canonical_location.py` and extend `tests/unit/test_job_location.py` for multi-location, remote-scope, and deterministic tie-break cases.
+- [x] T008 [P] [US1] Extend mapper and sync coverage in `tests/unit/ingest/mappers/test_company_apis.py`, `tests/unit/ingest/mappers/test_smartrecruiters.py`, `tests/unit/ingest/mappers/test_eightfold.py`, `tests/unit/ingest/mappers/test_lever.py`, `tests/unit/ingest/mappers/test_greenhouse.py`, and `tests/unit/ingest/mappers/test_ashby.py` for candidate-location extraction inputs.
+- [x] T009 [P] [US1] Extend ingest transaction coverage in `tests/unit/test_full_snapshot_sync.py`, `tests/unit/test_job_service.py`, and `tests/integration/test_job_api.py` to assert location reuse, one-primary behavior, and compatibility-field alignment.
 
 ### Implementation for User Story 1
 
-- [ ] T010 [US1] Integrate canonical location persistence into `app/services/application/full_snapshot_sync.py` so each mapped job writes deterministic `job_locations` links in the same transaction as the job upsert.
-- [ ] T011 [US1] Update `app/ingest/mappers/base.py`, `app/ingest/mappers/apple.py`, `app/ingest/mappers/smartrecruiters.py`, `app/ingest/mappers/uber.py`, `app/ingest/mappers/tiktok.py`, `app/ingest/mappers/eightfold.py`, `app/ingest/mappers/lever.py`, `app/ingest/mappers/greenhouse.py`, and `app/ingest/mappers/ashby.py` so the pipeline can supply multi-location candidate hints deterministically.
-- [ ] T012 [US1] Wire repository/domain orchestration in `app/repositories/job.py`, `app/repositories/location.py`, `app/repositories/job_location.py`, and `app/services/application/sync.py` so canonical row reuse and link upsert semantics stay idempotent.
-- [ ] T013 [US1] Implement compatibility sync from primary link in `app/services/domain/job_location.py` and apply it from ingest write paths so `job.location_*` fields remain rollout-safe.
+- [x] T010 [US1] Integrate canonical location persistence into `app/services/application/full_snapshot_sync.py` so each mapped job writes deterministic `job_locations` links in the same transaction as the job upsert.
+- [x] T011 [US1] Update `app/ingest/mappers/base.py`, `app/ingest/mappers/apple.py`, `app/ingest/mappers/smartrecruiters.py`, `app/ingest/mappers/uber.py`, `app/ingest/mappers/tiktok.py`, `app/ingest/mappers/eightfold.py`, `app/ingest/mappers/lever.py`, `app/ingest/mappers/greenhouse.py`, and `app/ingest/mappers/ashby.py` so the pipeline can supply multi-location candidate hints deterministically.
+- [x] T012 [US1] Wire repository/domain orchestration in `app/repositories/job.py`, `app/repositories/location.py`, `app/repositories/job_location.py`, and `app/services/application/sync.py` so canonical row reuse and link upsert semantics stay idempotent.
+- [x] T013 [US1] Implement compatibility sync from primary link in `app/services/domain/job_location.py` and apply it from ingest write paths so `job.location_*` fields remain rollout-safe.
 
 **Checkpoint**: New/updated jobs consistently persist canonical links with deterministic primaries and no duplicate canonical entities.
 

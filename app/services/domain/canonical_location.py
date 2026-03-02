@@ -21,6 +21,8 @@ def build_canonical_key(city: str | None, region: str | None, country_code: str 
     # Normalize each part
     normalized_parts = []
     for p in parts:
+        # Replace hyphens with spaces to treat them as word separators
+        p = p.replace("-", " ")
         # Unicode normalize and remove accents
         n = unicodedata.normalize("NFKD", p).encode("ASCII", "ignore").decode("ASCII")
         # Remove non-alphanumeric except spaces

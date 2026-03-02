@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, ClassVar
 
-from sqlalchemy import Column, DateTime, Float, Index, Integer, text
+from sqlalchemy import Column, DateTime, Index, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, SQLModel
 

@@ -10,6 +10,12 @@ from app.services.domain.country_normalization import normalize_country
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.job import Job
+
+
 @dataclass
 class StructuredLocation:
     city: str | None = None
@@ -132,7 +138,7 @@ async def sync_job_location(
     structured: StructuredLocation,
     is_primary: bool = False,
     source_raw: str | None = None,
-) -> None:
+) -> Location:
     """
     Sync a structured location to a job.
     1. Generates a canonical key.
@@ -170,3 +176,21 @@ async def sync_job_location(
         is_primary=is_primary,
         source_raw=source_raw,
     )
+    return location
+
+
+def sync_primary_to_job(
+    *,
+    job: "Job",
+    location: Location,
+    workplace_type: WorkplaceType = WorkplaceType.unknown,
+    remote_scope: str | None = None,
+) -> None:
+    """
+    Sync primary canonical location fields back to the Job model for legacy compatibility.
+    """
+    job.location_city = location.city
+    job.location_region = location.region
+    job.location_country_code = location.country_code
+    job.location_workplace_type = workplace_type
+    job.location_remote_scope = remote_scope
