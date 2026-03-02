@@ -95,3 +95,78 @@ async def test_embed_texts_fallback_without_dimensions(monkeypatch: pytest.Monke
 
     assert calls["count"] == 2
     assert vectors == [[0.1, 0.2, 0.3]]
+
+
+@pytest.mark.asyncio
+async def test_embed_texts_retries_transient_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    """embed_texts should retry transient failures up to configured limit."""
+
+    class _TransientError(RuntimeError):
+        status_code = 503
+
+    calls = {"count": 0}
+
+    async def fake_aembedding(**_kwargs):  # noqa: ANN003
+        calls["count"] += 1
+        if calls["count"] < 3:
+            raise _TransientError("service unavailable")
+        return SimpleNamespace(data=[{"embedding": [0.4, 0.5]}])
+
+    monkeypatch.setattr("app.services.infra.embedding.litellm.aembedding", fake_aembedding)
+
+    vectors = await embed_texts(
+        ["retry-me"],
+        config=EmbeddingConfig(provider="openai", model="Qwen/Qwen3-Embedding-8B"),
+        retries=2,
+    )
+
+    assert calls["count"] == 3
+    assert vectors == [[0.4, 0.5]]
+
+
+@pytest.mark.asyncio
+async def test_embed_texts_stops_at_retry_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    """embed_texts should stop retrying once retries are exhausted."""
+
+    class _TransientError(RuntimeError):
+        status_code = 503
+
+    calls = {"count": 0}
+
+    async def fake_aembedding(**_kwargs):  # noqa: ANN003
+        calls["count"] += 1
+        raise _TransientError("service unavailable")
+
+    monkeypatch.setattr("app.services.infra.embedding.litellm.aembedding", fake_aembedding)
+
+    with pytest.raises(_TransientError):
+        await embed_texts(
+            ["always-fail"],
+            config=EmbeddingConfig(provider="openai", model="Qwen/Qwen3-Embedding-8B"),
+            retries=1,
+        )
+
+    assert calls["count"] == 2
+
+
+@pytest.mark.asyncio
+async def test_embed_texts_does_not_retry_non_transient_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """embed_texts should fail fast for non-transient provider errors."""
+    calls = {"count": 0}
+
+    async def fake_aembedding(**_kwargs):  # noqa: ANN003
+        calls["count"] += 1
+        raise ValueError("invalid request payload")
+
+    monkeypatch.setattr("app.services.infra.embedding.litellm.aembedding", fake_aembedding)
+
+    with pytest.raises(ValueError):
+        await embed_texts(
+            ["bad-request"],
+            config=EmbeddingConfig(provider="openai", model="Qwen/Qwen3-Embedding-8B"),
+            retries=3,
+        )
+
+    assert calls["count"] == 1
