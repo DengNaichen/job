@@ -15,6 +15,10 @@ from app.ingest.mappers import (
 )
 from app.models.job import Job, WorkplaceType
 from app.repositories.job import JobRepository
+from app.services.domain.country_normalization import (
+    is_canonical_country_code,
+    normalize_country,
+)
 from app.services.domain.job_location import parse_location_text
 
 logger = logging.getLogger(__name__)
@@ -47,7 +51,7 @@ def apply_backfill_to_job(job: Job) -> bool:
 
     is_high_confidence = job.source in HIGH_CONFIDENCE_SOURCES
 
-    # 1. Try to extract using the mapper from raw_payload
+    # 1. Try to extract using the mapper from raw_payload (Explicit Field -> High Confidence)
     mapper = MAPPERS.get(job.source) if job.source else None
     mapped = None
     if mapper and job.raw_payload:
@@ -60,34 +64,53 @@ def apply_backfill_to_job(job: Job) -> bool:
         except Exception as e:
             logger.warning(f"Mapper failed for job {job.id}: {e}")
 
-    # 2. Fallback to location_text if raw_payload didn't yield structure
-    if not (new_city or new_region or new_country) and job.location_text:
-        parsed = parse_location_text(job.location_text)
-        new_city = parsed.city
-        new_region = parsed.region
-        new_country = parsed.country_code
-        if new_workplace == WorkplaceType.unknown:
-            new_workplace = parsed.workplace_type
-        is_high_confidence = False  # Parsed from text is inherently low confidence
+    # 2. Fallback for COUNTRY specifically: try remote_scope or text (Heuristic -> Lower Confidence)
+    # T014: repair from raw_payload first and location_text or location_remote_scope second
+    heuristic_country = None
+    if not (new_country and is_high_confidence):
+        # Try remote_scope first if it exists
+        if job.location_remote_scope:
+            res = normalize_country(job.location_remote_scope, is_explicit_field=False)
+            if res.country_code:
+                heuristic_country = res.country_code
 
-    # 3. Explicit confidence guards
-    # If the job already has a city/region/country, only overwrite if our new data is high confidence
-    has_existing = bool(job.location_city or job.location_region or job.location_country_code)
+        # Then try location_text
+        if not heuristic_country and job.location_text:
+            parsed = parse_location_text(job.location_text)
+            heuristic_country = parsed.country_code
 
+            # Also sync city/region/workplace if they are still missing
+            if not (new_city or new_region or new_country):
+                new_city = parsed.city
+                new_region = parsed.region
+                if new_workplace == WorkplaceType.unknown:
+                    new_workplace = parsed.workplace_type
+
+    # 3. Apply updates with confidence protection
     changed = False
 
-    if not has_existing or is_high_confidence:
-        if new_city != job.location_city:
+    # Country update rules
+    target_country = new_country or heuristic_country
+    if target_country:
+        current_canonical = is_canonical_country_code(job.location_country_code)
+        # Overwrite if:
+        # - Current is not canonical (null or raw string)
+        # - OR current is canonical but our new value is high-confidence from mapper
+        if not current_canonical or (target_country == new_country and is_high_confidence):
+            if job.location_country_code != target_country:
+                job.location_country_code = target_country
+                changed = True
+
+    # City/Region/Workplace update rules (staying with basic "empty or high confidence" for now)
+    has_existing_city_region = bool(job.location_city or job.location_region)
+    if not has_existing_city_region or is_high_confidence:
+        if new_city and new_city != job.location_city:
             job.location_city = new_city
             changed = True
-        if new_region != job.location_region:
+        if new_region and new_region != job.location_region:
             job.location_region = new_region
             changed = True
-        if new_country != job.location_country_code:
-            job.location_country_code = new_country
-            changed = True
 
-    # Workplace type can be updated if currently unknown
     if (
         job.location_workplace_type == WorkplaceType.unknown
         and new_workplace != WorkplaceType.unknown
@@ -108,7 +131,7 @@ async def run_backfill(session: AsyncSession, batch_size: int = 100) -> int:
     total_updated = 0
 
     while True:
-        jobs = await repo.list_jobs_for_location_backfill(last_id=last_id, limit=batch_size)
+        jobs = await repo.list_jobs_for_country_backfill(last_id=last_id, limit=batch_size)
         if not jobs:
             break
 

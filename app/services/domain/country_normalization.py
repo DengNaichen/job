@@ -240,3 +240,18 @@ def normalize_country(
                 )
 
     return CountryNormalizationResult()
+
+
+def is_canonical_country_code(value: str | None) -> bool:
+    """Return True if *value* is a valid ISO 3166-1 alpha-2 country code.
+
+    Used by backfill logic to decide whether an existing
+    ``location_country_code`` is already canonical and should be protected
+    from lower-confidence overwrites.
+    """
+    if not value or not isinstance(value, str):
+        return False
+    upper = value.strip().upper()
+    if len(upper) != 2 or not upper.isalpha():
+        return False
+    return pycountry.countries.get(alpha_2=upper) is not None

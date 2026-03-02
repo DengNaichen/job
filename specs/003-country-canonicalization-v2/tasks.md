@@ -55,16 +55,14 @@
 
 **Independent Test**: Run the country normalization backfill against mixed-confidence fixtures and verify that null, invalid, or non-canonical historical values are repaired, ambiguous rows stay null, and reruns do not oscillate.
 
-### Tests for User Story 2
-
-- [ ] T012 [P] [US2] Expand `tests/unit/test_backfill_job_locations.py` to cover upgrading raw country names/codes to canonical alpha-2 values, repairing invalid or weak historical data, preserving canonical high-confidence values, and leaving multi-country or supranational rows untouched.
-- [ ] T013 [P] [US2] Update `tests/unit/test_import_company_api_jobs.py`, `tests/unit/test_import_greenhouse_jobs.py`, `tests/unit/test_import_lever_jobs.py`, `tests/unit/test_import_ashby_jobs.py`, `tests/unit/test_import_smartrecruiters_jobs.py`, and `tests/unit/test_import_eightfold_jobs.py` so persisted/imported expectations reflect canonical country codes.
+- [x] T012 [P] [US2] Expand `tests/unit/test_backfill_job_locations.py` to cover upgrading raw country names/codes to canonical alpha-2 values, repairing invalid or weak historical data, preserving canonical high-confidence values, and leaving multi-country or supranational rows untouched.
+- [x] T013 [P] [US2] Update `tests/unit/test_import_company_api_jobs.py`, `tests/unit/test_import_greenhouse_jobs.py`, `tests/unit/test_import_lever_jobs.py`, `tests/unit/test_import_ashby_jobs.py`, `tests/unit/test_import_smartrecruiters_jobs.py`, and `tests/unit/test_import_eightfold_jobs.py` so persisted/imported expectations reflect canonical country codes.
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] Update `scripts/backfill_job_locations.py` so `location_country_code` is repaired from `raw_payload` first and `location_text` or `location_remote_scope` second, while protecting existing high-confidence canonical values from lower-confidence overrides.
-- [ ] T015 [US2] Extend `app/repositories/job.py` with any batch selection helpers needed to target rows whose `location_country_code` is null, invalid, or non-canonical without repeatedly scanning unrelated jobs.
-- [ ] T016 [US2] Reuse `app/services/domain/country_normalization.py` and `app/services/domain/job_location.py` from the backfill path so ingest and historical repair follow identical alias, ambiguity, and confidence rules.
+- [x] T014 [US2] Update `scripts/backfill_job_locations.py` so `location_country_code` is repaired from `raw_payload` first and `location_text` or `location_remote_scope` second, while protecting existing high-confidence canonical values from lower-confidence overrides.
+- [x] T015 [US2] Extend `app/repositories/job.py` with any batch selection helpers needed to target rows whose `location_country_code` is null, invalid, or non-canonical without repeatedly scanning unrelated jobs.
+- [x] T016 [US2] Reuse `app/services/domain/country_normalization.py` and `app/services/domain/job_location.py` from the backfill path so ingest and historical repair follow identical alias, ambiguity, and confidence rules.
 
 **Checkpoint**: Historical jobs can be upgraded to canonical country codes safely and rerun without confidence downgrades or value oscillation.
 
