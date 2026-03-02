@@ -17,7 +17,7 @@ from .config import (
 )
 from .parsing import _extract_choice_content, _extract_choice_text, _extract_json
 from .types import LLMConfig
-from .usage import get_token_usage
+from .usage import add_usage
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +93,7 @@ async def complete_json(
             if usage:
                 prompt_tokens = getattr(usage, "prompt_tokens", 0) or 0
                 completion_tokens = getattr(usage, "completion_tokens", 0) or 0
-                get_token_usage().add_usage(model_name, prompt_tokens, completion_tokens)
+                add_usage(model_name, prompt_tokens, completion_tokens)
 
             content = _extract_choice_text(response.choices[0])
             if not content:

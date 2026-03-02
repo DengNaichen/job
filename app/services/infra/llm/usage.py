@@ -1,42 +1,47 @@
 """Token usage tracking for LLM integration."""
 
-import logging
-from typing import Any
+from __future__ import annotations
 
-import litellm
+from collections.abc import Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
+from typing import Any
 
 from .types import TokenUsage
 
-logger = logging.getLogger(__name__)
+# Fallback tracker for legacy call sites that rely on process-wide counters.
+_global_token_usage = TokenUsage()
+_usage_scope_var: ContextVar[TokenUsage | None] = ContextVar("llm_usage_scope", default=None)
 
-# Global token tracker instance
-_token_usage = TokenUsage()
+
+def _current_usage() -> TokenUsage:
+    scoped = _usage_scope_var.get()
+    if scoped is not None:
+        return scoped
+    return _global_token_usage
 
 
 def get_token_usage() -> TokenUsage:
-    """Get the global token usage tracker."""
-    return _token_usage
+    """Get the current token usage tracker (scoped when available)."""
+    return _current_usage()
 
 
-def _track_usage(kwargs: dict[str, Any], response: Any, start_time: float, end_time: float) -> None:
-    """Callback to track token usage after each LLM call."""
-    _ = (start_time, end_time)
+def add_usage(model: str, prompt_tokens: int, completion_tokens: int) -> None:
+    """Add token usage to the active usage scope."""
+    _current_usage().add_usage(model, prompt_tokens, completion_tokens)
+
+
+def snapshot_usage() -> dict[str, Any]:
+    """Return usage summary for the active usage scope."""
+    return _current_usage().summary()
+
+
+@contextmanager
+def start_usage_scope() -> Iterator[TokenUsage]:
+    """Create an isolated request-local token usage scope."""
+    scope_usage = TokenUsage()
+    token = _usage_scope_var.set(scope_usage)
     try:
-        usage = getattr(response, "usage", None)
-        if usage:
-            prompt_tokens = getattr(usage, "prompt_tokens", 0) or 0
-            completion_tokens = getattr(usage, "completion_tokens", 0) or 0
-            model = kwargs.get("model", "unknown")
-            _token_usage.add_usage(model, prompt_tokens, completion_tokens)
-            logger.debug(
-                "Token usage: %s - prompt=%s, completion=%s",
-                model,
-                prompt_tokens,
-                completion_tokens,
-            )
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("Failed to track token usage: %s", exc)
-
-
-# Register callback with LiteLLM.
-litellm.success_callback = [_track_usage]
+        yield scope_usage
+    finally:
+        _usage_scope_var.reset(token)
