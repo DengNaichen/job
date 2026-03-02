@@ -93,8 +93,8 @@
 **Purpose**: Validate the rollout end to end and record follow-up normalization gaps without broadening feature scope.
 
 - [x] T021 [P] Run targeted test suites for changed paths with `./scripts/uv run pytest tests/unit/test_job_location.py tests/unit/ingest/mappers/test_company_apis.py tests/unit/ingest/mappers/test_smartrecruiters.py tests/unit/ingest/mappers/test_eightfold.py tests/unit/ingest/mappers/test_lever.py tests/unit/ingest/mappers/test_greenhouse.py tests/unit/ingest/mappers/test_ashby.py tests/unit/test_job_service.py tests/integration/test_job_api.py tests/unit/test_backfill_job_locations.py tests/unit/test_import_company_api_jobs.py tests/unit/test_import_greenhouse_jobs.py tests/unit/test_import_lever_jobs.py tests/unit/test_import_ashby_jobs.py tests/unit/test_import_smartrecruiters_jobs.py tests/unit/test_import_eightfold_jobs.py tests/unit/test_match_query.py tests/unit/test_match_schema.py tests/unit/test_match_service.py tests/unit/test_llm_match_recommendation.py tests/unit/test_match_experiment_script.py tests/integration/test_matching_api.py`.
-- [ ] T022 Do a manual dry run of `scripts/backfill_job_locations.py` against a small dataset and record which rows upgraded from raw names or weak codes to canonical codes and which ambiguous rows intentionally stayed null.
-- [ ] T023 Capture follow-up work in `docs/ROADMAP.md` or `specs/004-canonical-locations-v3/spec.md` for normalized location entities, multi-country link modeling, and any broader retrieval/filter rollout that should not block v2.
+- [x] T022 Do a manual dry run of `scripts/backfill_job_locations.py` against a small dataset and record which rows upgraded from raw names or weak codes to canonical codes and which ambiguous rows intentionally stayed null.
+- [x] T023 Capture follow-up work in `docs/ROADMAP.md` or `specs/004-canonical-locations-v3/spec.md` for normalized location entities, multi-country link modeling, and any broader retrieval/filter rollout that should not block v2.
 
 ---
 
