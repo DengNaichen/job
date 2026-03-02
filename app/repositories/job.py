@@ -1,13 +1,34 @@
 """Job repository for database operations."""
 
 from collections.abc import Collection
+from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import func, or_, update
+from sqlalchemy import and_, func, or_, update
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models import Job, JobStatus
+from app.models import Job, JobEmbedding, JobStatus
+
+
+@dataclass(frozen=True)
+class EmbeddableJobRow:
+    """Projection used for generating active-target embeddings."""
+
+    id: str
+    title: str
+    description: str
+    content_fingerprint: str | None
+
+
+@dataclass(frozen=True)
+class LegacyEmbeddingCandidateRow:
+    """Projection used for migrating legacy in-row embeddings."""
+
+    id: str
+    embedding: list[float]
+    embedding_model: str
+    content_fingerprint: str | None
 
 
 class JobRepository:
@@ -225,3 +246,218 @@ class JobRepository:
         statement = statement.order_by(Job.id).limit(limit)
         result = await self.session.exec(statement)
         return list(result.all())
+
+    # ------------------------------------------------------------------ #
+    # Embedding storage redesign helpers                                   #
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def _target_join(
+        *,
+        embedding_kind: str,
+        embedding_target_revision: int,
+        embedding_model: str,
+        embedding_dim: int,
+    ):
+        return and_(
+            JobEmbedding.job_id == Job.id,
+            JobEmbedding.embedding_kind == embedding_kind,
+            JobEmbedding.embedding_target_revision == embedding_target_revision,
+            JobEmbedding.embedding_model == embedding_model,
+            JobEmbedding.embedding_dim == embedding_dim,
+        )
+
+    @staticmethod
+    def _embeddable_description_expr():
+        return func.coalesce(
+            func.nullif(Job.description_plain, ""), func.nullif(Job.description_html, "")
+        )
+
+    async def list_embeddable_jobs_for_active_target(
+        self,
+        *,
+        embedding_kind: str,
+        embedding_target_revision: int,
+        embedding_model: str,
+        embedding_dim: int,
+        last_id: str | None = None,
+        limit: int = 100,
+        require_structured: bool = False,
+        force: bool = False,
+    ) -> list[EmbeddableJobRow]:
+        """List embeddable jobs whose active target is missing or stale."""
+        description_expr = self._embeddable_description_expr().label("description")
+        statement = (
+            select(Job.id, Job.title, description_expr, Job.content_fingerprint)
+            .select_from(Job)
+            .outerjoin(
+                JobEmbedding,
+                self._target_join(
+                    embedding_kind=embedding_kind,
+                    embedding_target_revision=embedding_target_revision,
+                    embedding_model=embedding_model,
+                    embedding_dim=embedding_dim,
+                ),
+            )
+            .where(description_expr.is_not(None))
+        )
+        if require_structured:
+            statement = statement.where(
+                Job.structured_jd.is_not(None),
+                func.coalesce(Job.structured_jd_version, 0) >= 3,
+            )
+        if last_id is not None:
+            statement = statement.where(Job.id > last_id)
+        if not force:
+            statement = statement.where(
+                or_(
+                    JobEmbedding.id.is_(None),
+                    JobEmbedding.content_fingerprint.is_distinct_from(Job.content_fingerprint),
+                )
+            )
+
+        statement = statement.order_by(Job.id).limit(limit)
+        result = await self.session.exec(statement)
+        rows = result.all()
+        return [
+            EmbeddableJobRow(
+                id=row.id,
+                title=row.title,
+                description=row.description,
+                content_fingerprint=row.content_fingerprint,
+            )
+            for row in rows
+        ]
+
+    async def list_legacy_embedding_migration_candidates(
+        self,
+        *,
+        embedding_kind: str,
+        embedding_target_revision: int,
+        embedding_model: str,
+        embedding_dim: int,
+        last_id: str | None = None,
+        limit: int = 100,
+        require_structured: bool = False,
+    ) -> list[LegacyEmbeddingCandidateRow]:
+        """List jobs with legacy in-row vectors and no active-target persisted row."""
+        statement = (
+            select(Job.id, Job.embedding, Job.embedding_model, Job.content_fingerprint)
+            .select_from(Job)
+            .outerjoin(
+                JobEmbedding,
+                self._target_join(
+                    embedding_kind=embedding_kind,
+                    embedding_target_revision=embedding_target_revision,
+                    embedding_model=embedding_model,
+                    embedding_dim=embedding_dim,
+                ),
+            )
+            .where(
+                Job.embedding.is_not(None),
+                Job.embedding_model.is_not(None),
+                JobEmbedding.id.is_(None),
+            )
+        )
+        if require_structured:
+            statement = statement.where(
+                Job.structured_jd.is_not(None),
+                func.coalesce(Job.structured_jd_version, 0) >= 3,
+            )
+        if last_id is not None:
+            statement = statement.where(Job.id > last_id)
+
+        statement = statement.order_by(Job.id).limit(limit)
+        result = await self.session.exec(statement)
+        rows = result.all()
+        return [
+            LegacyEmbeddingCandidateRow(
+                id=row.id,
+                embedding=list(row.embedding),
+                embedding_model=row.embedding_model,
+                content_fingerprint=row.content_fingerprint,
+            )
+            for row in rows
+        ]
+
+    async def count_jobs_missing_or_stale_active_target(
+        self,
+        *,
+        embedding_kind: str,
+        embedding_target_revision: int,
+        embedding_model: str,
+        embedding_dim: int,
+        require_structured: bool = False,
+        require_embeddable_content: bool = True,
+        force: bool = False,
+    ) -> int:
+        """Count jobs that still need active-target embedding writes."""
+        description_expr = self._embeddable_description_expr()
+        statement = (
+            select(func.count(Job.id))
+            .select_from(Job)
+            .outerjoin(
+                JobEmbedding,
+                self._target_join(
+                    embedding_kind=embedding_kind,
+                    embedding_target_revision=embedding_target_revision,
+                    embedding_model=embedding_model,
+                    embedding_dim=embedding_dim,
+                ),
+            )
+        )
+        if require_structured:
+            statement = statement.where(
+                Job.structured_jd.is_not(None),
+                func.coalesce(Job.structured_jd_version, 0) >= 3,
+            )
+        if require_embeddable_content:
+            statement = statement.where(description_expr.is_not(None))
+        if force:
+            if not require_embeddable_content:
+                statement = statement.where(description_expr.is_not(None))
+        else:
+            statement = statement.where(
+                or_(
+                    JobEmbedding.id.is_(None),
+                    JobEmbedding.content_fingerprint.is_distinct_from(Job.content_fingerprint),
+                )
+            )
+        result = await self.session.exec(statement)
+        return int(result.one())
+
+    async def count_fresh_active_target_jobs(
+        self,
+        *,
+        embedding_kind: str,
+        embedding_target_revision: int,
+        embedding_model: str,
+        embedding_dim: int,
+        require_structured: bool = False,
+    ) -> int:
+        """Count jobs whose active-target row is already fresh."""
+        description_expr = self._embeddable_description_expr()
+        statement = (
+            select(func.count(Job.id))
+            .select_from(Job)
+            .join(
+                JobEmbedding,
+                self._target_join(
+                    embedding_kind=embedding_kind,
+                    embedding_target_revision=embedding_target_revision,
+                    embedding_model=embedding_model,
+                    embedding_dim=embedding_dim,
+                ),
+            )
+            .where(
+                description_expr.is_not(None),
+                JobEmbedding.content_fingerprint.is_not_distinct_from(Job.content_fingerprint),
+            )
+        )
+        if require_structured:
+            statement = statement.where(
+                Job.structured_jd.is_not(None),
+                func.coalesce(Job.structured_jd_version, 0) >= 3,
+            )
+        result = await self.session.exec(statement)
+        return int(result.one())
