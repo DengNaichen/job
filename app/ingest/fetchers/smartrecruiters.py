@@ -3,7 +3,7 @@ from typing import Any
 
 import httpx
 
-from app.ingest.fetchers.base import BaseFetcher
+from app.ingest.fetchers.base import BaseFetcher, RetryConfig
 
 
 class SmartRecruitersFetcher(BaseFetcher):
@@ -13,8 +13,14 @@ class SmartRecruitersFetcher(BaseFetcher):
     PAGE_SIZE = 100
     REQUEST_TIMEOUT_SECONDS = 60.0
     DETAIL_CONCURRENCY = 8
-    DETAIL_RETRY_ATTEMPTS = 2
-    DETAIL_RETRY_DELAY_SECONDS = 0.25
+
+    # Detail endpoint retry config: fixed delay, no 429, returns None on failure
+    detail_retry_config = RetryConfig(
+        max_retries=2,
+        retryable_status_codes={500, 502, 503, 504},  # No 429
+        backoff_base_seconds=0.25,
+        exponential_backoff=False,  # Fixed delay
+    )
 
     @property
     def source_name(self) -> str:
@@ -83,34 +89,21 @@ class SmartRecruitersFetcher(BaseFetcher):
         async def fetch_detail(summary: dict[str, Any]) -> dict[str, Any] | None:
             detail_url = self._detail_url(summary, slug)
             async with semaphore:
-                for attempt in range(self.DETAIL_RETRY_ATTEMPTS):
-                    try:
-                        response = await client.get(detail_url)
-                    except httpx.RequestError:
-                        if attempt + 1 < self.DETAIL_RETRY_ATTEMPTS:
-                            await asyncio.sleep(self.DETAIL_RETRY_DELAY_SECONDS)
-                            continue
-                        return None
+                response = await self.request_with_graceful_retry(
+                    client,
+                    url=detail_url,
+                    retry_config=self.detail_retry_config,
+                )
+                if response is None:
+                    return None
 
-                    if response.status_code == 404:
-                        return None
+                detail = response.json()
+                if not isinstance(detail, dict):
+                    return None
 
-                    if response.status_code in {500, 502, 503, 504}:
-                        if attempt + 1 < self.DETAIL_RETRY_ATTEMPTS:
-                            await asyncio.sleep(self.DETAIL_RETRY_DELAY_SECONDS)
-                            continue
-                        return None
-
-                    response.raise_for_status()
-                    detail = response.json()
-                    if not isinstance(detail, dict):
-                        return None
-
-                    merged = dict(summary)
-                    merged.update(detail)
-                    return merged
-
-            return None
+                merged = dict(summary)
+                merged.update(detail)
+                return merged
 
         details = await asyncio.gather(*(fetch_detail(summary) for summary in summaries))
         return [detail for detail in details if detail is not None]
@@ -122,10 +115,3 @@ class SmartRecruitersFetcher(BaseFetcher):
             return ref.strip()
         posting_id = str(summary.get("id", "")).strip()
         return f"https://api.smartrecruiters.com/v1/companies/{slug}/postings/{posting_id}"
-
-    @staticmethod
-    def _to_int_or_none(value: Any) -> int | None:
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            return None

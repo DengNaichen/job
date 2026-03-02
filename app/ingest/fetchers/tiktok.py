@@ -11,9 +11,6 @@ class TikTokFetcher(BaseFetcher):
 
     API_URL = "https://api.lifeattiktok.com/api/v1/public/supplier/search/job/posts"
     REQUEST_TIMEOUT_SECONDS = 60.0
-    MAX_RETRIES = 3
-    RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
-    RETRY_BACKOFF_SECONDS = 0.25
     PAGE_SIZE = 12
     VALID_IDENTIFIER = "tiktok"
     DEFAULT_HEADERS = {
@@ -47,8 +44,10 @@ class TikTokFetcher(BaseFetcher):
             total: int | None = None
 
             while True:
-                payload = await self._request_json(
+                payload = await self.request_json_with_retry(
                     client,
+                    method="POST",
+                    url=self.API_URL,
                     json={
                         "recruitment_id_list": [],
                         "job_category_id_list": [],
@@ -80,50 +79,3 @@ class TikTokFetcher(BaseFetcher):
     def _validate_identifier(self, slug: str) -> None:
         if slug != self.VALID_IDENTIFIER:
             raise ValueError(f"Unsupported tiktok source identifier: {slug}")
-
-    async def _request_json(
-        self,
-        client: httpx.AsyncClient,
-        *,
-        json: dict[str, Any],
-    ) -> dict[str, Any]:
-        last_error: Exception | None = None
-
-        for attempt in range(self.MAX_RETRIES):
-            try:
-                response = await client.post(self.API_URL, json=json)
-                if response.status_code in self.RETRYABLE_STATUS_CODES:
-                    raise httpx.HTTPStatusError(
-                        f"Retryable HTTP error: {response.status_code}",
-                        request=response.request,
-                        response=response,
-                    )
-                response.raise_for_status()
-                payload = response.json()
-                if isinstance(payload, dict):
-                    return payload
-                raise ValueError("TikTok response payload must be a JSON object")
-            except httpx.HTTPStatusError as exc:
-                last_error = exc
-                if (
-                    exc.response.status_code not in self.RETRYABLE_STATUS_CODES
-                    or attempt + 1 >= self.MAX_RETRIES
-                ):
-                    raise
-            except httpx.RequestError as exc:
-                last_error = exc
-                if attempt + 1 >= self.MAX_RETRIES:
-                    raise
-
-            await asyncio.sleep(self.RETRY_BACKOFF_SECONDS * (2**attempt))
-
-        if last_error is not None:
-            raise last_error
-        raise RuntimeError("TikTok request failed without an exception")
-
-    @staticmethod
-    def _to_int_or_none(value: Any) -> int | None:
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            return None
