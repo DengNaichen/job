@@ -1,7 +1,4 @@
-"""LiteLLM wrapper for multi-provider AI support.
-
-简化版，复用自 Resume-Matcher，去掉了 config_path 相关逻辑。
-"""
+"""LiteLLM wrapper for multi-provider AI support."""
 
 import asyncio
 import json

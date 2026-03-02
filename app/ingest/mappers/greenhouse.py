@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Any
 
 from app.ingest.mappers.base import BaseMapper
@@ -35,28 +34,10 @@ class GreenhouseMapper(BaseMapper):
             employment_type=employment_type,
             description_html=self._clean(raw_job.get("content")),
             description_plain=None,
-            published_at=self._to_iso_or_none(raw_job.get("first_published")),
-            source_updated_at=self._to_iso_or_none(raw_job.get("updated_at")),
+            published_at=self._to_datetime_or_none(raw_job.get("first_published")),
+            source_updated_at=self._to_datetime_or_none(raw_job.get("updated_at")),
             raw_payload=raw_job,
         )
-
-    @staticmethod
-    def _clean(value: Any) -> str | None:
-        """Clean string value."""
-        if not isinstance(value, str):
-            return None
-        s = value.strip()
-        return s if s else None
-
-    @staticmethod
-    def _to_iso_or_none(value: Any) -> datetime | None:
-        """Convert to ISO datetime or None."""
-        if not value:
-            return None
-        try:
-            return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-        except (ValueError, TypeError):
-            return None
 
     @staticmethod
     def _get_first_department_name(raw_job: dict[str, Any]) -> str | None:

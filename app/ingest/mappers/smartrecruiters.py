@@ -1,5 +1,4 @@
 import html
-from datetime import datetime
 from typing import Any
 
 from app.ingest.mappers.base import BaseMapper
@@ -40,12 +39,24 @@ class SmartRecruitersMapper(BaseMapper):
                 self._get_location_field(raw_job, "country")
             ),
             location_workplace_type=self._get_workplace_type(raw_job),
+            location_hints=[
+                {
+                    "city": self._clean(self._get_location_field(raw_job, "city")),
+                    "region": self._clean(self._get_location_field(raw_job, "region")),
+                    "country_code": self.normalize_country_field(
+                        self._get_location_field(raw_job, "country")
+                    ),
+                    "workplace_type": self._get_workplace_type(raw_job),
+                }
+            ]
+            if self._get_location_text(raw_job)
+            else [],
             department=self._clean(self._get_label(raw_job, "department")),
             team=self._clean(self._get_label(raw_job, "function")),
             employment_type=self._clean(self._get_label(raw_job, "typeOfEmployment")),
             description_html=description_html,
             description_plain=html_to_text(description_html) if description_html else None,
-            published_at=self._to_iso_or_none(raw_job.get("releasedDate")),
+            published_at=self._to_datetime_or_none(raw_job.get("releasedDate")),
             source_updated_at=None,
             raw_payload=raw_job,
         )
@@ -75,13 +86,6 @@ class SmartRecruitersMapper(BaseMapper):
             parts.append("\n".join(part for part in [title_html, text.strip()] if part))
 
         return "\n".join(parts) if parts else None
-
-    @staticmethod
-    def _clean(value: Any) -> str | None:
-        if not isinstance(value, str):
-            return None
-        stripped = value.strip()
-        return stripped if stripped else None
 
     @staticmethod
     def _get_location_text(raw_job: dict[str, Any]) -> str | None:
@@ -121,12 +125,3 @@ class SmartRecruitersMapper(BaseMapper):
             return None
         label = value.get("label")
         return label if isinstance(label, str) else None
-
-    @staticmethod
-    def _to_iso_or_none(value: Any) -> datetime | None:
-        if not value:
-            return None
-        try:
-            return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-        except (TypeError, ValueError):
-            return None

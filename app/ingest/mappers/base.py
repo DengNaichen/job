@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime, timezone
 from typing import Any
 
 from app.schemas.job import JobCreate
@@ -36,6 +37,75 @@ class BaseMapper(ABC):
             - Empty strings should be converted to None
             - Invalid dates should be converted to None
     """
+
+    # Timestamp threshold: values above this are treated as milliseconds
+    TIMESTAMP_MS_THRESHOLD = 100_000_000_000
+
+    @staticmethod
+    def _clean(value: Any) -> str | None:
+        """
+        Clean string value.
+
+        Returns stripped string if valid, None otherwise.
+        """
+        if not isinstance(value, str):
+            return None
+        stripped = value.strip()
+        return stripped if stripped else None
+
+    @classmethod
+    def _to_datetime_or_none(cls, value: Any) -> datetime | None:
+        """
+        Parse value to datetime, supporting multiple formats.
+
+        Supported formats:
+        - ISO 8601 strings (e.g., "2024-01-15T10:30:00Z")
+        - Unix timestamps in seconds (e.g., 1705315800)
+        - Unix timestamps in milliseconds (e.g., 1705315800000)
+        - Numeric strings
+
+        Returns:
+            datetime in UTC, or None if parsing fails
+        """
+        if value in (None, ""):
+            return None
+
+        # Handle numeric types (int, float)
+        if isinstance(value, (int, float)):
+            return cls._parse_timestamp(float(value))
+
+        # Handle strings
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped:
+                return None
+
+            # Try parsing as number first
+            try:
+                timestamp = float(stripped)
+                return cls._parse_timestamp(timestamp)
+            except ValueError:
+                pass
+
+            # Try parsing as ISO format
+            try:
+                return datetime.fromisoformat(stripped.replace("Z", "+00:00"))
+            except ValueError:
+                pass
+
+        return None
+
+    @classmethod
+    def _parse_timestamp(cls, timestamp: float) -> datetime | None:
+        """Convert Unix timestamp (seconds or milliseconds) to datetime."""
+        # Convert milliseconds to seconds if needed
+        if timestamp > cls.TIMESTAMP_MS_THRESHOLD:
+            timestamp /= 1000.0
+
+        try:
+            return datetime.fromtimestamp(timestamp, tz=timezone.utc)
+        except (OSError, OverflowError, ValueError):
+            return None
 
     @property
     @abstractmethod

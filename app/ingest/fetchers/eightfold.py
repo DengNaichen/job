@@ -1,4 +1,3 @@
-import asyncio
 from collections.abc import Mapping
 from typing import Any
 
@@ -24,9 +23,6 @@ class EightfoldFetcher(BaseFetcher):
     DETAIL_PATH = "/api/pcsx/position_details"
     PAGE_SIZE = 10
     REQUEST_TIMEOUT_SECONDS = 60.0
-    MAX_RETRIES = 3
-    RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
-    RETRY_BACKOFF_SECONDS = 0.25
     DETAIL_CONCURRENCY = 6
     MAX_CONSECUTIVE_EMPTY_PAGES = 2
 
@@ -60,7 +56,7 @@ class EightfoldFetcher(BaseFetcher):
         consecutive_empty_pages = 0
 
         while True:
-            payload = await self._request_json(
+            payload = await self.request_json_with_retry(
                 client,
                 url=f"{config['base_url']}{self.SEARCH_PATH}",
                 params={
@@ -100,9 +96,9 @@ class EightfoldFetcher(BaseFetcher):
         config: dict[str, str],
         summaries: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
-        semaphore = asyncio.Semaphore(self.DETAIL_CONCURRENCY)
-
-        async def fetch_detail(summary: dict[str, Any]) -> dict[str, Any]:
+        async def fetch_detail(
+            client: httpx.AsyncClient, summary: dict[str, Any]
+        ) -> dict[str, Any] | None:
             position_id = summary.get("id")
             params = {
                 "position_id": position_id,
@@ -110,71 +106,35 @@ class EightfoldFetcher(BaseFetcher):
                 "hl": "en",
             }
 
-            async with semaphore:
-                try:
-                    payload = await self._request_json(
-                        client,
-                        url=f"{config['base_url']}{self.DETAIL_PATH}",
-                        params=params,
-                    )
-                except Exception:
-                    failed_summary = dict(summary)
-                    failed_summary["_detail_fetch_failed"] = True
-                    return failed_summary
+            try:
+                payload = await self.request_json_with_retry(
+                    client,
+                    url=f"{config['base_url']}{self.DETAIL_PATH}",
+                    params=params,
+                )
+            except Exception:
+                return None
 
             detail = payload.get("data")
             if not isinstance(detail, dict):
-                failed_summary = dict(summary)
-                failed_summary["_detail_fetch_failed"] = True
-                return failed_summary
+                return None
 
             merged = dict(summary)
             merged.update(detail)
             return merged
 
-        return await asyncio.gather(*(fetch_detail(summary) for summary in summaries))
+        def on_failure(summary: dict[str, Any]) -> dict[str, Any]:
+            failed = dict(summary)
+            failed["_detail_fetch_failed"] = True
+            return failed
 
-    async def _request_json(
-        self,
-        client: httpx.AsyncClient,
-        *,
-        url: str,
-        params: dict[str, Any],
-    ) -> dict[str, Any]:
-        last_error: Exception | None = None
-
-        for attempt in range(self.MAX_RETRIES):
-            try:
-                response = await client.get(url, params=params)
-                if response.status_code in self.RETRYABLE_STATUS_CODES:
-                    raise httpx.HTTPStatusError(
-                        f"Retryable HTTP error: {response.status_code}",
-                        request=response.request,
-                        response=response,
-                    )
-                response.raise_for_status()
-                payload = response.json()
-                if isinstance(payload, dict):
-                    return payload
-                raise ValueError("Eightfold response payload must be a JSON object")
-            except httpx.HTTPStatusError as exc:
-                last_error = exc
-                status_code = exc.response.status_code
-                if (
-                    status_code not in self.RETRYABLE_STATUS_CODES
-                    or attempt + 1 >= self.MAX_RETRIES
-                ):
-                    raise
-            except httpx.RequestError as exc:
-                last_error = exc
-                if attempt + 1 >= self.MAX_RETRIES:
-                    raise
-
-            await asyncio.sleep(self.RETRY_BACKOFF_SECONDS * (2**attempt))
-
-        if last_error is not None:
-            raise last_error
-        raise RuntimeError("Eightfold request failed without an exception")
+        return await self.fetch_details_concurrently(
+            client,
+            summaries,
+            fetch_detail=fetch_detail,
+            concurrency=self.DETAIL_CONCURRENCY,
+            on_failure=on_failure,
+        )
 
     @staticmethod
     def _extract_positions(data: Any) -> list[dict[str, Any]]:
@@ -186,10 +146,3 @@ class EightfoldFetcher(BaseFetcher):
             return []
 
         return [position for position in positions if isinstance(position, dict)]
-
-    @staticmethod
-    def _to_int_or_none(value: Any) -> int | None:
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            return None

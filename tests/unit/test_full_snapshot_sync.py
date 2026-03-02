@@ -1,4 +1,4 @@
-from __future__ import annotations
+from typing import Any
 
 from copy import deepcopy
 
@@ -8,14 +8,14 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.ingest.fetchers.base import BaseFetcher
 from app.ingest.mappers.base import BaseMapper
-from app.models import Job, JobStatus, PlatformType, Source
+from app.models import Job, JobLocation, JobStatus, Location, PlatformType, Source
 from app.schemas.job import JobCreate
 from app.services.application.full_snapshot_sync import FullSnapshotSyncService
 from app.services.infra.blob_storage import JobBlobManager
 
 
 class _FakeFetcher(BaseFetcher):
-    def __init__(self, jobs: list[dict[str, object]], *, error: Exception | None = None):
+    def __init__(self, jobs: list[dict[str, Any]], *, error: Exception | None = None):
         self.jobs = deepcopy(jobs)
         self.error = error
 
@@ -23,7 +23,7 @@ class _FakeFetcher(BaseFetcher):
     def source_name(self) -> str:
         return "greenhouse"
 
-    async def fetch(self, slug: str, **kwargs) -> list[dict[str, object]]:  # noqa: ANN003
+    async def fetch(self, slug: str, **kwargs: Any) -> list[dict[str, Any]]:  # noqa: ANN401
         _ = (slug, kwargs)
         if self.error is not None:
             raise self.error
@@ -38,7 +38,7 @@ class _FakeMapper(BaseMapper):
     def source_name(self) -> str:
         return "greenhouse"
 
-    def map(self, raw_job: dict[str, object]) -> JobCreate:
+    def map(self, raw_job: dict[str, Any]) -> JobCreate:
         if self.error_job_id is not None and str(raw_job["id"]) == self.error_job_id:
             raise ValueError("mapper boom")
         return JobCreate(
@@ -48,6 +48,7 @@ class _FakeMapper(BaseMapper):
             apply_url=str(raw_job["absolute_url"]),
             description_html=str(raw_job.get("content") or ""),
             raw_payload=raw_job,
+            location_hints=raw_job.get("location_hints") or [],  # type: ignore
         )
 
 
@@ -322,3 +323,59 @@ async def test_full_snapshot_sync_dry_run_does_not_persist_or_close_jobs(
     assert result.stats.inserted_count == 3
     assert result.stats.closed_count == 0
     assert rows == []
+
+
+@pytest.mark.asyncio
+async def test_full_snapshot_sync_persists_canonical_locations(session: AsyncSession) -> None:
+    service = _service(session)
+    source = _source()
+    jobs = [
+        {
+            "id": "job-1",
+            "title": "Engineer in SF",
+            "absolute_url": "https://example.com/1",
+            "location_hints": [
+                {
+                    "city": "San Francisco",
+                    "region": "CA",
+                    "country_code": "US",
+                    "workplace_type": "onsite",
+                }
+            ],
+        },
+        {
+            "id": "job-2",
+            "title": "Remote Engineer",
+            "absolute_url": "https://example.com/2",
+            "location_hints": [
+                {"country_code": "CA", "workplace_type": "remote", "remote_scope": "Canada"}
+            ],
+        },
+    ]
+
+    result = await service.sync_source(
+        source=source,
+        fetcher=_FakeFetcher(jobs),
+        mapper=_FakeMapper(),
+    )
+
+    assert result.ok is True
+
+    # Verify Job models (compatibility fields)
+    job_rows = {j.external_job_id: j for j in await _all_jobs(session)}
+    assert job_rows["job-1"].location_city == "San Francisco"
+    assert job_rows["job-1"].location_country_code == "US"
+    assert job_rows["job-2"].location_country_code == "CA"
+    assert job_rows["job-2"].location_workplace_type == "remote"
+
+    # Verify Location models
+    loc_rows = (await session.exec(select(Location))).all()
+    assert len(loc_rows) == 2
+    loc_keys = {loc.canonical_key for loc in loc_rows}
+    assert "us-ca-san-francisco" in loc_keys
+    assert "ca" in loc_keys
+
+    # Verify JobLocation links
+    link_rows = (await session.exec(select(JobLocation))).all()
+    assert len(link_rows) == 2
+    assert all(link.is_primary is True for link in link_rows)

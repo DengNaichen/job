@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Any
 
 from app.ingest.mappers.base import BaseMapper
@@ -35,23 +34,7 @@ class AshbyMapper(BaseMapper):
             employment_type=employment_type,
             description_html=self._clean(raw_job.get("descriptionHtml")),
             description_plain=self._clean(raw_job.get("descriptionPlain")),
-            published_at=self._to_iso_or_none(raw_job.get("publishedAt")),
+            published_at=self._to_datetime_or_none(raw_job.get("publishedAt")),
             source_updated_at=None,
             raw_payload=raw_job,
         )
-
-    @staticmethod
-    def _clean(value: Any) -> str | None:
-        if not isinstance(value, str):
-            return None
-        stripped = value.strip()
-        return stripped if stripped else None
-
-    @staticmethod
-    def _to_iso_or_none(value: Any) -> datetime | None:
-        if not value:
-            return None
-        try:
-            return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-        except (TypeError, ValueError):
-            return None

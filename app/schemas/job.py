@@ -4,6 +4,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from app.models import JobStatus, WorkplaceType
+from app.schemas.location import LocationRead
 
 
 class JobBase(BaseModel):
@@ -46,6 +47,9 @@ class JobCreate(JobBase):
     structured_jd: dict[str, Any] | None = None
     structured_jd_updated_at: datetime | None = None
 
+    # New normalized location hints (User Story 1)
+    location_hints: list[dict[str, Any]] = Field(default_factory=list)
+
 
 class JobRead(JobBase):
     id: str
@@ -61,6 +65,10 @@ class JobRead(JobBase):
     raw_payload: dict[str, Any]
     raw_payload_key: str | None
     raw_payload_hash: str | None
+
+    # New normalized locations
+    locations: list["LocationRead"] = []
+
     sponsorship_not_available: str
     job_domain_raw: str | None
     job_domain_normalized: str

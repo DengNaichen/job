@@ -5,10 +5,12 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from sqlalchemy import and_, func, or_, update
+from sqlalchemy.orm import selectinload
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import Job, JobEmbedding, JobStatus
+from app.models.job_location import JobLocation
 
 
 @dataclass(frozen=True)
@@ -46,13 +48,24 @@ class JobRepository:
 
     async def get_by_id(self, job_id: str) -> Job | None:
         """Get a job by ID."""
-        return await self.session.get(Job, job_id)
+        statement = (
+            select(Job)
+            .where(Job.id == job_id)
+            .options(selectinload(Job.job_locations).selectinload(JobLocation.location))
+        )
+        result = await self.session.exec(statement)
+        return result.first()
 
     async def list_by_ids(self, job_ids: list[str]) -> list[Job]:
         """Get jobs by IDs while preserving input order."""
         if not job_ids:
             return []
-        result = await self.session.execute(select(Job).where(Job.id.in_(job_ids)))
+        statement = (
+            select(Job)
+            .where(Job.id.in_(job_ids))
+            .options(selectinload(Job.job_locations).selectinload(JobLocation.location))
+        )
+        result = await self.session.execute(statement)
         jobs = list(result.scalars().all())
         jobs_by_id = {str(job.id): job for job in jobs}
         return [jobs_by_id[job_id] for job_id in job_ids if job_id in jobs_by_id]
@@ -138,7 +151,12 @@ class JobRepository:
         status: JobStatus | None = None,
     ) -> list[Job]:
         """List jobs with optional pagination and status filter."""
-        statement = select(Job).offset(skip).limit(limit)
+        statement = (
+            select(Job)
+            .offset(skip)
+            .limit(limit)
+            .options(selectinload(Job.job_locations).selectinload(JobLocation.location))
+        )
         if status is not None:
             statement = statement.where(Job.status == status)
         result = await self.session.exec(statement)
@@ -240,6 +258,25 @@ class JobRepository:
         # This targets rows needing country repair (null or raw names like "United States")
         statement = select(Job).where(
             or_(Job.location_country_code.is_(None), func.length(Job.location_country_code) != 2)  # type: ignore
+        )
+        if last_id:
+            statement = statement.where(Job.id > last_id)
+        statement = statement.order_by(Job.id).limit(limit)
+        result = await self.session.exec(statement)
+        return list(result.all())
+
+    async def list_jobs_missing_canonical_locations(
+        self,
+        last_id: str | None = None,
+        limit: int = 100,
+    ) -> list[Job]:
+        """List jobs that do not have any associated JobLocation links."""
+        from app.models.job_location import JobLocation
+
+        statement = (
+            select(Job)
+            .outerjoin(JobLocation, Job.id == JobLocation.job_id)
+            .where(JobLocation.job_id.is_(None))
         )
         if last_id:
             statement = statement.where(Job.id > last_id)

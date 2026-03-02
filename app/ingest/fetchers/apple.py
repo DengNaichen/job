@@ -1,4 +1,3 @@
-import asyncio
 from typing import Any
 
 import httpx
@@ -17,9 +16,6 @@ class AppleFetcher(BaseFetcher):
     LOCALE = "en-us"
     PAGE_SIZE = 20
     REQUEST_TIMEOUT_SECONDS = 60.0
-    MAX_RETRIES = 3
-    RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
-    RETRY_BACKOFF_SECONDS = 0.25
     DETAIL_CONCURRENCY = 6
     VALID_IDENTIFIER = "apple"
     DEFAULT_HEADERS = {
@@ -64,7 +60,9 @@ class AppleFetcher(BaseFetcher):
             raise ValueError(f"Unsupported apple source identifier: {slug}")
 
     async def _get_csrf_token(self, client: httpx.AsyncClient) -> str:
-        response = await self._request(client, method="GET", url=f"{self.API_BASE}{self.CSRF_PATH}")
+        response = await self.request_with_retry(
+            client, method="GET", url=f"{self.API_BASE}{self.CSRF_PATH}"
+        )
         token = response.headers.get("x-apple-csrf-token")
         if not token:
             raise ValueError("Apple CSRF token missing from response headers")
@@ -76,7 +74,7 @@ class AppleFetcher(BaseFetcher):
         page = 1
 
         while True:
-            payload = await self._request_json(
+            payload = await self.request_json_with_retry(
                 client,
                 method="POST",
                 url=f"{self.API_BASE}{self.SEARCH_PATH}",
@@ -120,95 +118,39 @@ class AppleFetcher(BaseFetcher):
         client: httpx.AsyncClient,
         summaries: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
-        semaphore = asyncio.Semaphore(self.DETAIL_CONCURRENCY)
-
-        async def fetch_detail(summary: dict[str, Any]) -> dict[str, Any]:
+        async def fetch_detail(
+            client: httpx.AsyncClient, summary: dict[str, Any]
+        ) -> dict[str, Any] | None:
             position_id = summary.get("positionId")
             if not isinstance(position_id, str) or not position_id.strip():
-                failed_summary = dict(summary)
-                failed_summary["_detail_fetch_failed"] = True
-                return failed_summary
+                return None
 
-            async with semaphore:
-                try:
-                    payload = await self._request_json(
-                        client,
-                        method="GET",
-                        url=f"{self.API_BASE}{self.DETAIL_PATH}/{position_id.strip()}",
-                    )
-                except Exception:
-                    failed_summary = dict(summary)
-                    failed_summary["_detail_fetch_failed"] = True
-                    return failed_summary
+            try:
+                payload = await self.request_json_with_retry(
+                    client,
+                    method="GET",
+                    url=f"{self.API_BASE}{self.DETAIL_PATH}/{position_id.strip()}",
+                )
+            except Exception:
+                return None
 
             detail = payload.get("res")
             if not isinstance(detail, dict):
-                failed_summary = dict(summary)
-                failed_summary["_detail_fetch_failed"] = True
-                return failed_summary
+                return None
 
             merged = dict(summary)
             merged.update(detail)
             return merged
 
-        return await asyncio.gather(*(fetch_detail(summary) for summary in summaries))
+        def on_failure(summary: dict[str, Any]) -> dict[str, Any]:
+            failed = dict(summary)
+            failed["_detail_fetch_failed"] = True
+            return failed
 
-    async def _request_json(
-        self,
-        client: httpx.AsyncClient,
-        *,
-        method: str,
-        url: str,
-        json: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
-        response = await self._request(client, method=method, url=url, json=json)
-        payload = response.json()
-        if isinstance(payload, dict):
-            return payload
-        raise ValueError("Apple response payload must be a JSON object")
-
-    async def _request(
-        self,
-        client: httpx.AsyncClient,
-        *,
-        method: str,
-        url: str,
-        json: dict[str, Any] | None = None,
-    ) -> httpx.Response:
-        last_error: Exception | None = None
-
-        for attempt in range(self.MAX_RETRIES):
-            try:
-                response = await client.request(method, url, json=json)
-                if response.status_code in self.RETRYABLE_STATUS_CODES:
-                    raise httpx.HTTPStatusError(
-                        f"Retryable HTTP error: {response.status_code}",
-                        request=response.request,
-                        response=response,
-                    )
-                response.raise_for_status()
-                return response
-            except httpx.HTTPStatusError as exc:
-                last_error = exc
-                if (
-                    exc.response.status_code not in self.RETRYABLE_STATUS_CODES
-                    or attempt + 1 >= self.MAX_RETRIES
-                ):
-                    raise
-            except httpx.RequestError as exc:
-                last_error = exc
-                if attempt + 1 >= self.MAX_RETRIES:
-                    raise
-
-            await asyncio.sleep(self.RETRY_BACKOFF_SECONDS * (2**attempt))
-
-        if last_error is not None:
-            raise last_error
-        raise RuntimeError("Apple request failed without an exception")
-
-    @staticmethod
-    def _to_int_or_none(value: Any) -> int | None:
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            return None
+        return await self.fetch_details_concurrently(
+            client,
+            summaries,
+            fetch_detail=fetch_detail,
+            concurrency=self.DETAIL_CONCURRENCY,
+            on_failure=on_failure,
+        )

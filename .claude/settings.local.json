@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv run pytest tests/unit/ingest/fetchers/ -v)",
+      "Bash(uv run pytest tests/unit/ingest/mappers/ -v)",
+      "Bash(uv run ruff check app/ingest/mappers/)",
+      "Bash(wc -l /Users/nd/Developer/job/app/ingest/mappers/*.py)",
+      "Bash(uv run ruff check app/ingest/fetchers/)"
+    ]
+  }
+}

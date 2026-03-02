@@ -32,7 +32,15 @@ def build_sql_prefilter(
 
     if preferred_country_code:
         placeholder = f"${start_index + len(params)}"
-        clauses.append(f"location_country_code = {placeholder}")
+        # Country filter should check the new normalized job_locations -> locations relationship
+        # OR fall back to the compatibility `location_country_code` field for jobs not yet backfilled.
+        clauses.append(
+            f"(EXISTS ("
+            f"SELECT 1 FROM job_locations jl "
+            f"JOIN locations l ON jl.location_id = l.id "
+            f"WHERE jl.job_id = job.id AND l.country_code = {placeholder}"
+            f") OR location_country_code = {placeholder})"
+        )
         params.append(preferred_country_code)
 
     if user_degree_rank >= 0:

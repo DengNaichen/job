@@ -1,13 +1,18 @@
 import enum
 import uuid
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    pass
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import Column, ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.types import DateTime
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, SQLModel, Relationship
+
+from app.models.job_location import JobLocation
 
 
 class JobStatus(str, enum.Enum):
@@ -100,3 +105,6 @@ class Job(SQLModel, table=True):
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    # Relationships
+    job_locations: list[JobLocation] = Relationship(back_populates="job")

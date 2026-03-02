@@ -10,6 +10,11 @@ from app.ingest.fetchers.base import BaseFetcher
 from app.ingest.mappers.base import BaseMapper
 from app.models import Job, JobStatus, Source, build_source_key
 from app.repositories.job import JobRepository
+from app.services.domain.job_location import (
+    StructuredLocation,
+    sync_job_location,
+    sync_primary_to_job,
+)
 from app.services.infra.blob_storage import JobBlobManager, JobBlobPointers
 
 
@@ -107,6 +112,46 @@ class FullSnapshotSyncService:
                 await self.job_repository.save_all_no_commit(staged_jobs)
                 await self.job_repository.flush()
 
+                # Phase 2: Persist normalized locations after jobs are flushed (IDs exist)
+                for job in staged_jobs:
+                    # Find the corresponding payload to get hints
+                    payload = next(
+                        (
+                            p
+                            for p in unique_payloads
+                            if str(p["external_job_id"]) == str(job.external_job_id)
+                        ),
+                        None,
+                    )
+                    if not payload:
+                        continue
+
+                    hints = payload.get("location_hints") or []
+                    for i, hint in enumerate(hints):
+                        is_primary = i == 0
+                        # Convert dict hint to StructuredLocation
+                        structured = StructuredLocation(**hint)
+
+                        location = await sync_job_location(
+                            session=self.session,
+                            job_id=str(job.id),
+                            structured=structured,
+                            is_primary=is_primary,
+                            source_raw=payload.get("location_text"),
+                        )
+
+                        if is_primary:
+                            sync_primary_to_job(
+                                job=job,
+                                location=location,
+                                workplace_type=structured.workplace_type,
+                                remote_scope=structured.remote_scope,
+                            )
+
+                # Re-save jobs to persist updated compatibility fields if primary was synced
+                await self.job_repository.save_all_no_commit(staged_jobs)
+                await self.job_repository.flush()
+
             if dry_run:
                 await self.session.rollback()
                 stats.closed_count = 0
@@ -157,6 +202,7 @@ class FullSnapshotSyncService:
         data["last_seen_at"] = sync_started_at
         data["created_at"] = sync_started_at
         data["updated_at"] = sync_started_at
+        data.pop("location_hints", None)
         return Job(**data)
 
     @staticmethod
@@ -173,6 +219,8 @@ class FullSnapshotSyncService:
         # payload always carries both source_id and legacy source (dual-write).
         # Overwriting source_id on existing rows is intentional: it self-heals any row
         # that was written before the Phase 2 backfill ran (source_id was NULL or wrong).
+        # that was written before the Phase 2 backfill ran (source_id was NULL or wrong).
+        normalized_payload.pop("location_hints", None)
         for key, value in normalized_payload.items():
             setattr(job, key, value)
         job.status = JobStatus.open
