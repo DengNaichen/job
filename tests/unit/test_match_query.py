@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.services.infra.match_query import (
+from app.services.infra.matching.query import (
     build_sql_prefilter,
     fetch_candidates,
     to_asyncpg_dsn,
@@ -49,7 +49,8 @@ def test_build_sql_prefilter_with_country_sponsorship_and_degree() -> None:
 
     assert "sponsorship_not_available <> 'yes'" in sql
     assert "EXISTS (SELECT 1 FROM job_locations jl JOIN locations l" in sql
-    assert "location_country_code = $2" in sql
+    assert "l.country_code = $2" in sql
+    assert "jl.job_id = j.id" in sql
     assert "min_degree_rank" in sql
     assert params == ["US", 3]
     assert summary == {
@@ -86,7 +87,7 @@ def test_build_sql_prefilter_with_only_country() -> None:
     )
 
     assert "sponsorship_not_available" not in sql
-    assert "location_country_code = $2" in sql
+    assert "l.country_code = $2" in sql
     assert params == ["CA"]
     assert summary == {
         "sponsorship_filter_applied": False,
@@ -129,7 +130,11 @@ async def test_fetch_candidates_keeps_match_constraints_and_fields() -> None:
         fake_conn,
         user_vec_literal="[0.1,0.2]",
         top_k=25,
-        prefilter_sql="j.sponsorship_not_available <> 'yes' AND j.location_country_code = $6",
+        prefilter_sql=(
+            "j.sponsorship_not_available <> 'yes' "
+            "AND EXISTS (SELECT 1 FROM job_locations jl JOIN locations l "
+            "ON jl.location_id = l.id WHERE jl.job_id = j.id AND l.country_code = $6)"
+        ),
         prefilter_params=["US"],
         embedding_kind="job_description",
         embedding_target_revision=1,
@@ -139,7 +144,9 @@ async def test_fetch_candidates_keeps_match_constraints_and_fields() -> None:
 
     assert fake_conn.query is not None
     assert "je.embedding IS NOT NULL" in fake_conn.query
-    assert "j.location_country_code AS country_code" in fake_conn.query
+    assert "loc.country_code AS country_code" in fake_conn.query
+    assert "LEFT JOIN job_locations jl_primary" in fake_conn.query
+    assert "LEFT JOIN locations loc" in fake_conn.query
     assert "COALESCE(j.structured_jd_version, 0) >= 3" in fake_conn.query
     assert "j.sponsorship_not_available <> 'yes'" in fake_conn.query
     assert "JOIN job_embedding je ON j.id = je.job_id" in fake_conn.query

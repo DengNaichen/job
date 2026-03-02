@@ -15,7 +15,7 @@ from app.schemas.structured_jd import (
     StructuredJD,
 )
 from app.services.domain.jd_rules import extract_rule_based_fields, fallback_job_domain
-from app.services.infra.html_utils import html_to_text
+from app.services.infra.text import html_to_text
 from app.services.infra.llm import complete_json, get_llm_config
 
 logger = logging.getLogger(__name__)

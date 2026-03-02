@@ -32,14 +32,13 @@ def build_sql_prefilter(
 
     if preferred_country_code:
         placeholder = f"${start_index + len(params)}"
-        # Country filter should check the new normalized job_locations -> locations relationship
-        # OR fall back to the compatibility `location_country_code` field for jobs not yet backfilled.
+        # Country filter checks normalized job_locations -> locations only.
         clauses.append(
             f"(EXISTS ("
             f"SELECT 1 FROM job_locations jl "
             f"JOIN locations l ON jl.location_id = l.id "
-            f"WHERE jl.job_id = job.id AND l.country_code = {placeholder}"
-            f") OR location_country_code = {placeholder})"
+            f"WHERE jl.job_id = j.id AND l.country_code = {placeholder}"
+            f"))"
         )
         params.append(preferred_country_code)
 
@@ -97,33 +96,15 @@ async def fetch_candidates(
     limit_placeholder = f"${len(params)}"
     query = f"""
         SELECT
-            id AS job_id,
-            source,
-            title,
-            apply_url,
-            location_text,
-            location_city AS city,
-            location_region AS region,
-            location_country_code AS country_code,
-            location_workplace_type AS workplace_type,
-            department,
-            team,
-            employment_type,
-            sponsorship_not_available,
-            job_domain_raw,
-            job_domain_normalized,
-            min_degree_level,
-            min_degree_rank,
-            structured_jd,
             j.id AS job_id,
-            j.source,
+            (s.platform::text || ':' || s.identifier) AS source,
             j.title,
             j.apply_url,
-            j.location_text,
-            j.location_city AS city,
-            j.location_region AS region,
-            j.location_country_code AS country_code,
-            j.location_workplace_type AS workplace_type,
+            jl_primary.source_raw AS location_text,
+            loc.city AS city,
+            loc.region AS region,
+            loc.country_code AS country_code,
+            jl_primary.workplace_type AS workplace_type,
             j.department,
             j.team,
             j.employment_type,
@@ -140,7 +121,12 @@ async def fetch_candidates(
             END AS jd_experience_years,
             (1 - (je.embedding <=> $1::vector)) AS cosine_score
         FROM job j
+        JOIN sources s ON s.id = j.source_id
         JOIN job_embedding je ON j.id = je.job_id
+        LEFT JOIN job_locations jl_primary
+            ON jl_primary.job_id = j.id AND jl_primary.is_primary = TRUE
+        LEFT JOIN locations loc
+            ON loc.id = jl_primary.location_id
         WHERE {" AND ".join(where_clauses)}
         ORDER BY je.embedding <=> $1::vector
         LIMIT {limit_placeholder}

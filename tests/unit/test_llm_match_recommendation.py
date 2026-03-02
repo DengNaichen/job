@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from app.services.infra.llm import LLMConfig, get_token_usage
-from app.services.infra.llm_match_recommendation import (
+from app.services.infra.matching.llm_rerank import (
     LLMMatchRecommendation,
     apply_llm_rerank,
     build_llm_match_payload,
@@ -151,11 +151,11 @@ async def test_get_llm_match_recommendation_parses_structured_response(
         }
 
     monkeypatch.setattr(
-        "app.services.infra.llm_match_recommendation.get_llm_config",
+        "app.services.infra.matching.llm_rerank.get_llm_config",
         lambda: LLMConfig(provider="openai", model="gpt-4o-mini", api_key="test-key"),
     )
     monkeypatch.setattr(
-        "app.services.infra.llm_match_recommendation.complete_json",
+        "app.services.infra.matching.llm_rerank.complete_json",
         fake_complete_json,
     )
 
@@ -196,11 +196,11 @@ async def test_apply_llm_rerank_reorders_only_window(monkeypatch: pytest.MonkeyP
         )
 
     monkeypatch.setattr(
-        "app.services.infra.llm_match_recommendation.get_llm_config",
+        "app.services.infra.matching.llm_rerank.get_llm_config",
         lambda: LLMConfig(provider="openai", model="gpt-4o-mini", api_key="test-key"),
     )
     monkeypatch.setattr(
-        "app.services.infra.llm_match_recommendation.get_llm_match_recommendation",
+        "app.services.infra.matching.llm_rerank.get_llm_match_recommendation",
         fake_recommendation,
     )
 
@@ -249,11 +249,11 @@ async def test_apply_llm_rerank_falls_back_per_item_on_failure(
         )
 
     monkeypatch.setattr(
-        "app.services.infra.llm_match_recommendation.get_llm_config",
+        "app.services.infra.matching.llm_rerank.get_llm_config",
         lambda: LLMConfig(provider="openai", model="gpt-4o-mini", api_key="test-key"),
     )
     monkeypatch.setattr(
-        "app.services.infra.llm_match_recommendation.get_llm_match_recommendation",
+        "app.services.infra.matching.llm_rerank.get_llm_match_recommendation",
         fake_recommendation,
     )
 
@@ -301,11 +301,11 @@ async def test_apply_llm_rerank_does_not_reset_global_usage(
     usage.add_usage("global-before", 11, 7)
 
     monkeypatch.setattr(
-        "app.services.infra.llm_match_recommendation.get_llm_config",
+        "app.services.infra.matching.llm_rerank.get_llm_config",
         lambda: LLMConfig(provider="openai", model="gpt-4o-mini", api_key="test-key"),
     )
     monkeypatch.setattr(
-        "app.services.infra.llm_match_recommendation.get_llm_match_recommendation",
+        "app.services.infra.matching.llm_rerank.get_llm_match_recommendation",
         fake_recommendation,
     )
 

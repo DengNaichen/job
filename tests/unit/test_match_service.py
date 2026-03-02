@@ -95,7 +95,7 @@ async def test_match_service_run_returns_typed_response_without_llm(
             _make_candidate("job-2", 0.83),
         ]
 
-    monkeypatch.setattr("app.services.infra.match_query.asyncpg.connect", fake_connect)
+    monkeypatch.setattr("app.services.infra.matching.query.asyncpg.connect", fake_connect)
     monkeypatch.setattr(
         "app.services.application.match_service.get_settings",
         lambda: SimpleNamespace(database_url="postgresql+asyncpg://local/test", embedding_dim=3),
@@ -113,7 +113,7 @@ async def test_match_service_run_returns_typed_response_without_llm(
         ),
     )
     monkeypatch.setattr("app.services.application.match_service.embed_text", fake_embed_text)
-    monkeypatch.setattr("app.services.infra.match_query.fetch_candidates", fake_fetch_candidates)
+    monkeypatch.setattr("app.services.infra.matching.query.fetch_candidates", fake_fetch_candidates)
 
     response = await MatchExperimentService().run(_make_request(enable_llm_rerank=False))
 
@@ -195,7 +195,7 @@ async def test_match_service_run_applies_llm_rerank(
             },
         }
 
-    monkeypatch.setattr("app.services.infra.match_query.asyncpg.connect", fake_connect)
+    monkeypatch.setattr("app.services.infra.matching.query.asyncpg.connect", fake_connect)
     monkeypatch.setattr(
         "app.services.application.match_service.get_settings",
         lambda: SimpleNamespace(database_url="postgresql+asyncpg://local/test", embedding_dim=3),
@@ -213,13 +213,13 @@ async def test_match_service_run_applies_llm_rerank(
         ),
     )
     monkeypatch.setattr("app.services.application.match_service.embed_text", fake_embed_text)
-    monkeypatch.setattr("app.services.infra.match_query.fetch_candidates", fake_fetch_candidates)
+    monkeypatch.setattr("app.services.infra.matching.query.fetch_candidates", fake_fetch_candidates)
     monkeypatch.setattr(
-        "app.services.infra.llm_match_recommendation.get_llm_config",
+        "app.services.infra.matching.llm_rerank.get_llm_config",
         lambda: LLMConfig(provider="openai", model="gpt-4o-mini", api_key="test-key"),
     )
     monkeypatch.setattr(
-        "app.services.infra.llm_match_recommendation.apply_llm_rerank",
+        "app.services.infra.matching.llm_rerank.apply_llm_rerank",
         fake_apply_llm_rerank,
     )
 
@@ -250,7 +250,7 @@ async def test_match_service_run_wraps_query_errors(
         _ = (args, kwargs)
         return [0.1, 0.2, 0.3]
 
-    monkeypatch.setattr("app.services.infra.match_query.asyncpg.connect", fake_connect)
+    monkeypatch.setattr("app.services.infra.matching.query.asyncpg.connect", fake_connect)
     monkeypatch.setattr(
         "app.services.application.match_service.get_settings",
         lambda: SimpleNamespace(database_url="postgresql+asyncpg://local/test", embedding_dim=3),
@@ -289,7 +289,7 @@ async def test_match_service_run_fails_fast_when_llm_not_configured(
         _ = (args, kwargs)
         return [_make_candidate("job-1", 0.88)]
 
-    monkeypatch.setattr("app.services.infra.match_query.asyncpg.connect", fake_connect)
+    monkeypatch.setattr("app.services.infra.matching.query.asyncpg.connect", fake_connect)
     monkeypatch.setattr(
         "app.services.application.match_service.get_settings",
         lambda: SimpleNamespace(database_url="postgresql+asyncpg://local/test", embedding_dim=3),
@@ -307,9 +307,9 @@ async def test_match_service_run_fails_fast_when_llm_not_configured(
         ),
     )
     monkeypatch.setattr("app.services.application.match_service.embed_text", fake_embed_text)
-    monkeypatch.setattr("app.services.infra.match_query.fetch_candidates", fake_fetch_candidates)
+    monkeypatch.setattr("app.services.infra.matching.query.fetch_candidates", fake_fetch_candidates)
     monkeypatch.setattr(
-        "app.services.infra.llm_match_recommendation.get_llm_config",
+        "app.services.infra.matching.llm_rerank.get_llm_config",
         lambda: LLMConfig(provider="openai", model="gpt-4o-mini", api_key=None),
     )
 

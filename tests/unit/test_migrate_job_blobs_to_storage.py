@@ -7,7 +7,8 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import Job
-from app.services.infra.blob_storage import BlobStorageError, JobBlobManager
+from app.services.application.job_blob import JobBlobManager
+from app.services.infra.blob_storage import BlobStorageError
 from scripts.migrate_job_blobs_to_storage import migrate_job_blobs
 
 

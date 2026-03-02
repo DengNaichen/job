@@ -7,14 +7,13 @@ import httpx
 import pytest
 
 from app.models import Job
+from app.services.application.job_blob import JobBlobManager, JobBlobPointers
 from app.services.infra.blob_storage import (
-    JobBlobManager,
-    JobBlobPointers,
-    SupabaseBlobStorage,
     build_description_html_blob,
     build_raw_payload_blob,
     compute_sha256_hex,
 )
+from app.services.infra.blob_storage import SupabaseBlobStorage
 
 
 class _InMemoryBlobStorage:

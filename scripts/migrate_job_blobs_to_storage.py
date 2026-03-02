@@ -13,12 +13,8 @@ from sqlmodel import select
 
 from app.core.config import get_settings
 from app.models import Job
-from app.services.infra.blob_storage import (
-    JobBlobManager,
-    JobBlobPointers,
-    build_description_html_blob,
-    build_raw_payload_blob,
-)
+from app.services.application.job_blob import JobBlobManager, JobBlobPointers
+from app.services.infra.blob_storage import build_description_html_blob, build_raw_payload_blob
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
