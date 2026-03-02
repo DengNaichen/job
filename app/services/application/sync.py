@@ -63,10 +63,17 @@ class SyncService:
                     error_summary=f"unsupported platform: {source.platform.value}",
                 )
 
-            sync_run = await sync_run_repository.create_running(
+            sync_run = await sync_run_repository.try_create_running(
                 source=source_key,
                 source_id=str(source.id),
             )
+            if sync_run is None:
+                return await sync_run_repository.create_finished(
+                    source=source_key,
+                    source_id=str(source.id),
+                    status=SyncRunStatus.failed,
+                    error_summary="overlap: source already running",
+                )
             fetcher = handlers.fetcher_cls()
             mapper = handlers.mapper_cls()
             last_result: SourceSyncResult | None = None

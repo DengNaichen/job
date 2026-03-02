@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, ForeignKey, String
+from sqlalchemy import Column, ForeignKey, Index, String, text
 from sqlmodel import Field, SQLModel
 
 
@@ -13,6 +13,16 @@ class SyncRunStatus(str, enum.Enum):
 
 
 class SyncRun(SQLModel, table=True):
+    __table_args__ = (
+        Index(
+            "uq_syncrun_running_source_id",
+            "source_id",
+            unique=True,
+            postgresql_where=text("status = 'running' AND source_id IS NOT NULL"),
+            sqlite_where=text("status = 'running' AND source_id IS NOT NULL"),
+        ),
+    )
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     # Authoritative owner FK — nullable during migration window; enforced NOT NULL in second revision.
     source_id: str | None = Field(
