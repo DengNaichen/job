@@ -109,17 +109,6 @@ async def test_fetch_candidates_keeps_match_constraints_and_fields() -> None:
         fake_conn,
         user_vec_literal="[0.1,0.2]",
         top_k=25,
-        prefilter_sql="sponsorship_not_available <> 'yes' AND location_country_code = $2",
-        prefilter_params=["US", 2],
-    )
-
-    assert fake_conn.query is not None
-    assert "embedding IS NOT NULL" in fake_conn.query
-    assert "location_country_code AS country_code" in fake_conn.query
-    assert "COALESCE(structured_jd_version, 0) >= 3" in fake_conn.query
-    assert "sponsorship_not_available <> 'yes'" in fake_conn.query
-    assert "LIMIT $4" in fake_conn.query
-    assert fake_conn.params == ("[0.1,0.2]", "US", 2, 25)
         prefilter_sql="j.sponsorship_not_available <> 'yes' AND j.location_country_code = $6",
         prefilter_params=["US"],
         embedding_kind="job_description",
