@@ -67,6 +67,8 @@ class FullSnapshotSyncService:
                 if not external_job_id:
                     raise FullSnapshotSyncError("Mapped job is missing external_job_id")
                 payload["external_job_id"] = external_job_id
+                # Dual-write: authoritative source_id + compatibility source string
+                payload["source_id"] = source_id
                 payload["source"] = source_key
                 mapped_payloads.append(payload)
 
@@ -76,8 +78,8 @@ class FullSnapshotSyncService:
             stats.deduped_by_external_id = stats.mapped_count - stats.unique_count
 
             sync_started_at = _now_naive_utc()
-            existing_rows = await self.job_repository.list_by_source_and_external_ids(
-                source=source_key,
+            existing_rows = await self.job_repository.list_by_source_id_and_external_ids(
+                source_id=source_id,
                 external_job_ids=[payload["external_job_id"] for payload in unique_payloads],
             )
             existing_map = {str(job.external_job_id): job for job in existing_rows}
@@ -109,8 +111,8 @@ class FullSnapshotSyncService:
                 await self.session.rollback()
                 stats.closed_count = 0
             else:
-                stats.closed_count = await self.job_repository.bulk_close_missing_for_source(
-                    source=source_key,
+                stats.closed_count = await self.job_repository.bulk_close_missing_for_source_id(
+                    source_id=source_id,
                     seen_at_before=sync_started_at,
                     updated_at=_now_naive_utc(),
                 )
@@ -168,6 +170,9 @@ class FullSnapshotSyncService:
         normalized_payload["source_updated_at"] = _to_naive_utc(
             normalized_payload.get("source_updated_at")
         )
+        # payload always carries both source_id and legacy source (dual-write).
+        # Overwriting source_id on existing rows is intentional: it self-heals any row
+        # that was written before the Phase 2 backfill ran (source_id was NULL or wrong).
         for key, value in normalized_payload.items():
             setattr(job, key, value)
         job.status = JobStatus.open

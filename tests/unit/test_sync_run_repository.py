@@ -78,3 +78,93 @@ async def test_has_any_for_source(session) -> None:
     await repo.create_running(source="greenhouse:airbnb")
 
     assert await repo.has_any_for_source(source="greenhouse:airbnb") is True
+
+
+# ------------------------------------------------------------------ #
+# Phase 3 — source_id authoritative helpers (T010)                    #
+# ------------------------------------------------------------------ #
+
+
+@pytest.mark.asyncio
+async def test_create_running_dual_writes_source_id(session) -> None:
+    """create_running stores source_id when provided (dual-write)."""
+    repo = SyncRunRepository(session)
+
+    run = await repo.create_running(source="greenhouse:notion", source_id="src-uuid-001")
+
+    assert run.source == "greenhouse:notion"
+    assert run.source_id == "src-uuid-001"  # type: ignore[attr-defined]
+
+
+@pytest.mark.asyncio
+async def test_create_finished_dual_writes_source_id(session) -> None:
+    """create_finished stores source_id when provided (dual-write)."""
+    from app.models import SyncRunStatus
+
+    repo = SyncRunRepository(session)
+
+    run = await repo.create_finished(
+        source="greenhouse:notion",
+        source_id="src-uuid-002",
+        status=SyncRunStatus.failed,
+        error_summary="unsupported",
+    )
+
+    assert run.source_id == "src-uuid-002"  # type: ignore[attr-defined]
+
+
+@pytest.mark.asyncio
+async def test_get_running_by_source_id_finds_running_run(session) -> None:
+    """get_running_by_source_id returns a running sync run for the given source_id."""
+    repo = SyncRunRepository(session)
+
+    run = await repo.create_running(source="greenhouse:linear", source_id="src-uuid-003")
+    found = await repo.get_running_by_source_id(source_id="src-uuid-003")
+
+    assert found is not None
+    assert found.id == run.id
+
+
+@pytest.mark.asyncio
+async def test_get_running_by_source_id_returns_none_when_finished(session) -> None:
+    """get_running_by_source_id returns None once the run is finished."""
+    from app.models import SyncRunStatus
+
+    repo = SyncRunRepository(session)
+
+    run = await repo.create_running(source="greenhouse:figma", source_id="src-uuid-004")
+    await repo.finish(run=run, status=SyncRunStatus.success)
+
+    found = await repo.get_running_by_source_id(source_id="src-uuid-004")
+
+    assert found is None
+
+
+@pytest.mark.asyncio
+async def test_get_running_by_source_id_returns_none_for_different_source(session) -> None:
+    """get_running_by_source_id does not cross source boundaries."""
+    repo = SyncRunRepository(session)
+
+    await repo.create_running(source="greenhouse:linear", source_id="src-uuid-005")
+
+    found = await repo.get_running_by_source_id(source_id="src-uuid-999")
+
+    assert found is None
+
+
+@pytest.mark.asyncio
+async def test_has_any_for_source_id_returns_false_when_no_runs(session) -> None:
+    repo = SyncRunRepository(session)
+
+    assert await repo.has_any_for_source_id(source_id="src-uuid-100") is False
+
+
+@pytest.mark.asyncio
+async def test_has_any_for_source_id_returns_true_after_run_created(session) -> None:
+    repo = SyncRunRepository(session)
+
+    assert await repo.has_any_for_source_id(source_id="src-uuid-101") is False
+
+    await repo.create_running(source="greenhouse:rippling", source_id="src-uuid-101")
+
+    assert await repo.has_any_for_source_id(source_id="src-uuid-101") is True

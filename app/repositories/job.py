@@ -36,6 +36,60 @@ class JobRepository:
         jobs_by_id = {str(job.id): job for job in jobs}
         return [jobs_by_id[job_id] for job_id in job_ids if job_id in jobs_by_id]
 
+    # ------------------------------------------------------------------ #
+    # Authoritative source_id-based helpers (Phase 3 cutover)              #
+    # ------------------------------------------------------------------ #
+
+    async def list_by_source_id_and_external_ids(
+        self,
+        source_id: str,
+        external_job_ids: list[str],
+    ) -> list[Job]:
+        """Authoritative: get jobs for one same-source snapshot keyed by source_id."""
+        if not external_job_ids:
+            return []
+        result = await self.session.exec(
+            select(Job).where(
+                Job.source_id == source_id,
+                Job.external_job_id.in_(external_job_ids),
+            )
+        )
+        return list(result.all())
+
+    async def bulk_close_missing_for_source_id(
+        self,
+        *,
+        source_id: str,
+        seen_at_before: datetime,
+        updated_at: datetime,
+    ) -> int:
+        """Authoritative: close stale open jobs for a source_id not seen in this snapshot."""
+        result = await self.session.exec(
+            update(Job)
+            .where(
+                Job.source_id == source_id,
+                Job.status == JobStatus.open,
+                Job.last_seen_at < seen_at_before,
+            )
+            .values(
+                status=JobStatus.closed,
+                updated_at=updated_at,
+            )
+        )
+        return int(result.rowcount or 0)
+
+    async def source_id_reference_exists(self, source_id: str) -> bool:
+        """Return True if any job row references the given source_id."""
+        result = await self.session.exec(
+            select(Job.id).where(Job.source_id == source_id).limit(1)
+        )
+        return result.first() is not None
+
+    # ------------------------------------------------------------------ #
+    # Legacy string-based helpers                                          #
+    # LEGACY-FALLBACK: remove after enforcement revision (Phase 6).        #
+    # ------------------------------------------------------------------ #
+
     async def list_by_source_and_external_ids(
         self,
         source: str,
@@ -52,6 +106,13 @@ class JobRepository:
             )
         )
         return list(result.all())
+
+    async def has_any_for_source(self, *, source: str) -> bool:
+        """LEGACY-FALLBACK: return True if any job row uses the given legacy source key."""
+        result = await self.session.exec(
+            select(Job.id).where(Job.source == source).limit(1)
+        )
+        return result.first() is not None
 
     async def list_jobs(
         self,
@@ -95,7 +156,7 @@ class JobRepository:
         seen_at_before: datetime,
         updated_at: datetime,
     ) -> int:
-        """Close stale open jobs for a source that were not seen in this snapshot."""
+        """LEGACY-FALLBACK: close stale open jobs for a source string not seen in this snapshot."""
         result = await self.session.exec(
             update(Job)
             .where(

@@ -4,10 +4,11 @@ Data model design for the job aggregation service.
 
 ## Overview
 
-This service contains two core models:
+This service contains three core models:
 
-- **Job** - Job posting information, stores data fetched from external sources
-- **SyncRun** - Sync run records, tracks execution status of each sync task
+- **Source** - Upstream source configuration, keyed by `platform + identifier`
+- **Job** - Job posting information, stores data fetched from external sources. Linked to Source via `source_id` (authoritative FK)
+- **SyncRun** - Sync run records, tracks execution status of each sync task. Linked to Source via `source_id` (authoritative FK)
 
 ## Job Model
 
@@ -18,7 +19,8 @@ Job posting table with multi-source aggregation and intelligent deduplication.
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | UUID | Primary key |
-| `source` | str | Same-source identity key (e.g. `greenhouse:airbnb`, `greenhouse:stripe`) |
+| `source_id` | UUID FK | **Authoritative owner key** — FK to `sources.id`. Non-null after enforcement migration. |
+| `source` | str | Legacy compatibility key (e.g. `greenhouse:airbnb`). Dual-written alongside `source_id`. |
 | `external_job_id` | str | Job ID from external system |
 | `title` | str | Job title |
 | `apply_url` | str | Application URL |
@@ -29,7 +31,8 @@ The system supports multi-level deduplication:
 
 | Field | Purpose |
 |-------|---------|
-| `source` + `external_job_id` | Unique identifier within one concrete source snapshot stream |
+| `source_id` + `external_job_id` | **Authoritative** unique identity within one source |
+| `source` + `external_job_id` | Legacy unique constraint (compatibility) |
 | `normalized_apply_url` | Cross-source URL deduplication |
 | `content_fingerprint` | Content hash for detecting job content changes |
 | `dedupe_group_id` | Custom deduplication group for advanced dedup logic |
@@ -73,7 +76,8 @@ Sync task record table, tracks execution status and statistics of each sync oper
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | UUID | Primary key |
-| `source` | str | Data source identifier |
+| `source_id` | UUID FK | **Authoritative owner key** — FK to `sources.id`. Non-null after enforcement migration. |
+| `source` | str | Legacy compatibility key (e.g. `greenhouse:airbnb`). Dual-written alongside `source_id`. |
 | `status` | enum | `running` / `success` / `failed` |
 | `started_at` | datetime | Start time |
 | `finished_at` | datetime | End time (nullable) |
@@ -106,9 +110,11 @@ Deduplication breakdown:
 
 1. **Preserve Raw Data** - `raw_payload` stays available during transition while the large body can move to object storage
 2. **Complete Timestamps** - `ingested_at`, `last_seen_at`, `source_updated_at` support full timeline tracking
-3. **Same-Source Reconcile First** - `source` is a concrete `platform:identifier` key, so full snapshot sync can safely upsert and immediately close missing jobs
-4. **Layered Deduplication** - Same-source dedup is the current foundation; cross-source URL/content dedup remains a later phase
-5. **Observability** - `SyncRun` provides detailed sync statistics for monitoring and troubleshooting
+3. **Authoritative Source Ownership** - `source_id` (FK to `sources.id`) is the authoritative owner key for job and sync-run records. The legacy `source` string (`platform:identifier`) is dual-written as a compatibility field.
+4. **Same-Source Reconcile** - Full snapshot sync uses `source_id` to upsert and close missing jobs
+5. **Layered Deduplication** - Same-source dedup is the current foundation; cross-source URL/content dedup remains a later phase
+6. **Observability** - `SyncRun` provides detailed sync statistics for monitoring and troubleshooting
+7. **Source Lifecycle Guardrails** - Sources referenced by jobs or sync runs cannot be deleted; platform/identifier mutations are blocked when references exist
 
 ## Enum Types
 

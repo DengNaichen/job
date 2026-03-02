@@ -7,6 +7,7 @@ Create Date: 2026-02-28 18:30:00.000000
 
 from collections.abc import Sequence
 
+import sqlalchemy as sa
 from alembic import op
 
 
@@ -18,7 +19,17 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.drop_constraint("ck_sources_platform", "sources", type_="check")
+    conn = op.get_bind()
+    # Only drop the old check constraint if it exists (some environments may not have it).
+    result = conn.execute(
+        sa.text("""
+            SELECT 1 FROM pg_constraint
+            WHERE conname = 'ck_sources_platform'
+              AND conrelid = '"sources"'::regclass
+        """)
+    ).fetchone()
+    if result:
+        op.drop_constraint("ck_sources_platform", "sources", type_="check")
     op.create_check_constraint(
         "ck_sources_platform",
         "sources",

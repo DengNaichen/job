@@ -32,10 +32,12 @@ class SyncRunRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_running(self, *, source: str) -> SyncRun:
+    async def create_running(self, *, source: str, source_id: str | None = None) -> SyncRun:
+        """Create a running sync run. Dual-writes source_id when provided."""
         now = _now_naive_utc()
         run = SyncRun(
             source=source,
+            source_id=source_id,
             status=SyncRunStatus.running,
             started_at=now,
             created_at=now,
@@ -49,13 +51,16 @@ class SyncRunRepository:
         self,
         *,
         source: str,
+        source_id: str | None = None,
         status: SyncRunStatus,
         error_summary: str | None = None,
         stats: SourceSyncStats | None = None,
     ) -> SyncRun:
+        """Create a finished (terminal) sync run. Dual-writes source_id when provided."""
         now = _now_naive_utc()
         run = SyncRun(
             source=source,
+            source_id=source_id,
             status=status,
             started_at=now,
             finished_at=now,
@@ -68,7 +73,36 @@ class SyncRunRepository:
         await self.session.refresh(run)
         return run
 
+    # ------------------------------------------------------------------ #
+    # Authoritative source_id-based helpers (Phase 3 cutover)              #
+    # ------------------------------------------------------------------ #
+
+    async def get_running_by_source_id(self, *, source_id: str) -> SyncRun | None:
+        """Authoritative: find a running sync run for a given source_id."""
+        result = await self.session.exec(
+            select(SyncRun)
+            .where(
+                SyncRun.source_id == source_id,
+                SyncRun.status == SyncRunStatus.running,
+            )
+            .order_by(SyncRun.started_at.desc())
+        )
+        return result.first()
+
+    async def has_any_for_source_id(self, *, source_id: str) -> bool:
+        """Authoritative: return True if any sync run references the given source_id."""
+        result = await self.session.exec(
+            select(SyncRun.id).where(SyncRun.source_id == source_id).limit(1)
+        )
+        return result.first() is not None
+
+    # ------------------------------------------------------------------ #
+    # Legacy string-based helpers                                          #
+    # LEGACY-FALLBACK: remove after enforcement revision (Phase 6).        #
+    # ------------------------------------------------------------------ #
+
     async def get_running_by_source(self, *, source: str) -> SyncRun | None:
+        """LEGACY-FALLBACK: find a running sync run by legacy source key."""
         result = await self.session.exec(
             select(SyncRun)
             .where(
@@ -97,6 +131,7 @@ class SyncRunRepository:
         return run
 
     async def has_any_for_source(self, *, source: str) -> bool:
+        """LEGACY-FALLBACK: return True if any sync run uses the given legacy source key."""
         result = await self.session.exec(
             select(SyncRun.id).where(SyncRun.source == source).limit(1)
         )

@@ -20,6 +20,7 @@ class JobBase(BaseModel):
 
 
 class JobCreate(JobBase):
+    source_id: str | None = None  # Resolved by service from source string during compatibility window
     content_fingerprint: str | None = None
     dedupe_group_id: str | None = None
     description_html: str | None = None
@@ -39,6 +40,7 @@ class JobCreate(JobBase):
 
 class JobRead(JobBase):
     id: str
+    source_id: str | None  # Exposed during migration window; will be non-null after enforcement
     content_fingerprint: str | None
     dedupe_group_id: str | None
     description_html: str | None

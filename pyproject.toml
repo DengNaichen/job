@@ -41,6 +41,14 @@ markers = [
 ]
 testpaths = ["tests"]
 
+[tool.pyrefly]
+python-interpreter-path = ".venv/bin/python"
+
+[tool.pyright]
+typeCheckingMode = "off"
+reportMissingImports = "none"
+reportMissingModuleSource = "none"
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"

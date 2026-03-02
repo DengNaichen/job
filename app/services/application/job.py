@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 from app.models import Job, JobStatus
 from app.repositories.job import JobRepository
+from app.repositories.source import SourceRepository
 from app.schemas.job import JobCreate, JobUpdate
 from app.services.infra.blob_storage import JobBlobManager, JobBlobPointers
 
@@ -24,6 +25,17 @@ class JobNotFoundError(JobError):
         super().__init__(code="NOT_FOUND", message="Job not found")
 
 
+class SourceResolutionError(JobError):
+    """Raised when a legacy source string cannot be resolved to a known source."""
+
+    def __init__(self, source_key: str):
+        super().__init__(
+            code="SOURCE_NOT_FOUND",
+            message=f"Cannot resolve '{source_key}' to a known source",
+        )
+        self.source_key = source_key
+
+
 class JobService:
     """Service for Job business logic."""
 
@@ -31,9 +43,11 @@ class JobService:
         self,
         repository: JobRepository,
         blob_manager: JobBlobManager | None = None,
+        source_repository: SourceRepository | None = None,
     ):
         self.repository = repository
         self.blob_manager = blob_manager or JobBlobManager()
+        self.source_repository = source_repository
 
     async def list_jobs(
         self,
@@ -56,8 +70,17 @@ class JobService:
         return await self.repository.list_by_ids(job_ids)
 
     async def create_job(self, job_in: JobCreate) -> Job:
-        """Create a new job."""
-        job = Job(**job_in.model_dump())
+        """Create a new job, resolving source_id from the legacy source string when needed."""
+        job_data = job_in.model_dump()
+
+        # Resolve source_id from legacy source string when not already supplied
+        if not job_data.get("source_id") and job_data.get("source") and self.source_repository:
+            source = await self.source_repository.get_by_source_key(job_data["source"])
+            if source is None:
+                raise SourceResolutionError(job_data["source"])
+            job_data["source_id"] = source.id
+
+        job = Job(**job_data)
         await self.blob_manager.sync_job_blobs(job)
         return await self.repository.create(job)
 

@@ -129,9 +129,9 @@ sequenceDiagram
 
 ## 3. Current Database Shape
 
-This is the current MVP schema shape, not the target end-state.
-
-The important compromise is that `job.source` and `syncrun.source` are string keys like `greenhouse:airbnb`, not foreign keys.
+`source_id` is the **authoritative owner FK** on both `job` and `syncrun`.
+The legacy `source` string field (`platform:identifier`) is dual-written for backward compatibility
+and preserved until a future physical rename.
 
 ```mermaid
 flowchart LR
@@ -146,7 +146,8 @@ flowchart LR
     J["job
     ---
     id PK
-    source string
+    source_id FK → sources.id
+    source string (compat)
     external_job_id
     title
     apply_url
@@ -161,7 +162,8 @@ flowchart LR
     R["syncrun
     ---
     id PK
-    source string
+    source_id FK → sources.id
+    source string (compat)
     started_at
     finished_at
     status
@@ -170,13 +172,8 @@ flowchart LR
     updated_count
     closed_count"]
 
-    K["build_source_key(platform, identifier)
-    ---
-    e.g. greenhouse:airbnb"]
-
-    S --> K
-    K --> J
-    K --> R
+    S -->|source_id FK| J
+    S -->|source_id FK| R
 ```
 
 ## 4. Target Database Direction

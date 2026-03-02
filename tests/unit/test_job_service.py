@@ -10,6 +10,7 @@ from app.schemas.structured_jd import BatchStructuredJDItem
 from app.services.application.job import (
     JobNotFoundError,
     JobService,
+    SourceResolutionError,
 )
 from app.services.application.structured_jd import (
     JobStructuredJDMappingError,
@@ -58,6 +59,60 @@ async def test_create_job() -> None:
 
     assert result == created
     repository.create.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_create_job_resolves_source_id_from_legacy_source() -> None:
+    """create_job should populate source_id from source_repository when source_id is absent."""
+    from app.models import PlatformType, Source
+
+    repository = AsyncMock()
+    source_repository = AsyncMock()
+    source = Source(
+        name="Greenhouse",
+        name_normalized="greenhouse",
+        platform=PlatformType.GREENHOUSE,
+        identifier="airbnb",
+    )
+    source_repository.get_by_source_key.return_value = source
+    created = _build_job()
+    created.source_id = str(source.id)
+    repository.create.return_value = created
+    service = JobService(repository=repository, source_repository=source_repository)
+
+    payload = JobCreate(
+        source="greenhouse:airbnb",
+        external_job_id="123",
+        title="Engineer",
+        apply_url="https://example.com",
+    )
+    result = await service.create_job(payload)
+
+    assert result.source_id == str(source.id)
+    source_repository.get_by_source_key.assert_awaited_once_with("greenhouse:airbnb")
+    repository.create.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_create_job_fails_when_source_cannot_be_resolved() -> None:
+    """create_job should raise SourceResolutionError when source key does not resolve."""
+    repository = AsyncMock()
+    source_repository = AsyncMock()
+    source_repository.get_by_source_key.return_value = None
+    service = JobService(repository=repository, source_repository=source_repository)
+
+    payload = JobCreate(
+        source="greenhouse:unknown-company",
+        external_job_id="123",
+        title="Engineer",
+        apply_url="https://example.com",
+    )
+
+    with pytest.raises(SourceResolutionError) as exc_info:
+        await service.create_job(payload)
+
+    assert exc_info.value.source_key == "greenhouse:unknown-company"
+    repository.create.assert_not_awaited()
 
 
 @pytest.mark.asyncio
