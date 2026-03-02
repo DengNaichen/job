@@ -65,6 +65,7 @@ class TestEightfoldMapper:
 
         assert result.apply_url == "https://nvidia.eightfold.ai/careers/job/1"
         assert result.location_text == "Santa Clara, CA, United States"
+        assert result.location_country_code == "US"
         assert result.description_plain is None
         assert result.published_at is None
         assert result.source_updated_at is None
@@ -91,6 +92,7 @@ class TestEightfoldMapper:
         assert result.title == "ML Engineer"
         assert result.apply_url == "https://nvidia.eightfold.ai/careers/job/2"
         assert result.location_text == "Austin, TX, United States"
+        assert result.location_country_code == "US"
         assert result.department is None
         assert result.employment_type is None
         assert result.description_plain is None
@@ -110,3 +112,33 @@ class TestEightfoldMapper:
 
         assert result.raw_payload == raw_job
         assert result.raw_payload["atsJobId"] == "A-123"
+
+    def test_map_single_country_text_infers_canonical_code(self, mapper: EightfoldMapper) -> None:
+        """When location text clearly identifies one country, country_code is populated."""
+        raw_job = {
+            "id": "job-single-country",
+            "name": "Engineer",
+            "_board_base_url": "https://example.eightfold.ai",
+            "positionUrl": "/careers/job/sc",
+            "standardizedLocations": ["Berlin, Germany"],
+        }
+
+        result = mapper.map(raw_job)
+
+        assert result.location_country_code == "DE"
+        assert result.location_city == "Berlin"
+
+    def test_map_ambiguous_multi_country_returns_null(self, mapper: EightfoldMapper) -> None:
+        """When location text does not identify a single country, country_code stays None."""
+        raw_job = {
+            "id": "job-ambiguous",
+            "name": "Engineer",
+            "_board_base_url": "https://example.eightfold.ai",
+            "positionUrl": "/careers/job/amb",
+            "standardizedLocations": ["Remote - EMEA"],
+        }
+
+        result = mapper.map(raw_job)
+
+        assert result.location_country_code is None
+        assert result.location_workplace_type == WorkplaceType.remote

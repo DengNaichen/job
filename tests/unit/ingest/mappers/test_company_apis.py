@@ -33,6 +33,21 @@ class TestAppleMapper:
         assert "Minimum Qualifications:" in result.description_plain
         assert result.published_at == datetime(2026, 2, 28, 22, 16, 2, 947000, tzinfo=timezone.utc)
 
+    def test_map_normalizes_country_to_canonical_alpha2(self, mapper: AppleMapper) -> None:
+        """Explicit countryName field should normalize to canonical alpha-2 code."""
+        raw_job = {
+            "positionId": "200000001",
+            "postingTitle": "Engineer",
+            "transformedPostingTitle": "engineer",
+            "locations": [{"city": "Toronto", "stateProvince": "ON", "countryName": "Canada"}],
+        }
+
+        result = mapper.map(raw_job)
+
+        assert result.location_country_code == "CA"
+        assert result.location_city == "Toronto"
+        assert result.location_region == "ON"
+
 
 class TestUberMapper:
     @pytest.fixture
@@ -66,7 +81,7 @@ class TestUberMapper:
         assert result.location_text == "San Francisco, California, United States"
         assert result.location_city == "San Francisco"
         assert result.location_region == "California"
-        assert result.location_country_code == "United States"
+        assert result.location_country_code == "US"
         assert result.department == "Engineering"
         assert result.team == "Delivery"
         assert result.employment_type == "Full-Time"
@@ -104,7 +119,7 @@ class TestTikTokMapper:
         assert result.apply_url == "https://lifeattiktok.com/search/7610346089650063621"
         assert result.location_text == "Kuala Lumpur, Malaysia"
         assert result.location_city == "Kuala Lumpur"
-        assert result.location_country_code == "Malaysia"
+        assert result.location_country_code == "MY"
         assert result.department == "Operations"
         assert result.team == "Trust & Safety"
         assert result.employment_type == "Regular"

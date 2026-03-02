@@ -231,6 +231,22 @@ class JobRepository:
         result = await self.session.exec(statement)
         return list(result.all())
 
+    async def list_jobs_for_country_backfill(
+        self,
+        last_id: str | None = None,
+        limit: int = 100,
+    ) -> list[Job]:
+        """List jobs whose location_country_code is null or clearly not a canonical alpha-2 code."""
+        # This targets rows needing country repair (null or raw names like "United States")
+        statement = select(Job).where(
+            or_(Job.location_country_code.is_(None), func.length(Job.location_country_code) != 2)  # type: ignore
+        )
+        if last_id:
+            statement = statement.where(Job.id > last_id)
+        statement = statement.order_by(Job.id).limit(limit)
+        result = await self.session.exec(statement)
+        return list(result.all())
+
     # ------------------------------------------------------------------ #
     # Embedding storage redesign helpers                                   #
     # ------------------------------------------------------------------ #

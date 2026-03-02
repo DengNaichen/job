@@ -119,6 +119,7 @@ async def test_match_service_run_returns_typed_response_without_llm(
 
     assert response.meta.user_json == "/tmp/user.json"
     assert response.meta.sql_prefilter.degree_filter_applied is True
+    assert response.meta.sql_prefilter.preferred_country_code is None
     assert response.meta.llm_rerank_summary.enabled is False
     assert response.meta.results_returned == 2
     assert len(response.results) == 2

@@ -39,6 +39,7 @@ def _make_response(*, llm_enabled: bool) -> MatchResponse:
                 "sql_prefilter": {
                     "sponsorship_filter_applied": False,
                     "degree_filter_applied": True,
+                    "preferred_country_code": None,
                     "user_degree_rank": 2,
                 },
                 "candidates_after_sql_prefilter": 2,
@@ -198,6 +199,7 @@ def _make_args(user_json: Path, output: Path, *, enable_llm_rerank: bool) -> arg
         llm_top_n=2,
         llm_concurrency=3,
         max_user_chars=12000,
+        preferred_country_code=None,
         output=str(output),
     )
 

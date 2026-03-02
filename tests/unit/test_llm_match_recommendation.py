@@ -42,6 +42,7 @@ def _make_context_row(job_id: str) -> dict[str, object]:
         "team": "Business Intelligence",
         "job_domain_normalized": "data_ai",
         "min_degree_level": "bachelor",
+        "min_degree_rank": 2,
         "jd_experience_years": 3,
         "structured_jd": {
             "required_skills": [f"skill-{index}" for index in range(12)],

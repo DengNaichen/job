@@ -79,12 +79,21 @@ class MatchRequest(BaseModel):
     llm_top_n: int = Field(default=10, ge=1)
     llm_concurrency: int = Field(default=3, ge=1)
     max_user_chars: int = Field(default=12000, ge=1)
+    preferred_country_code: str | None = Field(
+        default=None,
+        min_length=2,
+        max_length=2,
+        pattern=r"^[A-Z]{2}$",
+        validation_alias=AliasChoices("preferredCountryCode", "preferred_country_code"),
+        serialization_alias="preferredCountryCode",
+    )
     user_json: str | None = None
 
 
 class SQLPrefilterSummary(BaseModel):
     sponsorship_filter_applied: bool
     degree_filter_applied: bool
+    preferred_country_code: str | None = None
     user_degree_rank: int
 
 

@@ -126,6 +126,7 @@ class MatchExperimentService:
             start_index=2,
             needs_sponsorship=needs_sponsorship,
             user_degree_rank=user_degree_rank,
+            preferred_country_code=request.preferred_country_code,
         )
 
         active_target = resolve_active_job_embedding_target(

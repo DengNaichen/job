@@ -53,6 +53,7 @@ def test_match_request_defaults() -> None:
     assert request.llm_top_n == 10
     assert request.llm_concurrency == 3
     assert request.max_user_chars == 12000
+    assert request.preferred_country_code is None
 
 
 def test_match_response_model_dump_preserves_existing_json_shape() -> None:
@@ -71,6 +72,7 @@ def test_match_response_model_dump_preserves_existing_json_shape() -> None:
                 "sql_prefilter": {
                     "sponsorship_filter_applied": False,
                     "degree_filter_applied": True,
+                    "preferred_country_code": "US",
                     "user_degree_rank": 2,
                 },
                 "candidates_after_sql_prefilter": 200,

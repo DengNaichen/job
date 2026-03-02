@@ -34,16 +34,16 @@
 
 ### Tests for User Story 1
 
-- [ ] T005 [P] [US1] Expand `tests/unit/test_job_location.py` to cover explicit country alias mapping, canonical code output, ambiguous abbreviations such as `CA`, single-country remote scope, multi-country remote scope, and supranational-region cases.
-- [ ] T006 [P] [US1] Update `tests/unit/ingest/mappers/test_company_apis.py` and `tests/unit/ingest/mappers/test_smartrecruiters.py` so structured source-native country fields normalize to canonical alpha-2 codes instead of raw names.
-- [ ] T007 [P] [US1] Update `tests/unit/ingest/mappers/test_eightfold.py`, `tests/unit/ingest/mappers/test_lever.py`, `tests/unit/ingest/mappers/test_greenhouse.py`, and `tests/unit/ingest/mappers/test_ashby.py` to cover conservative text inference for one clear country and null outputs for ambiguous multi-country cases.
-- [ ] T008 [P] [US1] Update `tests/unit/test_job_service.py` and `tests/integration/test_job_api.py` if needed so direct create/update and read paths continue to round-trip canonical country codes without reverting to display names.
+- [x] T005 [P] [US1] Expand `tests/unit/test_job_location.py` to cover explicit country alias mapping, canonical code output, ambiguous abbreviations such as `CA`, single-country remote scope, multi-country remote scope, and supranational-region cases.
+- [x] T006 [P] [US1] Update `tests/unit/ingest/mappers/test_company_apis.py` and `tests/unit/ingest/mappers/test_smartrecruiters.py` so structured source-native country fields normalize to canonical alpha-2 codes instead of raw names.
+- [x] T007 [P] [US1] Update `tests/unit/ingest/mappers/test_eightfold.py`, `tests/unit/ingest/mappers/test_lever.py`, `tests/unit/ingest/mappers/test_greenhouse.py`, and `tests/unit/ingest/mappers/test_ashby.py` to cover conservative text inference for one clear country and null outputs for ambiguous multi-country cases.
+- [x] T008 [P] [US1] Update `tests/unit/test_job_service.py` and `tests/integration/test_job_api.py` if needed so direct create/update and read paths continue to round-trip canonical country codes without reverting to display names.
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Update `app/ingest/mappers/apple.py`, `app/ingest/mappers/smartrecruiters.py`, `app/ingest/mappers/uber.py`, and `app/ingest/mappers/tiktok.py` to normalize explicit source-native country fields through the shared country helper.
-- [ ] T010 [US1] Update `app/ingest/mappers/eightfold.py`, `app/ingest/mappers/lever.py`, `app/ingest/mappers/greenhouse.py`, and `app/ingest/mappers/ashby.py` to use conservative text and remote-scope normalization, preserving null for ambiguous multi-country or region-only cases.
-- [ ] T011 [US1] Update `app/ingest/mappers/base.py` and any shared mapper plumbing needed so mappers stop hand-writing raw country strings into `location_country_code` and instead funnel through one canonical normalization path.
+- [x] T009 [US1] Update `app/ingest/mappers/apple.py`, `app/ingest/mappers/smartrecruiters.py`, `app/ingest/mappers/uber.py`, and `app/ingest/mappers/tiktok.py` to normalize explicit source-native country fields through the shared country helper.
+- [x] T010 [US1] Update `app/ingest/mappers/eightfold.py`, `app/ingest/mappers/lever.py`, `app/ingest/mappers/greenhouse.py`, and `app/ingest/mappers/ashby.py` to use conservative text and remote-scope normalization, preserving null for ambiguous multi-country or region-only cases.
+- [x] T011 [US1] Update `app/ingest/mappers/base.py` and any shared mapper plumbing needed so mappers stop hand-writing raw country strings into `location_country_code` and instead funnel through one canonical normalization path.
 
 **Checkpoint**: New ingests write canonical country codes for high-confidence single-country cases and keep ambiguous cases null without losing compatibility text.
 
@@ -55,16 +55,14 @@
 
 **Independent Test**: Run the country normalization backfill against mixed-confidence fixtures and verify that null, invalid, or non-canonical historical values are repaired, ambiguous rows stay null, and reruns do not oscillate.
 
-### Tests for User Story 2
-
-- [ ] T012 [P] [US2] Expand `tests/unit/test_backfill_job_locations.py` to cover upgrading raw country names/codes to canonical alpha-2 values, repairing invalid or weak historical data, preserving canonical high-confidence values, and leaving multi-country or supranational rows untouched.
-- [ ] T013 [P] [US2] Update `tests/unit/test_import_company_api_jobs.py`, `tests/unit/test_import_greenhouse_jobs.py`, `tests/unit/test_import_lever_jobs.py`, `tests/unit/test_import_ashby_jobs.py`, `tests/unit/test_import_smartrecruiters_jobs.py`, and `tests/unit/test_import_eightfold_jobs.py` so persisted/imported expectations reflect canonical country codes.
+- [x] T012 [P] [US2] Expand `tests/unit/test_backfill_job_locations.py` to cover upgrading raw country names/codes to canonical alpha-2 values, repairing invalid or weak historical data, preserving canonical high-confidence values, and leaving multi-country or supranational rows untouched.
+- [x] T013 [P] [US2] Update `tests/unit/test_import_company_api_jobs.py`, `tests/unit/test_import_greenhouse_jobs.py`, `tests/unit/test_import_lever_jobs.py`, `tests/unit/test_import_ashby_jobs.py`, `tests/unit/test_import_smartrecruiters_jobs.py`, and `tests/unit/test_import_eightfold_jobs.py` so persisted/imported expectations reflect canonical country codes.
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] Update `scripts/backfill_job_locations.py` so `location_country_code` is repaired from `raw_payload` first and `location_text` or `location_remote_scope` second, while protecting existing high-confidence canonical values from lower-confidence overrides.
-- [ ] T015 [US2] Extend `app/repositories/job.py` with any batch selection helpers needed to target rows whose `location_country_code` is null, invalid, or non-canonical without repeatedly scanning unrelated jobs.
-- [ ] T016 [US2] Reuse `app/services/domain/country_normalization.py` and `app/services/domain/job_location.py` from the backfill path so ingest and historical repair follow identical alias, ambiguity, and confidence rules.
+- [x] T014 [US2] Update `scripts/backfill_job_locations.py` so `location_country_code` is repaired from `raw_payload` first and `location_text` or `location_remote_scope` second, while protecting existing high-confidence canonical values from lower-confidence overrides.
+- [x] T015 [US2] Extend `app/repositories/job.py` with any batch selection helpers needed to target rows whose `location_country_code` is null, invalid, or non-canonical without repeatedly scanning unrelated jobs.
+- [x] T016 [US2] Reuse `app/services/domain/country_normalization.py` and `app/services/domain/job_location.py` from the backfill path so ingest and historical repair follow identical alias, ambiguity, and confidence rules.
 
 **Checkpoint**: Historical jobs can be upgraded to canonical country codes safely and rerun without confidence downgrades or value oscillation.
 
@@ -78,13 +76,13 @@
 
 ### Tests for User Story 3
 
-- [ ] T017 [P] [US3] Update `tests/unit/test_match_query.py`, `tests/unit/test_match_schema.py`, and `tests/unit/test_match_service.py` so match-oriented rows and response models expect canonical alpha-2 country codes.
-- [ ] T018 [P] [US3] Update `tests/unit/test_llm_match_recommendation.py`, `tests/unit/test_match_experiment_script.py`, and `tests/integration/test_matching_api.py` to keep downstream payloads compatible once country codes are canonical and, if added in this increment, country filters flow through the matching stack.
+- [x] T017 [P] [US3] Update `tests/unit/test_match_query.py`, `tests/unit/test_match_schema.py`, and `tests/unit/test_match_service.py` so match-oriented rows and response models expect canonical alpha-2 country codes.
+- [x] T018 [P] [US3] Update `tests/unit/test_llm_match_recommendation.py`, `tests/unit/test_match_experiment_script.py`, and `tests/integration/test_matching_api.py` to keep downstream payloads compatible once country codes are canonical and, if added in this increment, country filters flow through the matching stack.
 
 ### Implementation for User Story 3
 
-- [ ] T019 [US3] Update `app/schemas/match.py`, `app/services/application/match_service.py`, `app/services/infra/match_query.py`, and `app/services/infra/llm_match_recommendation.py` so country-aware query code relies on `location_country_code` directly rather than reparsing `location_text`, and add optional country filter plumbing if the matching endpoint is the first rollout surface.
-- [ ] T020 [US3] Update `app/api/v1/matching.py`, `docs/architecture/README.md`, and `docs/ROADMAP.md` to document that v2 stops at canonical country normalization on `job` and explicitly defers reusable canonical location entities and split tables to v3.
+- [x] T019 [US3] Update `app/schemas/match.py`, `app/services/application/match_service.py`, `app/services/infra/match_query.py`, and `app/services/infra/llm_match_recommendation.py` so country-aware query code relies on `location_country_code` directly rather than reparsing `location_text`, and add optional country filter plumbing if the matching endpoint is the first rollout surface.
+- [x] T020 [US3] Update `app/api/v1/matching.py`, `docs/architecture/README.md`, and `docs/ROADMAP.md` to document that v2 stops at canonical country normalization on `job` and explicitly defers reusable canonical location entities and split tables to v3.
 
 **Checkpoint**: Canonical country data is consumable by query/read paths, while full canonical location modeling remains clearly deferred.
 
@@ -94,9 +92,9 @@
 
 **Purpose**: Validate the rollout end to end and record follow-up normalization gaps without broadening feature scope.
 
-- [ ] T021 [P] Run targeted test suites for changed paths with `./scripts/uv run pytest tests/unit/test_job_location.py tests/unit/ingest/mappers/test_company_apis.py tests/unit/ingest/mappers/test_smartrecruiters.py tests/unit/ingest/mappers/test_eightfold.py tests/unit/ingest/mappers/test_lever.py tests/unit/ingest/mappers/test_greenhouse.py tests/unit/ingest/mappers/test_ashby.py tests/unit/test_job_service.py tests/integration/test_job_api.py tests/unit/test_backfill_job_locations.py tests/unit/test_import_company_api_jobs.py tests/unit/test_import_greenhouse_jobs.py tests/unit/test_import_lever_jobs.py tests/unit/test_import_ashby_jobs.py tests/unit/test_import_smartrecruiters_jobs.py tests/unit/test_import_eightfold_jobs.py tests/unit/test_match_query.py tests/unit/test_match_schema.py tests/unit/test_match_service.py tests/unit/test_llm_match_recommendation.py tests/unit/test_match_experiment_script.py tests/integration/test_matching_api.py`.
-- [ ] T022 Do a manual dry run of `scripts/backfill_job_locations.py` against a small dataset and record which rows upgraded from raw names or weak codes to canonical codes and which ambiguous rows intentionally stayed null.
-- [ ] T023 Capture follow-up work in `docs/ROADMAP.md` or `specs/004-canonical-locations-v3/spec.md` for normalized location entities, multi-country link modeling, and any broader retrieval/filter rollout that should not block v2.
+- [x] T021 [P] Run targeted test suites for changed paths with `./scripts/uv run pytest tests/unit/test_job_location.py tests/unit/ingest/mappers/test_company_apis.py tests/unit/ingest/mappers/test_smartrecruiters.py tests/unit/ingest/mappers/test_eightfold.py tests/unit/ingest/mappers/test_lever.py tests/unit/ingest/mappers/test_greenhouse.py tests/unit/ingest/mappers/test_ashby.py tests/unit/test_job_service.py tests/integration/test_job_api.py tests/unit/test_backfill_job_locations.py tests/unit/test_import_company_api_jobs.py tests/unit/test_import_greenhouse_jobs.py tests/unit/test_import_lever_jobs.py tests/unit/test_import_ashby_jobs.py tests/unit/test_import_smartrecruiters_jobs.py tests/unit/test_import_eightfold_jobs.py tests/unit/test_match_query.py tests/unit/test_match_schema.py tests/unit/test_match_service.py tests/unit/test_llm_match_recommendation.py tests/unit/test_match_experiment_script.py tests/integration/test_matching_api.py`.
+- [x] T022 Do a manual dry run of `scripts/backfill_job_locations.py` against a small dataset and record which rows upgraded from raw names or weak codes to canonical codes and which ambiguous rows intentionally stayed null.
+- [x] T023 Capture follow-up work in `docs/ROADMAP.md` or `specs/004-canonical-locations-v3/spec.md` for normalized location entities, multi-country link modeling, and any broader retrieval/filter rollout that should not block v2.
 
 ---
 
