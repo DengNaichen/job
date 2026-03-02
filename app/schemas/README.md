@@ -27,7 +27,7 @@ Input when creating a job:
     "location_text": "San Francisco",  # optional legacy display fallback
     "location_city": "San Francisco",  # optional
     "location_region": "CA",  # optional
-    "location_country_code": "US",  # optional
+    "location_country_code": "US",  # optional canonical single-country ISO 3166-1 alpha-2 code
     "location_workplace_type": "onsite",  # optional, default: unknown
     "location_remote_scope": null,  # optional
     "department": "Engineering",  # optional

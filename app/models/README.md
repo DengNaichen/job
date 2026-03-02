@@ -62,7 +62,7 @@ The system supports multi-level deduplication:
 | `location_text` | Work location (compatibility text for display) |
 | `location_city` | Structured city name |
 | `location_region` | Structured region (state/province) |
-| `location_country_code` | ISO Alpha-2 country code |
+| `location_country_code` | Canonical single-country ISO 3166-1 alpha-2 code |
 | `location_workplace_type` | Workplace type (`remote`, `hybrid`, `onsite`, `unknown`) |
 | `location_remote_scope` | Remote availability scope (e.g. "US Only") |
 | `department` | Department |

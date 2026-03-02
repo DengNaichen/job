@@ -17,10 +17,10 @@
 
 **Purpose**: Establish one shared canonical country policy before changing mappers, backfill behavior, or query/read paths.
 
-- [ ] T001 Add `pycountry` to `pyproject.toml` and refresh `uv.lock` so the repo has a stable ISO country metadata source for canonical normalization.
-- [ ] T002 Create shared country normalization primitives in `app/services/domain/country_normalization.py` for alias mapping, ambiguity guards, multi-country detection, and confidence/source tracking.
-- [ ] T003 Refactor `app/services/domain/job_location.py` to compose the shared country normalizer for explicit country fields, conservative location-text parsing, and remote-scope extraction while preserving the existing `StructuredLocation` contract.
-- [ ] T004 [P] Update `app/models/README.md` and `app/schemas/README.md` to document that `location_country_code` now stores a canonical single-country code rather than raw display text.
+- [x] T001 Add `pycountry` to `pyproject.toml` and refresh `uv.lock` so the repo has a stable ISO country metadata source for canonical normalization.
+- [x] T002 Create shared country normalization primitives in `app/services/domain/country_normalization.py` for alias mapping, ambiguity guards, multi-country detection, and confidence/source tracking.
+- [x] T003 Refactor `app/services/domain/job_location.py` to compose the shared country normalizer for explicit country fields, conservative location-text parsing, and remote-scope extraction while preserving the existing `StructuredLocation` contract.
+- [x] T004 [P] Update `app/models/README.md` and `app/schemas/README.md` to document that `location_country_code` now stores a canonical single-country code rather than raw display text.
 
 **Checkpoint**: Shared country normalization rules exist and can be reused consistently by ingest, backfill, and query/read code without any schema change.
 

@@ -13,6 +13,7 @@ dependencies = [
     "httpx>=0.28.1",
     "litellm>=1.0.0",
     "pgvector>=0.4.1",
+    "pycountry>=26.2.16",
     "pydantic-settings>=2.13.1",
     "python-dotenv>=1.2.1",
     "sqlmodel>=0.0.37",
