@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from app.services.infra.llm import LLMConfig
+from app.services.infra.llm import LLMConfig, get_token_usage
 from app.services.infra.llm_match_recommendation import (
     LLMMatchRecommendation,
+    apply_llm_rerank,
     build_llm_match_payload,
     get_llm_adjustment,
     get_llm_match_recommendation,
-    apply_llm_rerank,
 )
 
 
@@ -281,3 +281,48 @@ async def test_apply_llm_rerank_falls_back_per_item_on_failure(
     assert summary["attempted_count"] == 2
     assert summary["succeeded_count"] == 1
     assert summary["failed_count"] == 1
+
+
+@pytest.mark.asyncio
+async def test_apply_llm_rerank_does_not_reset_global_usage(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def fake_recommendation(user_data, ranked_row, context_row, *, config=None):  # noqa: ANN001, ANN003
+        _ = (user_data, ranked_row, context_row, config)
+        return LLMMatchRecommendation(
+            recommendation="yes",
+            reasons=["Relevant experience"],
+            gaps=[],
+            resume_focus_points=[],
+        )
+
+    usage = get_token_usage()
+    usage.reset()
+    usage.add_usage("global-before", 11, 7)
+
+    monkeypatch.setattr(
+        "app.services.infra.llm_match_recommendation.get_llm_config",
+        lambda: LLMConfig(provider="openai", model="gpt-4o-mini", api_key="test-key"),
+    )
+    monkeypatch.setattr(
+        "app.services.infra.llm_match_recommendation.get_llm_match_recommendation",
+        fake_recommendation,
+    )
+
+    rows = [_make_ranked_row("job-1", 0.91)]
+    context_by_job_id = {"job-1": _make_context_row("job-1")}
+
+    _, summary = await apply_llm_rerank(
+        rows,
+        user_data=_make_user_data(),
+        context_by_job_id=context_by_job_id,
+        llm_top_n=1,
+        concurrency=1,
+    )
+
+    assert summary["token_usage"]["total_tokens"] == 0
+    global_summary = usage.summary()
+    assert global_summary["prompt_tokens"] == 11
+    assert global_summary["completion_tokens"] == 7
+    assert global_summary["total_tokens"] == 18
+    usage.reset()
