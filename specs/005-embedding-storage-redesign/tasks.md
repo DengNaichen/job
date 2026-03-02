@@ -17,9 +17,9 @@
 
 **Purpose**: Establish the new persisted embedding store and one shared active-target policy before changing write paths, historical rollout, or matching recall.
 
-- [ ] T001 Create `app/models/job_embedding.py`, export it from `app/models/__init__.py`, and document the new table in `app/models/README.md`.
-- [ ] T002 Add a new Alembic migration under `alembic/versions/` to create the `job_embedding` table, vector indexes/constraints for active-target uniqueness, and a rollout-safe coexistence with legacy `job.embedding*` columns.
-- [ ] T003 Create `app/repositories/job_embedding.py`, update `app/repositories/__init__.py`, and extend `app/services/infra/embedding.py` with one stable active embedding target descriptor derived from the current embedding model/dimension configuration.
+- [x] T001 Create `app/models/job_embedding.py`, export it from `app/models/__init__.py`, and document the new table in `app/models/README.md`.
+- [x] T002 Add a new Alembic migration under `alembic/versions/` to create the `job_embedding` table, vector indexes/constraints for active-target uniqueness, and a rollout-safe coexistence with legacy `job.embedding*` columns.
+- [x] T003 Create `app/repositories/job_embedding.py`, update `app/repositories/__init__.py`, and extend `app/services/infra/embedding.py` with one stable active embedding target descriptor derived from the current embedding model/dimension configuration.
 
 **Checkpoint**: The repo has a dedicated persisted job-embedding entity, migration support, and one shared target-selection rule that can be reused by write, migration, and query code.
 
@@ -33,13 +33,13 @@
 
 ### Tests for User Story 1
 
-- [ ] T004 [P] [US1] Expand `tests/unit/test_embedding_service.py` and add `tests/unit/test_job_embedding_repository.py` to cover active-target descriptor resolution, normalized model identity, and active-target upsert/refresh behavior keyed by `content_fingerprint`.
-- [ ] T005 [P] [US1] Add `tests/unit/test_backfill_job_embeddings_gemini.py` to cover writing fresh active-target rows to `job_embedding` without requiring `job.embedding` as the primary persistence path.
+- [x] T004 [P] [US1] Expand `tests/unit/test_embedding_service.py` and add `tests/unit/test_job_embedding_repository.py` to cover active-target descriptor resolution, normalized model identity, and active-target upsert/refresh behavior keyed by `content_fingerprint`.
+- [x] T005 [P] [US1] Add `tests/unit/test_backfill_job_embeddings_gemini.py` to cover writing fresh active-target rows to `job_embedding` without requiring `job.embedding` as the primary persistence path.
 
 ### Implementation for User Story 1
 
-- [ ] T006 [US1] Extend `app/repositories/job.py` and `app/repositories/job_embedding.py` with the write-side helpers needed to select embeddable jobs, detect already-fresh active-target rows, and upsert the new persisted records.
-- [ ] T007 [US1] Refactor `scripts/backfill_job_embeddings_gemini.py` so the normal embedding write path creates or refreshes `job_embedding` rows for the active target using `content_fingerprint`-aware skip/refresh logic.
+- [x] T006 [US1] Extend `app/repositories/job.py` and `app/repositories/job_embedding.py` with the write-side helpers needed to select embeddable jobs, detect already-fresh active-target rows, and upsert the new persisted records.
+- [x] T007 [US1] Refactor `scripts/backfill_job_embeddings_gemini.py` so the normal embedding write path creates or refreshes `job_embedding` rows for the active target using `content_fingerprint`-aware skip/refresh logic.
 
 **Checkpoint**: New embedding writes land in `job_embedding`, and reruns for unchanged content stay deterministic without relying on `job.embedding` as the main store.
 
@@ -53,12 +53,12 @@
 
 ### Tests for User Story 2
 
-- [ ] T008 [P] [US2] Expand `tests/unit/test_backfill_job_embeddings_gemini.py` to cover migrating compatible legacy `job.embedding*` state, regenerating missing active-target rows, stale-content refresh behavior, dry-run reporting, and rerunnable execution.
+- [x] T008 [P] [US2] Expand `tests/unit/test_backfill_job_embeddings_gemini.py` to cover migrating compatible legacy `job.embedding*` state, regenerating missing active-target rows, stale-content refresh behavior, dry-run reporting, and rerunnable execution.
 
 ### Implementation for User Story 2
 
-- [ ] T009 [US2] Extend `scripts/backfill_job_embeddings_gemini.py` to migrate usable legacy in-row vectors into `job_embedding` before calling the provider for missing or stale active-target rows.
-- [ ] T010 [US2] Extend `app/repositories/job.py` and `app/repositories/job_embedding.py` with batch/keyset helpers for legacy migration candidates, missing active-target rows, stale `content_fingerprint` rows, and bounded rollout reporting.
+- [x] T009 [US2] Extend `scripts/backfill_job_embeddings_gemini.py` to migrate usable legacy in-row vectors into `job_embedding` before calling the provider for missing or stale active-target rows.
+- [x] T010 [US2] Extend `app/repositories/job.py` and `app/repositories/job_embedding.py` with batch/keyset helpers for legacy migration candidates, missing active-target rows, stale `content_fingerprint` rows, and bounded rollout reporting.
 
 **Checkpoint**: Historical jobs can be migrated or regenerated into `job_embedding` safely, and reruns do not create duplicate active-target state.
 

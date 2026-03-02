@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 import litellm
@@ -10,6 +11,8 @@ from pydantic import BaseModel
 from app.core.config import get_settings
 
 EMBEDDING_TIMEOUT = 120
+JOB_EMBEDDING_KIND = "job_description"
+JOB_EMBEDDING_TARGET_REVISION = 1
 
 
 class EmbeddingConfig(BaseModel):
@@ -19,6 +22,16 @@ class EmbeddingConfig(BaseModel):
     model: str
     api_key: str | None = None
     api_base: str | None = None
+
+
+@dataclass(frozen=True)
+class EmbeddingTargetDescriptor:
+    """Stable embedding target descriptor used by storage and retrieval paths."""
+
+    embedding_kind: str
+    embedding_target_revision: int
+    embedding_model: str
+    embedding_dim: int
 
 
 def get_embedding_config() -> EmbeddingConfig:
@@ -70,6 +83,35 @@ def resolve_embedding_model_name(config: EmbeddingConfig) -> str:
         return config.model
 
     return f"{prefix}{config.model}" if prefix else config.model
+
+
+def normalize_embedding_model_identity(*, provider: str, model: str) -> str:
+    """Normalize provider/model identity into one stable persisted string."""
+    return resolve_embedding_model_name(EmbeddingConfig(provider=provider, model=model))
+
+
+def resolve_active_job_embedding_target(
+    *,
+    config: EmbeddingConfig | None = None,
+    embedding_dim: int | None = None,
+) -> EmbeddingTargetDescriptor:
+    """Resolve the currently configured active target descriptor for job-side embeddings."""
+    if config is None:
+        config = get_embedding_config()
+    if embedding_dim is None:
+        embedding_dim = get_settings().embedding_dim
+    if embedding_dim <= 0:
+        raise ValueError("embedding_dim must be > 0")
+
+    model_identity = normalize_embedding_model_identity(
+        provider=config.provider, model=config.model
+    )
+    return EmbeddingTargetDescriptor(
+        embedding_kind=JOB_EMBEDDING_KIND,
+        embedding_target_revision=JOB_EMBEDDING_TARGET_REVISION,
+        embedding_model=model_identity,
+        embedding_dim=embedding_dim,
+    )
 
 
 def _extract_vector(item: Any) -> list[float]:
