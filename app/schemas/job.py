@@ -1,12 +1,10 @@
 from datetime import datetime
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
 from pydantic import BaseModel, Field
 
 from app.models import JobStatus, WorkplaceType
-
-if TYPE_CHECKING:
-    from app.schemas.location import LocationRead
+from app.schemas.location import LocationRead
 
 
 class JobBase(BaseModel):

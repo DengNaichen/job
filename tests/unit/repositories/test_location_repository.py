@@ -1,7 +1,6 @@
 import pytest
 
 from sqlmodel.ext.asyncio.session import AsyncSession
-from sqlalchemy.exc import IntegrityError
 
 
 class TestLocationRepository:
@@ -21,7 +20,7 @@ class TestLocationRepository:
             region="CA",
             country_code="US",
         )
-        
+
         # First upsert
         created1 = await repo.upsert(loc1)
         assert created1.id is not None
@@ -36,13 +35,13 @@ class TestLocationRepository:
             country_code="US",
         )
         created2 = await repo.upsert(loc2)
-        
+
         # Should return same ID
         assert created1.id == created2.id
-        
+
         # Depending on upsert logic, it might have updated display_name or kept the old one.
         # But critically, no duplicate row was created.
-        
+
         # Verify db representation has exactly 1 entry for this key
         found = await repo.get_by_canonical_key("US#CA#SF")
         assert found is not None

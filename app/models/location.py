@@ -1,10 +1,13 @@
 import uuid
 from datetime import datetime, timezone
-from typing import Any, ClassVar
+from typing import Any, ClassVar, TYPE_CHECKING
 
 from sqlalchemy import Column, DateTime, Index, text
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, SQLModel, Relationship
+
+if TYPE_CHECKING:
+    from app.models.job_location import JobLocation
 
 
 class Location(SQLModel, table=True):
@@ -30,3 +33,6 @@ class Location(SQLModel, table=True):
         default_factory=lambda: datetime.now(timezone.utc),
         sa_column=Column(DateTime(timezone=True), server_default=text("now()"), nullable=False),
     )
+
+    # Relationships
+    job_locations: list["JobLocation"] = Relationship(back_populates="location")

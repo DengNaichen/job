@@ -3,6 +3,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from sqlalchemy.orm.attributes import instance_state
+
 from app.core.database import get_session
 from app.models import Job, JobStatus
 from app.repositories.job import JobRepository
@@ -20,23 +22,36 @@ def get_job_service(session: AsyncSession = Depends(get_session)) -> JobService:
     return JobService(repository, source_repository=source_repository)
 
 
+def _map_job_to_read(job: Job) -> JobRead:
+    """Helper to map a Job model to JobRead, injecting explicitly loaded locations."""
+    data = job.model_dump()
+    state = instance_state(job)
+    if "job_locations" in state.dict:
+        data["locations"] = [link.location.model_dump() for link in state.dict["job_locations"]]
+    else:
+        data["locations"] = []
+    return JobRead.model_validate(data)
+
+
 @router.get("/", response_model=list[JobRead])
 async def list_jobs(
     skip: int = 0,
     limit: int = 100,
     status: JobStatus | None = None,
     service: JobService = Depends(get_job_service),
-) -> list[Job]:
-    return await service.list_jobs(skip=skip, limit=limit, status=status)
+) -> list[JobRead]:
+    jobs = await service.list_jobs(skip=skip, limit=limit, status=status)
+    return [_map_job_to_read(job) for job in jobs]
 
 
 @router.get("/{job_id}", response_model=JobRead)
 async def get_job(
     job_id: str,
     service: JobService = Depends(get_job_service),
-) -> Job:
+) -> JobRead:
     try:
-        return await service.get_job(job_id)
+        job = await service.get_job(job_id)
+        return _map_job_to_read(job)
     except JobNotFoundError:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -45,9 +60,10 @@ async def get_job(
 async def create_job(
     job_in: JobCreate,
     service: JobService = Depends(get_job_service),
-) -> Job:
+) -> JobRead:
     try:
-        return await service.create_job(job_in)
+        job = await service.create_job(job_in)
+        return _map_job_to_read(job)
     except SourceResolutionError as e:
         raise HTTPException(status_code=422, detail=e.message)
 
@@ -57,9 +73,10 @@ async def update_job(
     job_id: str,
     job_in: JobUpdate,
     service: JobService = Depends(get_job_service),
-) -> Job:
+) -> JobRead:
     try:
-        return await service.update_job(job_id, job_in)
+        job = await service.update_job(job_id, job_in)
+        return _map_job_to_read(job)
     except JobNotFoundError:
         raise HTTPException(status_code=404, detail="Job not found")
 

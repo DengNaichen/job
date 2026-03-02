@@ -11,8 +11,6 @@ from app.ingest.mappers import (
     LeverMapper,
     SmartRecruitersMapper,
     TikTokMapper,
-    UberMapper,
-    BaseMapper,
 )
 from app.models.job import Job, WorkplaceType
 from app.repositories.job import JobRepository
@@ -26,6 +24,7 @@ from app.services.domain.job_location import (
 
 logger = logging.getLogger(__name__)
 
+
 async def apply_backfill_to_job_v3(session: AsyncSession, job: Job) -> bool:
     """
     Apply v3 canonical location backfill to a job in-place.
@@ -33,7 +32,7 @@ async def apply_backfill_to_job_v3(session: AsyncSession, job: Job) -> bool:
     Returns True if fields or links were actually modified.
     """
     structured_locations: list[StructuredLocation] = []
-    
+
     # Check if this source is high confidence
     MAPPERS = {
         "apple": AppleMapper(),
@@ -43,11 +42,8 @@ async def apply_backfill_to_job_v3(session: AsyncSession, job: Job) -> bool:
         "lever": LeverMapper(),
         "smartrecruiters": SmartRecruitersMapper(),
         "tiktok": TikTokMapper(),
-        "uber": UberMapper(),
     }
-    HIGH_CONFIDENCE_SOURCES = {"smartrecruiters", "apple", "uber", "tiktok", "eightfold"}
-    is_high_confidence = job.source in HIGH_CONFIDENCE_SOURCES
-    
+
     # 1. Try to extract using the mapper (High Confidence)
     mapper = MAPPERS.get(job.source) if job.source else None
     if mapper and job.raw_payload:
@@ -69,6 +65,7 @@ async def apply_backfill_to_job_v3(session: AsyncSession, job: Job) -> bool:
     if not structured_locations:
         has_existing_city_region = bool(job.location_city or job.location_region)
         from app.services.domain.country_normalization import is_canonical_country_code
+
         current_canonical_country = is_canonical_country_code(job.location_country_code)
 
         # If we already have strong data, we should just canonicalize what we have
@@ -79,7 +76,7 @@ async def apply_backfill_to_job_v3(session: AsyncSession, job: Job) -> bool:
                 region=job.location_region,
                 country_code=job.location_country_code,
                 workplace_type=job.location_workplace_type,
-                remote_scope=job.location_remote_scope
+                remote_scope=job.location_remote_scope,
             )
             # still attempt to patch country if it's missing or non-canonical but we have text
             if not current_canonical_country and job.location_text:
@@ -103,14 +100,14 @@ async def apply_backfill_to_job_v3(session: AsyncSession, job: Job) -> bool:
 
     job_loc_repo = JobLocationRepository(session)
     existing_links = await job_loc_repo.list_by_job_id(job.id) if job.id else []
-    
+
     # Helper to check if a location matches an existing link
     # For idempotency, we just count created links or field changes
     seen_keys = set()
-    
+
     for i, structured in enumerate(structured_locations):
-        is_primary = (i == 0)
-        
+        is_primary = i == 0
+
         # This will create/update the Location and JobLocation link
         location_entity = await sync_job_location(
             session=session,
@@ -120,34 +117,36 @@ async def apply_backfill_to_job_v3(session: AsyncSession, job: Job) -> bool:
             source_raw="backfill",
         )
         seen_keys.add(location_entity.canonical_key)
-        
+
         # Compare if the link already exactly existed
         link_existed = False
         for link in existing_links:
             if link.location_id == location_entity.id and link.is_primary == is_primary:
                 link_existed = True
                 break
-        
+
         if not link_existed:
             changed = True
-            
+
         if is_primary:
             old_city = job.location_city
             old_region = job.location_region
             old_country = job.location_country_code
             old_workplace = job.location_workplace_type
-            
+
             sync_primary_to_job(
                 job=job,
                 location=location_entity,
                 workplace_type=structured.workplace_type,
                 remote_scope=structured.remote_scope,
             )
-            
-            if (job.location_city != old_city or 
-                job.location_region != old_region or 
-                job.location_country_code != old_country or 
-                job.location_workplace_type != old_workplace):
+
+            if (
+                job.location_city != old_city
+                or job.location_region != old_region
+                or job.location_country_code != old_country
+                or job.location_workplace_type != old_workplace
+            ):
                 changed = True
 
     return changed

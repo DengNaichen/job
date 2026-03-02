@@ -1,9 +1,13 @@
 import uuid
 from datetime import datetime, timezone
-from typing import ClassVar
+from typing import ClassVar, TYPE_CHECKING
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, UniqueConstraint, text
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, SQLModel, Relationship
+
+if TYPE_CHECKING:
+    from app.models.job import Job
+    from app.models.location import Location
 
 
 class JobLocation(SQLModel, table=True):
@@ -32,3 +36,7 @@ class JobLocation(SQLModel, table=True):
         default_factory=lambda: datetime.now(timezone.utc),
         sa_column=Column(DateTime(timezone=True), server_default=text("now()"), nullable=False),
     )
+
+    # Relationships
+    job: "Job" = Relationship(back_populates="job_locations")
+    location: "Location" = Relationship(back_populates="job_locations")

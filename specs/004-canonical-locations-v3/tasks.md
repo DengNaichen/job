@@ -81,15 +81,15 @@
 
 ### Tests for User Story 3
 
-- [ ] T020 [P] [US3] Update `tests/unit/test_match_query.py`, `tests/unit/test_match_service.py`, and `tests/unit/test_match_schema.py` so country/location filtering expectations target normalized joins rather than only `job.location_country_code`.
-- [ ] T021 [P] [US3] Update `tests/integration/test_matching_api.py` and `tests/integration/test_job_api.py` to validate normalized location serialization plus compatibility-field continuity.
-- [ ] T022 [P] [US3] Update `tests/unit/test_llm_match_recommendation.py` and `tests/unit/test_match_experiment_script.py` if downstream payload builders now consume normalized primary/full location summaries.
+- [x] T020 [P] [US3] Update `tests/unit/test_match_query.py`, `tests/unit/test_match_service.py`, and `tests/unit/test_match_schema.py` so country/location filtering expectations target normalized joins rather than only `job.location_country_code`.
+- [x] T021 [P] [US3] Update `tests/integration/test_matching_api.py` and `tests/integration/test_job_api.py` to validate normalized location serialization plus compatibility-field continuity.
+- [x] T022 [P] [US3] Update `tests/unit/test_llm_match_recommendation.py` and `tests/unit/test_match_experiment_script.py` if downstream payload builders now consume normalized primary/full location summaries.
 
 ### Implementation for User Story 3
 
-- [ ] T023 [US3] Refactor `app/services/infra/match_query.py`, `app/services/application/match_service.py`, and `app/api/v1/matching.py` so country-aware filters can join via `job_locations -> locations`.
-- [ ] T024 [US3] Update read serialization in `app/services/application/job.py`, `app/api/v1/jobs.py`, `app/schemas/job.py`, and `app/schemas/location.py` to expose primary + linked locations while preserving existing compatibility fields.
-- [ ] T025 [US3] Update docs in `docs/architecture/README.md`, `docs/ROADMAP.md`, and `README.md` to mark v3 normalized location tables as authoritative long-term location identity.
+- [x] T023 [US3] Refactor `app/services/infra/match_query.py`, `app/services/application/match_service.py`, and `app/api/v1/matching.py` so country-aware filters can join via `job_locations -> locations`.
+- [x] T024 [US3] Update read serialization in `app/services/application/job.py`, `app/api/v1/jobs.py`, `app/schemas/job.py`, and `app/schemas/location.py` to expose primary + linked locations while preserving existing compatibility fields.
+- [x] T025 [US3] Update docs in `docs/architecture/README.md`, `docs/ROADMAP.md`, and `README.md` to mark v3 normalized location tables as authoritative long-term location identity.
 
 **Checkpoint**: Query/read paths can consume normalized links, and compatibility behavior remains stable during migration.
 
@@ -99,9 +99,9 @@
 
 **Purpose**: Validate v3 end-to-end and capture deferred cleanup explicitly.
 
-- [ ] T026 [P] Run targeted suites with `./scripts/uv run pytest tests/unit/services/domain/test_canonical_location.py tests/unit/test_job_location.py tests/unit/ingest/mappers/test_company_apis.py tests/unit/ingest/mappers/test_smartrecruiters.py tests/unit/ingest/mappers/test_eightfold.py tests/unit/ingest/mappers/test_lever.py tests/unit/ingest/mappers/test_greenhouse.py tests/unit/ingest/mappers/test_ashby.py tests/unit/test_full_snapshot_sync.py tests/unit/test_job_service.py tests/unit/test_backfill_job_locations.py tests/unit/repositories/test_location_repository.py tests/unit/repositories/test_job_location_repository.py tests/unit/test_import_company_api_jobs.py tests/unit/test_import_greenhouse_jobs.py tests/unit/test_import_lever_jobs.py tests/unit/test_import_ashby_jobs.py tests/unit/test_import_smartrecruiters_jobs.py tests/unit/test_import_eightfold_jobs.py tests/unit/test_match_query.py tests/unit/test_match_service.py tests/unit/test_match_schema.py tests/unit/test_llm_match_recommendation.py tests/unit/test_match_experiment_script.py tests/integration/test_job_api.py tests/integration/test_matching_api.py`.
-- [ ] T027 Do a manual dry run of `scripts/backfill_job_locations_v3.py` on a bounded dataset and record canonical reuse rate, multi-location restoration counts, primary-link stability, and unchanged-row skip counts.
-- [ ] T028 Capture post-v3 follow-up cleanup in `docs/ROADMAP.md` (timing for dropping/repurposing denormalized compatibility fields, GeoNames refresh cadence automation, and additional retrieval rollout steps).
+- [x] T026 [P] Run targeted suites with `./scripts/uv run pytest tests/unit/services/domain/test_canonical_location.py tests/unit/test_job_location.py tests/unit/ingest/mappers/test_company_apis.py tests/unit/ingest/mappers/test_smartrecruiters.py tests/unit/ingest/mappers/test_eightfold.py tests/unit/ingest/mappers/test_lever.py tests/unit/ingest/mappers/test_greenhouse.py tests/unit/ingest/mappers/test_ashby.py tests/unit/test_full_snapshot_sync.py tests/unit/test_job_service.py tests/unit/test_backfill_job_locations.py tests/unit/repositories/test_location_repository.py tests/unit/repositories/test_job_location_repository.py tests/unit/test_import_company_api_jobs.py tests/unit/test_import_greenhouse_jobs.py tests/unit/test_import_lever_jobs.py tests/unit/test_import_ashby_jobs.py tests/unit/test_import_smartrecruiters_jobs.py tests/unit/test_import_eightfold_jobs.py tests/unit/test_match_query.py tests/unit/test_match_service.py tests/unit/test_match_schema.py tests/unit/test_llm_match_recommendation.py tests/unit/test_match_experiment_script.py tests/integration/test_job_api.py tests/integration/test_matching_api.py`.
+- [x] T027 Do a manual dry run of `scripts/backfill_job_locations_v3.py` on a bounded dataset and record canonical reuse rate, multi-location restoration counts, primary-link stability, and unchanged-row skip counts.
+- [x] T028 Capture post-v3 follow-up cleanup in `docs/ROADMAP.md` (timing for dropping/repurposing denormalized compatibility fields, GeoNames refresh cadence automation, and additional retrieval rollout steps).
 
 ---
 
