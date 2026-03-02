@@ -81,7 +81,7 @@ Current live counts, source coverage, storage footprint, and enrichment cost not
 - [ ] Country canonicalization v2 on `job`: make `location_country_code` reliable for filtering, including remote single-country rules (P2)
 - [ ] Country-aware filtering: apply `location_country_code` + `location_workplace_type` in retrieval/filter pipelines (P2)
 - [ ] Hybrid retrieval: title / skills / domain / location / structured filters + optional vector recall (P2)
-- [ ] Embedding storage redesign: move vectors out of the hot `job` row and support model/version isolation (P2)
+- [x] Embedding storage redesign: move vectors out of the hot `job` row and support model/version isolation (P2)
 - [ ] Production-ready matching service (P3)
 
 ## Phase 7: Candidate Service & Productization

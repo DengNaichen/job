@@ -54,46 +54,62 @@ async def fetch_candidates(
     top_k: int,
     prefilter_sql: str,
     prefilter_params: list[object],
+    embedding_kind: str,
+    embedding_target_revision: int,
+    embedding_model: str,
+    embedding_dim: int,
 ) -> list[dict[str, Any]]:
     where_clauses = [
-        "embedding IS NOT NULL",
-        "COALESCE(structured_jd_version, 0) >= 3",
+        "je.embedding IS NOT NULL",
+        "COALESCE(j.structured_jd_version, 0) >= 3",
+        "je.embedding_kind = $2",
+        "je.embedding_target_revision = $3",
+        "je.embedding_model = $4",
+        "je.embedding_dim = $5",
     ]
     if prefilter_sql:
         where_clauses.append(prefilter_sql)
 
-    params: list[object] = [user_vec_literal, *prefilter_params, top_k]
+    params: list[object] = [
+        user_vec_literal,
+        embedding_kind,
+        embedding_target_revision,
+        embedding_model,
+        embedding_dim,
+        *prefilter_params,
+        top_k,
+    ]
     limit_placeholder = f"${len(params)}"
-
     query = f"""
         SELECT
-            id AS job_id,
-            source,
-            title,
-            apply_url,
-            location_text,
-            city,
-            region,
-            country_code,
-            workplace_type,
-            department,
-            team,
-            employment_type,
-            sponsorship_not_available,
-            job_domain_raw,
-            job_domain_normalized,
-            min_degree_level,
-            min_degree_rank,
-            structured_jd,
+            j.id AS job_id,
+            j.source,
+            j.title,
+            j.apply_url,
+            j.location_text,
+            j.location_city AS city,
+            j.location_region AS region,
+            j.location_country_code AS country_code,
+            j.location_workplace_type AS workplace_type,
+            j.department,
+            j.team,
+            j.employment_type,
+            j.sponsorship_not_available,
+            j.job_domain_raw,
+            j.job_domain_normalized,
+            j.min_degree_level,
+            j.min_degree_rank,
+            j.structured_jd,
             CASE
-                WHEN structured_jd IS NOT NULL AND (structured_jd ->> 'experience_years') ~ '^-?\\d+$'
-                THEN (structured_jd ->> 'experience_years')::int
+                WHEN j.structured_jd IS NOT NULL AND (j.structured_jd ->> 'experience_years') ~ '^-?\\d+$'
+                THEN (j.structured_jd ->> 'experience_years')::int
                 ELSE NULL
             END AS jd_experience_years,
-            (1 - (embedding <=> $1::vector)) AS cosine_score
-        FROM job
+            (1 - (je.embedding <=> $1::vector)) AS cosine_score
+        FROM job j
+        JOIN job_embedding je ON j.id = je.job_id
         WHERE {" AND ".join(where_clauses)}
-        ORDER BY embedding <=> $1::vector
+        ORDER BY je.embedding <=> $1::vector
         LIMIT {limit_placeholder}
     """
 
@@ -120,6 +136,10 @@ class MatchCandidateGateway:
         top_k: int,
         prefilter_sql: str,
         prefilter_params: list[object],
+        embedding_kind: str,
+        embedding_target_revision: int,
+        embedding_model: str,
+        embedding_dim: int,
     ) -> list[dict[str, Any]]:
         settings = self.settings_provider()
         dsn = to_asyncpg_dsn(settings.database_url)
@@ -131,6 +151,10 @@ class MatchCandidateGateway:
                 top_k=top_k,
                 prefilter_sql=prefilter_sql,
                 prefilter_params=prefilter_params,
+                embedding_kind=embedding_kind,
+                embedding_target_revision=embedding_target_revision,
+                embedding_model=embedding_model,
+                embedding_dim=embedding_dim,
             )
         finally:
             await conn.close()
