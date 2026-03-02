@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from app.models import JobStatus
+from app.models import JobStatus, WorkplaceType
 
 
 class JobBase(BaseModel):
@@ -13,14 +13,23 @@ class JobBase(BaseModel):
     apply_url: str
     normalized_apply_url: str | None = None
     status: JobStatus = JobStatus.open
+
     location_text: str | None = None
+    location_city: str | None = None
+    location_region: str | None = None
+    location_country_code: str | None = None
+    location_workplace_type: WorkplaceType = WorkplaceType.unknown
+    location_remote_scope: str | None = None
+
     department: str | None = None
     team: str | None = None
     employment_type: str | None = None
 
 
 class JobCreate(JobBase):
-    source_id: str | None = None  # Resolved by service from source string during compatibility window
+    source_id: str | None = (
+        None  # Resolved by service from source string during compatibility window
+    )
     content_fingerprint: str | None = None
     dedupe_group_id: str | None = None
     description_html: str | None = None
@@ -76,6 +85,11 @@ class JobUpdate(BaseModel):
     title: str | None = None
     status: JobStatus | None = None
     location_text: str | None = None
+    location_city: str | None = None
+    location_region: str | None = None
+    location_country_code: str | None = None
+    location_workplace_type: WorkplaceType | None = None
+    location_remote_scope: str | None = None
     department: str | None = None
     team: str | None = None
     employment_type: str | None = None

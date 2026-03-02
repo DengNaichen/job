@@ -59,7 +59,12 @@ The system supports multi-level deduplication:
 
 | Field | Description |
 |-------|-------------|
-| `location_text` | Work location |
+| `location_text` | Work location (compatibility text for display) |
+| `location_city` | Structured city name |
+| `location_region` | Structured region (state/province) |
+| `location_country_code` | ISO Alpha-2 country code |
+| `location_workplace_type` | Workplace type (`remote`, `hybrid`, `onsite`, `unknown`) |
+| `location_remote_scope` | Remote availability scope (e.g. "US Only") |
 | `department` | Department |
 | `team` | Team |
 | `employment_type` | Employment type (full-time, part-time, contract, etc.) |
@@ -133,4 +138,14 @@ class SyncRunStatus(str, enum.Enum):
     running = "running"  # Sync in progress
     success = "success"  # Sync succeeded
     failed = "failed"    # Sync failed
+```
+
+### WorkplaceType
+
+```python
+class WorkplaceType(str, enum.Enum):
+    remote = "remote"
+    hybrid = "hybrid"
+    onsite = "onsite"
+    unknown = "unknown"
 ```

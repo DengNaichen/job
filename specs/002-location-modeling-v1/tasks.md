@@ -17,11 +17,11 @@
 
 **Purpose**: Add schema support and shared location primitives before changing mapper behavior or historical data.
 
-- [ ] T001 Create an Alembic revision in `alembic/versions/` that adds nullable `job` columns for `location_city`, `location_region`, `location_country_code`, `location_workplace_type`, and `location_remote_scope`.
-- [ ] T002 [P] Update `app/models/job.py` to add the new structured location fields and define the workplace-type enum/defaults used by the application layer.
-- [ ] T003 [P] Update `app/schemas/job.py` so `JobCreate`, `JobRead`, and `JobUpdate` support the structured location fields while preserving `location_text`.
-- [ ] T004 [P] Update `app/models/README.md` and `app/schemas/README.md` to document the new job-level location fields and clarify that `location_text` remains compatibility/display text.
-- [ ] T005 Create shared extraction/parsing helpers in `app/services/domain/job_location.py` that can build one best-effort structured location profile from source-native payloads or conservative text parsing.
+- [x] T001 Create an Alembic revision in `alembic/versions/` that adds nullable `job` columns for `location_city`, `location_region`, `location_country_code`, `location_workplace_type`, and `location_remote_scope`.
+- [x] T002 [P] Update `app/models/job.py` to add the new structured location fields and define the workplace-type enum/defaults used by the application layer.
+- [x] T003 [P] Update `app/schemas/job.py` so `JobCreate`, `JobRead`, and `JobUpdate` support the structured location fields while preserving `location_text`.
+- [x] T004 [P] Update `app/models/README.md` and `app/schemas/README.md` to document the new job-level location fields and clarify that `location_text` remains compatibility/display text.
+- [x] T005 Create shared extraction/parsing helpers in `app/services/domain/job_location.py` that can build one best-effort structured location profile from source-native payloads or conservative text parsing.
 
 **Checkpoint**: The database, model layer, schemas, and shared location helper are ready for mapper rollout and backfill work.
 

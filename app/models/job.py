@@ -15,6 +15,13 @@ class JobStatus(str, enum.Enum):
     closed = "closed"
 
 
+class WorkplaceType(str, enum.Enum):
+    remote = "remote"
+    hybrid = "hybrid"
+    onsite = "onsite"
+    unknown = "unknown"
+
+
 class Job(SQLModel, table=True):
     __table_args__ = (
         UniqueConstraint("source", "external_job_id", name="uq_job_source_external_job_id"),
@@ -28,7 +35,9 @@ class Job(SQLModel, table=True):
     # Authoritative owner FK — nullable during migration window; enforced NOT NULL in second revision.
     source_id: str | None = Field(
         default=None,
-        sa_column=Column(String(36), ForeignKey("sources.id", ondelete="RESTRICT"), nullable=True, index=True),
+        sa_column=Column(
+            String(36), ForeignKey("sources.id", ondelete="RESTRICT"), nullable=True, index=True
+        ),
     )
     # Compatibility source key (legacy string). Preserved throughout migration; renamed in a future cleanup.
     source: str = Field(index=True)
@@ -41,6 +50,12 @@ class Job(SQLModel, table=True):
     status: JobStatus = Field(default=JobStatus.open, index=True)
 
     location_text: str | None = Field(default=None)
+    location_city: str | None = Field(default=None)
+    location_region: str | None = Field(default=None)
+    location_country_code: str | None = Field(default=None, index=True)
+    location_workplace_type: WorkplaceType = Field(default=WorkplaceType.unknown, index=True)
+    location_remote_scope: str | None = Field(default=None)
+
     department: str | None = Field(default=None)
     team: str | None = Field(default=None)
     employment_type: str | None = Field(default=None)

@@ -24,7 +24,12 @@ Input when creating a job:
     "apply_url": "https://example.com/apply",
     "normalized_apply_url": "https://example.com/apply",  # optional
     "status": "open",  # optional, default: open
-    "location_text": "San Francisco",  # optional
+    "location_text": "San Francisco",  # optional legacy display fallback
+    "location_city": "San Francisco",  # optional
+    "location_region": "CA",  # optional
+    "location_country_code": "US",  # optional
+    "location_workplace_type": "onsite",  # optional, default: unknown
+    "location_remote_scope": null,  # optional
     "department": "Engineering",  # optional
     "team": "Backend",  # optional
     "employment_type": "full-time",  # optional
