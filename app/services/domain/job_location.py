@@ -2,7 +2,12 @@ from dataclasses import dataclass
 import re
 
 from app.models.job import WorkplaceType
+from app.models.location import Location
+from app.repositories.job_location import JobLocationRepository
+from app.repositories.location import LocationRepository
+from app.services.domain.canonical_location import build_canonical_key, normalize_display_name
 from app.services.domain.country_normalization import normalize_country
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 
 @dataclass
@@ -118,3 +123,50 @@ def parse_location_text(location_str: str | None) -> StructuredLocation:
                 loc.country_code = country_res.country_code
 
     return loc
+
+
+async def sync_job_location(
+    *,
+    session: AsyncSession,
+    job_id: str,
+    structured: StructuredLocation,
+    is_primary: bool = False,
+    source_raw: str | None = None,
+) -> None:
+    """
+    Sync a structured location to a job.
+    1. Generates a canonical key.
+    2. Upserts the Location entity.
+    3. Links the Location to the Job via JobLocation.
+    """
+    loc_repo = LocationRepository(session)
+    job_loc_repo = JobLocationRepository(session)
+
+    # Build canonical key for the location
+    canonical_key = build_canonical_key(
+        city=structured.city,
+        region=structured.region,
+        country_code=structured.country_code,
+    )
+
+    # Create Location model instance (Repositories handle existing check)
+    location_data = Location(
+        canonical_key=canonical_key,
+        display_name=normalize_display_name(
+            city=structured.city,
+            region=structured.region,
+            country_code=structured.country_code,
+        ),
+        city=structured.city,
+        region=structured.region,
+        country_code=structured.country_code,
+    )
+
+    # Upsert the location and link it
+    location = await loc_repo.upsert(location_data)
+    await job_loc_repo.link(
+        job_id=job_id,
+        location_id=location.id,
+        is_primary=is_primary,
+        source_raw=source_raw,
+    )

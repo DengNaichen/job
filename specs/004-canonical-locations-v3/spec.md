@@ -2,7 +2,7 @@
 
 **Feature Branch**: `004-canonical-locations-v3`  
 **Created**: 2026-03-01  
-**Status**: Draft  
+**Status**: Ready  
 **Input**: User description: "Create a v3 spec that introduces canonical location entities and split tables after v1 structured location fields and v2 canonical country normalization"
 
 ## Summary

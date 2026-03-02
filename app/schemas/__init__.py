@@ -1,4 +1,10 @@
 from app.schemas.job import JobCreate, JobRead, JobUpdate
+from app.schemas.location import (
+    JobLocationRead,
+    LocationBase,
+    LocationCreate,
+    LocationRead,
+)
 from app.schemas.match import (
     CandidateEducation,
     CandidateProfile,
@@ -26,6 +32,10 @@ __all__ = [
     "JobCreate",
     "JobRead",
     "JobUpdate",
+    "JobLocationRead",
+    "LocationBase",
+    "LocationCreate",
+    "LocationRead",
     "CandidateEducation",
     "CandidateProfile",
     "CandidateWorkHistory",

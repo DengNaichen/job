@@ -1,9 +1,12 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
 from app.models import JobStatus, WorkplaceType
+
+if TYPE_CHECKING:
+    from app.schemas.location import LocationRead
 
 
 class JobBase(BaseModel):
@@ -61,6 +64,10 @@ class JobRead(JobBase):
     raw_payload: dict[str, Any]
     raw_payload_key: str | None
     raw_payload_hash: str | None
+
+    # New normalized locations
+    locations: list["LocationRead"] = []
+
     sponsorship_not_available: str
     job_domain_raw: str | None
     job_domain_normalized: str

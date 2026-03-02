@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     llm_api_key: str | None = None  # defaults to gemini_api_key if not set
     llm_api_base: str | None = None
 
+    # GeoNames
+    geonames_data_dir: str = "data/geonames"
+    geonames_username: str | None = None
+
     @field_validator("debug", mode="before")
     @classmethod
     def normalize_debug_flag(cls, value: object) -> object:
