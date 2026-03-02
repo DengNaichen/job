@@ -18,7 +18,13 @@ from app.services.domain.matching import (
     infer_user_seniority_level,
     to_optional_int,
 )
-from app.services.infra.llm import LLMConfig, complete_json, get_llm_config, get_token_usage
+from app.services.infra.llm import (
+    LLMConfig,
+    complete_json,
+    get_llm_config,
+    snapshot_usage,
+    start_usage_scope,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -404,8 +410,6 @@ async def apply_llm_rerank(
 
     prepared_rows = attach_default_llm_fields(rows)
     window_size = min(llm_top_n, len(prepared_rows))
-    token_usage = get_token_usage()
-    token_usage.reset()
 
     if window_size == 0:
         summary = {
@@ -455,9 +459,11 @@ async def apply_llm_rerank(
         enriched["llm_enriched"] = True
         return index, enriched, True
 
-    results = await asyncio.gather(
-        *(_process_one(index, row) for index, row in enumerate(llm_window))
-    )
+    with start_usage_scope():
+        results = await asyncio.gather(
+            *(_process_one(index, row) for index, row in enumerate(llm_window))
+        )
+        token_summary = snapshot_usage()
 
     succeeded_count = 0
     failed_count = 0
@@ -479,8 +485,6 @@ async def apply_llm_rerank(
         reverse=True,
     )
     reorder_applied = [str(row.get("job_id") or "") for row in reordered_window] != original_order
-    token_summary = token_usage.summary()
-    token_usage.reset()
 
     summary = {
         "enabled": True,
