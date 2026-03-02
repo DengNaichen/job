@@ -170,9 +170,7 @@ class TestBaseFetcherRetry:
         )
 
         fetcher = ConcreteFetcher()
-        fetcher.retry_config = RetryConfig(
-            retryable_status_codes={418, 500, 502, 503, 504}
-        )
+        fetcher.retry_config = RetryConfig(retryable_status_codes={418, 500, 502, 503, 504})
 
         async with AsyncClient() as client:
             response = await fetcher.request_with_retry(
@@ -193,9 +191,7 @@ class TestBaseFetcherRetry:
         fetcher = ConcreteFetcher()
 
         async with AsyncClient() as client:
-            payload = await fetcher.request_json_with_retry(
-                client, url="https://example.com/api"
-            )
+            payload = await fetcher.request_json_with_retry(client, url="https://example.com/api")
 
         assert payload == {"data": "success"}
 
@@ -211,9 +207,7 @@ class TestBaseFetcherRetry:
 
         async with AsyncClient() as client:
             with pytest.raises(ValueError, match="must be a JSON object"):
-                await fetcher.request_json_with_retry(
-                    client, url="https://example.com/api"
-                )
+                await fetcher.request_json_with_retry(client, url="https://example.com/api")
 
 
 class TestGracefulRetry:

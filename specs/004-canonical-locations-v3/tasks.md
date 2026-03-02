@@ -59,15 +59,15 @@
 
 ### Tests for User Story 2
 
-- [ ] T014 [P] [US2] Expand `tests/unit/test_backfill_job_locations.py` for v3 backfill behavior (structured fields first, raw payload second, multi-location restoration, rerun idempotency, and compatibility-field alignment).
-- [ ] T015 [P] [US2] Add repository idempotency/constraint tests in `tests/unit/repositories/test_location_repository.py` and `tests/unit/repositories/test_job_location_repository.py`.
-- [ ] T016 [P] [US2] Update import-flow regression tests in `tests/unit/test_import_company_api_jobs.py`, `tests/unit/test_import_greenhouse_jobs.py`, `tests/unit/test_import_lever_jobs.py`, `tests/unit/test_import_ashby_jobs.py`, `tests/unit/test_import_smartrecruiters_jobs.py`, and `tests/unit/test_import_eightfold_jobs.py` for normalized link expectations where applicable.
+- [x] T014 [P] [US2] Expand `tests/unit/test_backfill_job_locations.py` for v3 backfill behavior (structured fields first, raw payload second, multi-location restoration, rerun idempotency, and compatibility-field alignment).
+- [x] T015 [P] [US2] Add repository idempotency/constraint tests in `tests/unit/repositories/test_location_repository.py` and `tests/unit/repositories/test_job_location_repository.py`.
+- [x] T016 [P] [US2] Update import-flow regression tests in `tests/unit/test_import_company_api_jobs.py`, `tests/unit/test_import_greenhouse_jobs.py`, `tests/unit/test_import_lever_jobs.py`, `tests/unit/test_import_ashby_jobs.py`, `tests/unit/test_import_smartrecruiters_jobs.py`, and `tests/unit/test_import_eightfold_jobs.py` for normalized link expectations where applicable.
 
 ### Implementation for User Story 2
 
-- [ ] T017 [US2] Create `scripts/backfill_job_locations_v3.py` (or equivalent v3 mode) to generate/reuse canonical locations and job links from historical jobs with rerunnable semantics.
-- [ ] T018 [US2] Extend `app/repositories/job.py` with backfill-target selection helpers (keyset pagination + candidate filtering) for efficient incremental rollout.
-- [ ] T019 [US2] Reuse shared canonicalization/primary-link logic from `app/services/domain/canonical_location.py` and `app/services/domain/job_location.py` in the backfill path so ingest and historical repair follow one rule set.
+- [x] T017 [US2] Create `scripts/backfill_job_locations_v3.py` (or equivalent v3 mode) to generate/reuse canonical locations and job links from historical jobs with rerunnable semantics.
+- [x] T018 [US2] Extend `app/repositories/job.py` with backfill-target selection helpers (keyset pagination + candidate filtering) for efficient incremental rollout.
+- [x] T019 [US2] Reuse shared canonicalization/primary-link logic from `app/services/domain/canonical_location.py` and `app/services/domain/job_location.py` in the backfill path so ingest and historical repair follow one rule set.
 
 **Checkpoint**: Historical jobs can be normalized safely, with no duplicate row drift on reruns.
 

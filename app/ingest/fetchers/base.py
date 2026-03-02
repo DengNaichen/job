@@ -12,9 +12,7 @@ class RetryConfig:
     """Configuration for HTTP retry behavior."""
 
     max_retries: int = 3
-    retryable_status_codes: set[int] = field(
-        default_factory=lambda: {429, 500, 502, 503, 504}
-    )
+    retryable_status_codes: set[int] = field(default_factory=lambda: {429, 500, 502, 503, 504})
     backoff_base_seconds: float = 0.25
     exponential_backoff: bool = True
 
@@ -73,9 +71,7 @@ class BaseFetcher(ABC):
             httpx.RequestError: For network errors after max retries
         """
         if not self.retry_enabled:
-            response = await client.request(
-                method, url, params=params, json=json, headers=headers
-            )
+            response = await client.request(method, url, params=params, json=json, headers=headers)
             response.raise_for_status()
             return response
 
@@ -219,7 +215,9 @@ class BaseFetcher(ABC):
         client: httpx.AsyncClient,
         summaries: list[dict[str, Any]],
         *,
-        fetch_detail: Callable[[httpx.AsyncClient, dict[str, Any]], Awaitable[dict[str, Any] | None]],
+        fetch_detail: Callable[
+            [httpx.AsyncClient, dict[str, Any]], Awaitable[dict[str, Any] | None]
+        ],
         concurrency: int | None = None,
         on_failure: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
     ) -> list[dict[str, Any]]:
@@ -246,7 +244,5 @@ class BaseFetcher(ABC):
                     return on_failure(summary)
                 return result
 
-        results = await asyncio.gather(
-            *(fetch_with_semaphore(summary) for summary in summaries)
-        )
+        results = await asyncio.gather(*(fetch_with_semaphore(summary) for summary in summaries))
         return [result for result in results if result is not None]
