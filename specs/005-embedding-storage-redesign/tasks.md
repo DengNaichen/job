@@ -72,14 +72,14 @@
 
 ### Tests for User Story 3
 
-- [ ] T011 [P] [US3] Update `tests/unit/test_match_query.py` and `tests/unit/test_match_service.py` so vector recall expects explicit active-target filtering through `job_embedding` rather than direct dependence on `job.embedding`.
-- [ ] T012 [P] [US3] Update `tests/unit/test_match_experiment_script.py`, `tests/unit/test_match_schema.py`, and `tests/integration/test_matching_api.py` so matching-facing behavior remains compatible after the query cutover.
+- [x] T011 [P] [US3] Update `tests/unit/test_match_query.py` and `tests/unit/test_match_service.py` so vector recall expects explicit active-target filtering through `job_embedding` rather than direct dependence on `job.embedding`.
+- [x] T012 [P] [US3] Update `tests/unit/test_match_experiment_script.py`, `tests/unit/test_match_schema.py`, and `tests/integration/test_matching_api.py` so matching-facing behavior remains compatible after the query cutover.
 
 ### Implementation for User Story 3
 
-- [ ] T013 [US3] Refactor `app/services/infra/match_query.py` to join against `job_embedding`, filter by the active target descriptor, and remove direct recall SQL dependence on `job.embedding`.
-- [ ] T014 [US3] Update `app/services/application/match_service.py` and `scripts/match_experiment.py` so request-time embedding generation stays aligned with the active stored target used by recall.
-- [ ] T015 [US3] Update `docs/architecture/README.md`, `docs/ROADMAP.md`, and `README.md` to document the dedicated `job_embedding` path, the recall cutover, and the bounded deprecation of legacy in-row embedding columns.
+- [x] T013 [US3] Refactor `app/services/infra/match_query.py` to join against `job_embedding`, filter by the active target descriptor, and remove direct recall SQL dependence on `job.embedding`.
+- [x] T014 [US3] Update `app/services/application/match_service.py` and `scripts/match_experiment.py` so request-time embedding generation stays aligned with the active stored target used by recall.
+- [x] T015 [US3] Update `docs/architecture/README.md`, `docs/ROADMAP.md`, and `README.md` to document the dedicated `job_embedding` path, the recall cutover, and the bounded deprecation of legacy in-row embedding columns.
 
 **Checkpoint**: Matching recall works through `job_embedding`, and the storage redesign is documented as independent from unfinished location work.
 
