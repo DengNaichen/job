@@ -194,5 +194,18 @@ class JobRepository:
         if exclude_job_ids:
             statement = statement.where(Job.id.not_in(list(exclude_job_ids)))
         statement = statement.order_by(Job.updated_at, Job.id).limit(limit)
-        result = await self.session.execute(statement)
-        return list(result.scalars().all())
+        result = await self.session.exec(statement)
+        return list(result.all())
+
+    async def list_jobs_for_location_backfill(
+        self,
+        last_id: str | None = None,
+        limit: int = 100,
+    ) -> list[Job]:
+        """List jobs for location backfill using keyset pagination."""
+        statement = select(Job)
+        if last_id:
+            statement = statement.where(Job.id > last_id)
+        statement = statement.order_by(Job.id).limit(limit)
+        result = await self.session.exec(statement)
+        return list(result.all())

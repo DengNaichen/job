@@ -59,14 +59,14 @@
 
 ### Tests for User Story 2
 
-- [ ] T014 [P] [US2] Add unit coverage in `tests/unit/test_backfill_job_locations.py` for confidence ordering, idempotent reruns, and ambiguous remote-scope cases.
-- [ ] T015 [P] [US2] Update `tests/unit/test_import_company_api_jobs.py`, `tests/unit/test_import_greenhouse_jobs.py`, `tests/unit/test_import_lever_jobs.py`, `tests/unit/test_import_ashby_jobs.py`, `tests/unit/test_import_smartrecruiters_jobs.py`, and `tests/unit/test_import_eightfold_jobs.py` if their job payload expectations need to include the new structured location fields.
+- [x] T014 [P] [US2] Add unit coverage in `tests/unit/test_backfill_job_locations.py` for confidence ordering, idempotent reruns, and ambiguous remote-scope cases.
+- [x] T015 [P] [US2] Update `tests/unit/test_import_company_api_jobs.py`, `tests/unit/test_import_greenhouse_jobs.py`, `tests/unit/test_import_lever_jobs.py`, `tests/unit/test_import_ashby_jobs.py`, `tests/unit/test_import_smartrecruiters_jobs.py`, and `tests/unit/test_import_eightfold_jobs.py` if their job payload expectations need to include the new structured location fields.
 
 ### Implementation for User Story 2
 
-- [ ] T016 [US2] Create `scripts/backfill_job_locations.py` to backfill structured location fields from `raw_payload` first and `location_text` second, with explicit confidence guards.
-- [ ] T017 [US2] Extend `app/repositories/job.py` with batch selection and persistence helpers needed by the location backfill script.
-- [ ] T018 [US2] Reuse `app/services/domain/job_location.py` from the backfill path so ingest and historical repair apply the same extraction rules.
+- [x] T016 [US2] Create `scripts/backfill_job_locations.py` to backfill structured location fields from `raw_payload` first and `location_text` second, with explicit confidence guards.
+- [x] T017 [US2] Extend `app/repositories/job.py` with batch selection and persistence helpers needed by the location backfill script.
+- [x] T018 [US2] Reuse `app/services/domain/job_location.py` from the backfill path so ingest and historical repair apply the same extraction rules.
 
 **Checkpoint**: Historical jobs can be upgraded safely without requiring a same-day full reimport.
 
