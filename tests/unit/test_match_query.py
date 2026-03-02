@@ -48,6 +48,7 @@ def test_build_sql_prefilter_with_country_sponsorship_and_degree() -> None:
     )
 
     assert "sponsorship_not_available <> 'yes'" in sql
+    assert "EXISTS (SELECT 1 FROM job_locations jl JOIN locations l" in sql
     assert "location_country_code = $2" in sql
     assert "min_degree_rank" in sql
     assert params == ["US", 3]
@@ -72,6 +73,25 @@ def test_build_sql_prefilter_omits_degree_when_unknown() -> None:
         "sponsorship_filter_applied": False,
         "degree_filter_applied": False,
         "preferred_country_code": None,
+        "user_degree_rank": -1,
+    }
+
+
+def test_build_sql_prefilter_with_only_country() -> None:
+    sql, params, summary = build_sql_prefilter(
+        start_index=2,
+        needs_sponsorship=False,
+        user_degree_rank=-1,
+        preferred_country_code="CA",
+    )
+
+    assert "sponsorship_not_available" not in sql
+    assert "location_country_code = $2" in sql
+    assert params == ["CA"]
+    assert summary == {
+        "sponsorship_filter_applied": False,
+        "degree_filter_applied": False,
+        "preferred_country_code": "CA",
         "user_degree_rank": -1,
     }
 
@@ -109,17 +129,6 @@ async def test_fetch_candidates_keeps_match_constraints_and_fields() -> None:
         fake_conn,
         user_vec_literal="[0.1,0.2]",
         top_k=25,
-        prefilter_sql="sponsorship_not_available <> 'yes' AND location_country_code = $2",
-        prefilter_params=["US", 2],
-    )
-
-    assert fake_conn.query is not None
-    assert "embedding IS NOT NULL" in fake_conn.query
-    assert "location_country_code AS country_code" in fake_conn.query
-    assert "COALESCE(structured_jd_version, 0) >= 3" in fake_conn.query
-    assert "sponsorship_not_available <> 'yes'" in fake_conn.query
-    assert "LIMIT $4" in fake_conn.query
-    assert fake_conn.params == ("[0.1,0.2]", "US", 2, 25)
         prefilter_sql="j.sponsorship_not_available <> 'yes' AND j.location_country_code = $6",
         prefilter_params=["US"],
         embedding_kind="job_description",
