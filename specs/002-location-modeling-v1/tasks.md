@@ -98,9 +98,9 @@
 
 **Purpose**: Validate the end-to-end rollout and capture follow-up cleanup work.
 
-- [ ] T025 [P] Run targeted test suites for changed paths with `./scripts/uv run pytest tests/test_mappers.py tests/test_mappers_lever.py tests/test_mappers_ashby.py tests/test_mappers_smartrecruiters.py tests/test_mappers_company_apis.py tests/test_mappers_eightfold.py tests/unit/test_job_location.py tests/unit/test_job_service.py tests/unit/test_backfill_job_locations.py tests/unit/test_match_query.py tests/unit/test_match_schema.py tests/unit/test_match_service.py tests/unit/test_llm_match_recommendation.py tests/unit/test_match_experiment_script.py tests/integration/test_matching_api.py`.
-- [ ] T026 Do a manual backfill dry run with `scripts/backfill_job_locations.py` against a small dataset and record any source-specific parsing gaps that should remain as follow-up work rather than block v1.
-- [ ] T027 Capture future work in `docs/ROADMAP.md` or follow-up specs for canonical location reuse, multi-location jobs, and any location indexing that only becomes justified once retrieval filters are actually implemented.
+- [x] T025 [P] Run targeted test suites for changed paths with `./scripts/uv run pytest tests/test_mappers.py tests/test_mappers_lever.py tests/test_mappers_ashby.py tests/test_mappers_smartrecruiters.py tests/test_mappers_company_apis.py tests/test_mappers_eightfold.py tests/unit/test_job_location.py tests/unit/test_job_service.py tests/unit/test_backfill_job_locations.py tests/unit/test_match_query.py tests/unit/test_match_schema.py tests/unit/test_match_service.py tests/unit/test_llm_match_recommendation.py tests/unit/test_match_experiment_script.py tests/integration/test_matching_api.py`.
+- [x] T026 Do a manual backfill dry run with `scripts/backfill_job_locations.py` against a small dataset and record any source-specific parsing gaps that should remain as follow-up work rather than block v1.
+- [x] T027 Capture future work in `docs/ROADMAP.md` or follow-up specs for canonical location reuse, multi-location jobs, and any location indexing that only becomes justified once retrieval filters are actually implemented.
 
 ---
 

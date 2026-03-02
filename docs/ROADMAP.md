@@ -101,3 +101,4 @@ Current live counts, source coverage, storage footprint, and enrichment cost not
 - [ ] Replace per-job ORM staging with batch-first ingest writes and bulk upsert paths (P1)
 - [ ] Parallelize / short-circuit blob sync so large sources stop paying one network round-trip chain per job (P1)
 - [ ] Add smarter source scheduling: lower frequency for historically empty / low-yield sources and better treatment for oversized sources (P2)
+- [ ] Improve source-specific location parsing for low-confidence text-heavy sources (e.g., remote scope edge cases and missing locations) (P3)
