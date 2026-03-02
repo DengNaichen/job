@@ -80,15 +80,15 @@
 
 ### Tests for User Story 3
 
-- [ ] T019 [P] [US3] Update `tests/unit/test_match_query.py`, `tests/unit/test_match_schema.py`, and `tests/unit/test_match_service.py` to cover structured location fields in match-oriented rows and response serialization.
-- [ ] T020 [P] [US3] Update `tests/unit/test_llm_match_recommendation.py` and `tests/unit/test_match_experiment_script.py` to keep downstream payload building compatible once structured location fields are available.
-- [ ] T021 [P] [US3] Update `tests/integration/test_matching_api.py` and add job-read coverage if needed so API payloads continue exposing `location_text` while optionally surfacing structured location fields.
+- [x] T019 [P] [US3] Update `tests/unit/test_match_query.py`, `tests/unit/test_match_schema.py`, and `tests/unit/test_match_service.py` to cover structured location fields in match-oriented rows and response serialization.
+- [x] T020 [P] [US3] Update `tests/unit/test_llm_match_recommendation.py` and `tests/unit/test_match_experiment_script.py` to keep downstream payload building compatible once structured location fields are available.
+- [x] T021 [P] [US3] Update `tests/integration/test_matching_api.py` and add job-read coverage if needed so API payloads continue exposing `location_text` while optionally surfacing structured location fields.
 
 ### Implementation for User Story 3
 
-- [ ] T022 [US3] Update `app/schemas/match.py`, `app/services/infra/match_query.py`, `app/services/application/match_service.py`, and `app/services/infra/llm_match_recommendation.py` so structured location fields are available to future retrieval/ranking code without reparsing `location_text`.
-- [ ] T023 [US3] Update `docs/architecture/README.md`, `README.md`, and `docs/ROADMAP.md` references as needed to reflect that v1 stops at job-level structured fields and explicitly defers `locations + job_locations`.
-- [ ] T024 [US3] Add an implementation note in `specs/002-location-modeling-v1/plan.md` or adjacent docs clarifying the deterministic primary-location rule and the explicit deferral of canonical location reuse.
+- [x] T022 [US3] Update `app/schemas/match.py`, `app/services/infra/match_query.py`, `app/services/application/match_service.py`, and `app/services/infra/llm_match_recommendation.py` so structured location fields are available to future retrieval/ranking code without reparsing `location_text`.
+- [x] T023 [US3] Update `docs/architecture/README.md`, `README.md`, and `docs/ROADMAP.md` references as needed to reflect that v1 stops at job-level structured fields and explicitly defers `locations + job_locations`.
+- [x] T024 [US3] Add an implementation note in `specs/002-location-modeling-v1/plan.md` or adjacent docs clarifying the deterministic primary-location rule and the explicit deferral of canonical location reuse.
 
 **Checkpoint**: Structured job location data is queryable and documented, but v1 still avoids canonical location tables.
 

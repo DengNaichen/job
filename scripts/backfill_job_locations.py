@@ -1,11 +1,17 @@
 import logging
-from typing import Any
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.ingest.mappers import (
-    AppleMapper, AshbyMapper, EightfoldMapper, GreenhouseMapper, LeverMapper,
-    SmartRecruitersMapper, TikTokMapper, UberMapper, BaseMapper
+    AppleMapper,
+    AshbyMapper,
+    EightfoldMapper,
+    GreenhouseMapper,
+    LeverMapper,
+    SmartRecruitersMapper,
+    TikTokMapper,
+    UberMapper,
+    BaseMapper,
 )
 from app.models.job import Job, WorkplaceType
 from app.repositories.job import JobRepository
@@ -25,19 +31,14 @@ MAPPERS: dict[str, BaseMapper] = {
 }
 
 # Sources that provide explicit structured location fields in their raw payload
-HIGH_CONFIDENCE_SOURCES = {
-    "smartrecruiters", "apple", "uber", "tiktok", "eightfold"
-}
+HIGH_CONFIDENCE_SOURCES = {"smartrecruiters", "apple", "uber", "tiktok", "eightfold"}
+
 
 def apply_backfill_to_job(job: Job) -> bool:
     """
     Apply structured location backfill to a job in-place.
     Returns True if fields were actually modified.
     """
-    original_city = job.location_city
-    original_region = job.location_region
-    original_country = job.location_country_code
-    original_workplace = job.location_workplace_type
 
     new_city = None
     new_region = None
@@ -67,12 +68,12 @@ def apply_backfill_to_job(job: Job) -> bool:
         new_country = parsed.country_code
         if new_workplace == WorkplaceType.unknown:
             new_workplace = parsed.workplace_type
-        is_high_confidence = False # Parsed from text is inherently low confidence
+        is_high_confidence = False  # Parsed from text is inherently low confidence
 
     # 3. Explicit confidence guards
     # If the job already has a city/region/country, only overwrite if our new data is high confidence
     has_existing = bool(job.location_city or job.location_region or job.location_country_code)
-    
+
     changed = False
 
     if not has_existing or is_high_confidence:
@@ -87,11 +88,15 @@ def apply_backfill_to_job(job: Job) -> bool:
             changed = True
 
     # Workplace type can be updated if currently unknown
-    if job.location_workplace_type == WorkplaceType.unknown and new_workplace != WorkplaceType.unknown:
+    if (
+        job.location_workplace_type == WorkplaceType.unknown
+        and new_workplace != WorkplaceType.unknown
+    ):
         job.location_workplace_type = new_workplace
         changed = True
 
     return changed
+
 
 async def run_backfill(session: AsyncSession, batch_size: int = 100) -> int:
     """
@@ -119,6 +124,7 @@ async def run_backfill(session: AsyncSession, batch_size: int = 100) -> int:
             logger.info(f"Updated {len(to_update)} jobs in this batch.")
 
     return total_updated
+
 
 if __name__ == "__main__":
     import asyncio

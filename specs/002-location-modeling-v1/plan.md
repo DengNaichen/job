@@ -109,7 +109,7 @@ tests/
 
 - This plan assumes the v1 field names from the spec: `location_city`, `location_region`, `location_country_code`, `location_workplace_type`, and `location_remote_scope`.
 - This plan assumes `location_workplace_type` should be modeled as a string enum in the database/application layer rather than as a free-text field.
-- This plan assumes a deterministic primary-location rule is good enough for sources that expose multiple locations; richer multi-location support remains future work.
+- This plan assumes a deterministic primary-location rule is good enough for sources that expose multiple locations (e.g., arbitrarily picking the first one in the list). Richer multi-location support using canonical `locations` and `job_locations` join tables is explicitly deferred to future work.
 
 ## Complexity Tracking
 

@@ -167,6 +167,10 @@ class MatchResultItem(BaseModel):
     title: str
     apply_url: str
     location_text: str | None = None
+    city: str | None = None
+    region: str | None = None
+    country_code: str | None = None
+    workplace_type: str | None = None
     department: str | None = None
     team: str | None = None
     employment_type: str | None = None

@@ -180,6 +180,8 @@ flowchart LR
 
 This is the shape implied by the roadmap, not the current implementation.
 
+> **Note**: Location Modeling V1 explicitly defers canonical `LOCATION` and many-to-many `JOB_LOCATION` tables shown below. In V1, location modeling stops at extracting nullable, job-level structured fields directly on the `job` row (`city`, `region`, `country_code`, `workplace_type`).
+
 ```mermaid
 erDiagram
     SOURCE {

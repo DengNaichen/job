@@ -77,7 +77,7 @@ Current live counts, source coverage, storage footprint, and enrichment cost not
 - [x] Experimental top-10 LLM enum recommendation rerank (P3)
 - [ ] Evaluation / benchmark harness (P2)
 - [ ] Retrieval redesign: move away from `JD-only` embedding as the main retrieval primitive (P2)
-- [ ] Location modeling v1 on `job`: add structured fields for filtering/ranking while keeping `location_text` as compatibility/display text (P2)
+- [x] Location modeling v1 on `job`: add structured fields for filtering/ranking while keeping `location_text` as compatibility/display text (P2)
 - [ ] Country canonicalization v2 on `job`: make `location_country_code` reliable for filtering, including remote single-country rules (P2)
 - [ ] Country-aware filtering: apply `location_country_code` + `location_workplace_type` in retrieval/filter pipelines (P2)
 - [ ] Hybrid retrieval: title / skills / domain / location / structured filters + optional vector recall (P2)
