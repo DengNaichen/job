@@ -21,6 +21,7 @@ def _apply_stats(run: SyncRun, stats: SourceSyncStats | None) -> None:
     run.mapped_count = stats.mapped_count
     run.unique_count = stats.unique_count
     run.deduped_by_external_id = stats.deduped_by_external_id
+    run.deduped_by_apply_url = stats.deduped_by_apply_url
     run.inserted_count = stats.inserted_count
     run.updated_count = stats.updated_count
     run.closed_count = stats.closed_count

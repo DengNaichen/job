@@ -10,10 +10,15 @@ from sqlalchemy.orm.attributes import instance_state
 from app.core.database import get_session
 from app.models import Job, JobStatus, build_source_key
 from app.repositories.job import JobRepository
-from app.schemas.location import JobLocationRead
 from app.repositories.source import SourceRepository
+from app.schemas.location import JobLocationRead
 from app.schemas.job import JobCreate, JobRead, JobUpdate
-from app.services.application.job_service import JobNotFoundError, JobService, SourceResolutionError
+from app.services.application.job_service import (
+    JobNotFoundError,
+    JobService,
+    SourceIdNotFoundError,
+    SourceResolutionError,
+)
 from app.services.infra.blob_storage import BlobNotFoundError, BlobStorageNotConfiguredError
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
@@ -75,7 +80,7 @@ async def list_jobs(
     skip: int = 0,
     limit: int = 100,
     status: JobStatus | None = None,
-    include_blob_content: bool = True,
+    include_blob_content: bool = False,
     service: JobService = Depends(get_job_service),
 ) -> list[JobRead]:
     jobs = await service.list_jobs(skip=skip, limit=limit, status=status)
@@ -113,7 +118,7 @@ async def create_job(
     try:
         job = await service.create_job(job_in)
         return await _map_job_to_read(job, service=service, include_blob_content=True)
-    except SourceResolutionError as e:
+    except (SourceResolutionError, SourceIdNotFoundError) as e:
         raise HTTPException(status_code=422, detail=e.message)
 
 

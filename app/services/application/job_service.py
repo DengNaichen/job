@@ -7,7 +7,10 @@ from app.repositories.job import JobRepository
 from app.repositories.source import SourceRepository
 from app.schemas.job import JobCreate, JobUpdate
 from app.services.application.blob.job_blob import JobBlobManager, JobBlobPointers
-from app.services.infra.text import html_to_text
+from app.services.application.job_payload import (
+    drop_legacy_job_payload_fields,
+    hydrate_description_plain,
+)
 
 
 class JobError(Exception):
@@ -37,18 +40,19 @@ class SourceResolutionError(JobError):
         self.source_key = source_key
 
 
+class SourceIdNotFoundError(JobError):
+    """Raised when an explicit source_id does not match a known source."""
+
+    def __init__(self, source_id: str):
+        super().__init__(
+            code="SOURCE_ID_NOT_FOUND",
+            message=f"Cannot resolve source_id '{source_id}' to a known source",
+        )
+        self.source_id = source_id
+
+
 class JobService:
     """Service for Job business logic."""
-
-    _LEGACY_STRUCTURED_LOCATION_FIELDS = {
-        "source",
-        "location_text",
-        "location_city",
-        "location_region",
-        "location_country_code",
-        "location_workplace_type",
-        "location_remote_scope",
-    }
 
     def __init__(
         self,
@@ -85,16 +89,16 @@ class JobService:
         job_data = job_in.model_dump()
         description_html = job_data.pop("description_html", None)
         raw_payload = job_data.pop("raw_payload", {})
-        if (
-            not job_data.get("description_plain")
-            and isinstance(description_html, str)
-            and description_html.strip()
-        ):
-            job_data["description_plain"] = html_to_text(description_html)
+        hydrate_description_plain(job_data, description_html=description_html)
         legacy_source_key = job_data.get("source")
-        job_data.pop("location_hints", None)
-        for field in self._LEGACY_STRUCTURED_LOCATION_FIELDS:
-            job_data.pop(field, None)
+        drop_legacy_job_payload_fields(job_data, include_source=True)
+
+        explicit_source_id = job_data.get("source_id")
+        if explicit_source_id and self.source_repository:
+            source = await self.source_repository.get_by_id(str(explicit_source_id))
+            if source is None:
+                raise SourceIdNotFoundError(str(explicit_source_id))
+            job_data["source_id"] = source.id
 
         # Resolve source_id from legacy source string when not already supplied.
         if not job_data.get("source_id"):
@@ -126,16 +130,9 @@ class JobService:
         explicit_fields = set(update_data)
         description_html = update_data.pop("description_html", None)
         raw_payload = update_data.pop("raw_payload", None)
-        if (
-            "description_html" in explicit_fields
-            and "description_plain" not in update_data
-            and isinstance(description_html, str)
-            and description_html.strip()
-        ):
-            update_data["description_plain"] = html_to_text(description_html)
-        update_data.pop("location_hints", None)
-        for field in self._LEGACY_STRUCTURED_LOCATION_FIELDS:
-            update_data.pop(field, None)
+        if "description_html" in explicit_fields and "description_plain" not in update_data:
+            hydrate_description_plain(update_data, description_html=description_html)
+        drop_legacy_job_payload_fields(update_data, include_source=True)
         for key, value in update_data.items():
             setattr(job, key, value)
         job.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)

@@ -9,6 +9,7 @@ class SourceSyncStats:
     mapped_count: int = 0
     unique_count: int = 0
     deduped_by_external_id: int = 0
+    deduped_by_apply_url: int = 0
     inserted_count: int = 0
     updated_count: int = 0
     closed_count: int = 0
