@@ -124,7 +124,7 @@ Deduplication breakdown:
 ## Design Principles
 
 1. **Blob-First Content** - large HTML/raw payload content is stored in object storage and referenced by DB pointers
-2. **Complete Timestamps** - `ingested_at`, `last_seen_at`, `source_updated_at` support full timeline tracking
+2. **Complete Timestamps** - `last_seen_at`, `source_updated_at`, `created_at`, `updated_at` support timeline tracking
 3. **Authoritative Source Ownership** - `source_id` (FK to `sources.id`) is the owner key for job and sync-run records.
 4. **Same-Source Reconcile** - Full snapshot sync uses `source_id` to upsert and close missing jobs
 5. **Layered Deduplication** - Same-source dedup is the current foundation; cross-source URL/content dedup remains a later phase

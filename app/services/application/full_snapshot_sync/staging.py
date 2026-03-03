@@ -104,7 +104,6 @@ def build_new_job(payload: dict[str, Any], sync_started_at: datetime) -> Job:
     data["published_at"] = to_naive_utc(data.get("published_at"))
     data["source_updated_at"] = to_naive_utc(data.get("source_updated_at"))
     data["status"] = JobStatus.open
-    data["ingested_at"] = sync_started_at
     data["last_seen_at"] = sync_started_at
     data["created_at"] = sync_started_at
     data["updated_at"] = sync_started_at

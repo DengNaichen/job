@@ -107,4 +107,4 @@ Current live counts, source coverage, storage footprint, and enrichment cost not
 - [x] Enforce one running `SyncRun` per `source_id` with DB partial unique index + create-time conflict handling (P1)
 - [ ] Add smarter source scheduling: lower frequency for historically empty / low-yield sources and better treatment for oversized sources (P2)
 - [ ] Improve source-specific location parsing for low-confidence text-heavy sources (e.g., remote scope edge cases and missing locations) (P3)
-- [ ] Physically remove legacy `job.embedding`, `job.embedding_model`, and `job.embedding_updated_at` columns once the `job_embedding` store rollout is stable and all matching/migration paths have been verified in production (P2)
+- [x] Physically remove legacy `job.embedding`, `job.embedding_model`, and `job.embedding_updated_at` columns once the `job_embedding` store rollout is stable and all matching/migration paths have been verified in production (P2)

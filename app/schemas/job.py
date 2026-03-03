@@ -88,7 +88,6 @@ class JobRead(JobBase):
     structured_jd_version: int
     structured_jd: dict[str, Any] | None
     structured_jd_updated_at: datetime | None
-    ingested_at: datetime
     last_seen_at: datetime
     created_at: datetime
     updated_at: datetime

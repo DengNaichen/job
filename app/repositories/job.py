@@ -23,16 +23,6 @@ class EmbeddableJobRow:
     content_fingerprint: str | None
 
 
-@dataclass(frozen=True)
-class LegacyEmbeddingCandidateRow:
-    """Projection used for migrating legacy in-row embeddings."""
-
-    id: str
-    embedding: list[float]
-    embedding_model: str
-    content_fingerprint: str | None
-
-
 class JobRepository:
     """Repository for Job entity database operations."""
 
@@ -408,57 +398,6 @@ class JobRepository:
                 id=row.id,
                 title=row.title,
                 description=row.description,
-                content_fingerprint=row.content_fingerprint,
-            )
-            for row in rows
-        ]
-
-    async def list_legacy_embedding_migration_candidates(
-        self,
-        *,
-        embedding_kind: str,
-        embedding_target_revision: int,
-        embedding_model: str,
-        embedding_dim: int,
-        last_id: str | None = None,
-        limit: int = 100,
-        require_structured: bool = False,
-    ) -> list[LegacyEmbeddingCandidateRow]:
-        """List jobs with legacy in-row vectors and no active-target persisted row."""
-        statement = (
-            select(Job.id, Job.embedding, Job.embedding_model, Job.content_fingerprint)
-            .select_from(Job)
-            .outerjoin(
-                JobEmbedding,
-                self._target_join(
-                    embedding_kind=embedding_kind,
-                    embedding_target_revision=embedding_target_revision,
-                    embedding_model=embedding_model,
-                    embedding_dim=embedding_dim,
-                ),
-            )
-            .where(
-                Job.embedding.is_not(None),
-                Job.embedding_model.is_not(None),
-                JobEmbedding.id.is_(None),
-            )
-        )
-        if require_structured:
-            statement = statement.where(
-                Job.structured_jd.is_not(None),
-                func.coalesce(Job.structured_jd_version, 0) >= 3,
-            )
-        if last_id is not None:
-            statement = statement.where(Job.id > last_id)
-
-        statement = statement.order_by(Job.id).limit(limit)
-        result = await self.session.exec(statement)
-        rows = result.all()
-        return [
-            LegacyEmbeddingCandidateRow(
-                id=row.id,
-                embedding=list(row.embedding),
-                embedding_model=row.embedding_model,
                 content_fingerprint=row.content_fingerprint,
             )
             for row in rows

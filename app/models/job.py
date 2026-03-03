@@ -6,7 +6,6 @@ from typing import Any, TYPE_CHECKING
 if TYPE_CHECKING:
     from app.models.source import Source
 
-from pgvector.sqlalchemy import Vector
 from sqlalchemy import Column, ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.types import DateTime
@@ -61,13 +60,6 @@ class Job(SQLModel, table=True):
         default=None, sa_column=Column(String(64), nullable=True)
     )
     description_plain: str | None = Field(default=None)
-    embedding: list[float] | None = Field(
-        default=None, sa_column=Column(Vector(1024), nullable=True)
-    )
-    embedding_model: str | None = Field(default=None, sa_column=Column(String(128), nullable=True))
-    embedding_updated_at: datetime | None = Field(
-        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
 
     sponsorship_not_available: str = Field(default="unknown", index=True)
     job_domain_raw: str | None = Field(default=None)
@@ -78,7 +70,6 @@ class Job(SQLModel, table=True):
 
     published_at: datetime | None = Field(default=None, index=True)
     source_updated_at: datetime | None = Field(default=None)
-    ingested_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     last_seen_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
 
     raw_payload_key: str | None = Field(default=None, sa_column=Column(String(255), nullable=True))

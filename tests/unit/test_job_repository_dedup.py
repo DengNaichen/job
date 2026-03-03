@@ -43,7 +43,6 @@ def _make_job(
         apply_url=f"https://example.com/{external_job_id}",
         status=status,
         last_seen_at=ts,
-        ingested_at=ts,
         created_at=ts,
         updated_at=ts,
     )

@@ -21,7 +21,6 @@ from app.services.infra.embedding import (
     embed_text,
     embed_texts,
     get_embedding_config,
-    normalize_embedding_model_identity,
     resolve_active_job_embedding_target,
 )
 
@@ -37,29 +36,12 @@ class JobRow:
     content_fingerprint: str | None
 
 
-@dataclass(frozen=True)
-class LegacyEmbeddingRow:
-    id: str
-    embedding: list[float]
-    embedding_model: str
-    content_fingerprint: str | None
-
-
-@dataclass
-class MigrationStats:
-    scanned: int = 0
-    migrated: int = 0
-    skipped_model_mismatch: int = 0
-    skipped_dim_mismatch: int = 0
-
-
 @dataclass
 class GenerationStats:
     scanned: int = 0
     considered: int = 0
     generated: int = 0
     failed: int = 0
-    skipped_planned_legacy_migration: int = 0
 
 
 class TpmLimiter:
@@ -207,55 +189,6 @@ async def _fetch_generation_batch(
         )
         for row in rows
     ]
-
-
-async def _fetch_legacy_migration_batch(
-    conn: asyncpg.Connection,
-    *,
-    target: EmbeddingTargetDescriptor,
-    limit: int,
-    last_id: str,
-    require_structured: bool,
-) -> list[LegacyEmbeddingRow]:
-    rows = await conn.fetch(
-        f"""
-        SELECT
-            j.id,
-            j.embedding,
-            j.embedding_model,
-            j.content_fingerprint
-        FROM job j
-        LEFT JOIN job_embedding je
-          ON je.job_id = j.id
-         AND je.embedding_kind = $1
-         AND je.embedding_target_revision = $2
-         AND je.embedding_model = $3
-         AND je.embedding_dim = $4
-        WHERE j.id > $5
-          AND j.embedding IS NOT NULL
-          AND j.embedding_model IS NOT NULL
-          {_structured_filter_sql(require_structured)}
-          AND je.id IS NULL
-        ORDER BY j.id
-        LIMIT $6
-        """,
-        *_target_params(target),
-        last_id,
-        limit,
-    )
-
-    parsed: list[LegacyEmbeddingRow] = []
-    for row in rows:
-        embedding_values = [float(value) for value in row["embedding"]]
-        parsed.append(
-            LegacyEmbeddingRow(
-                id=row["id"],
-                embedding=embedding_values,
-                embedding_model=row["embedding_model"],
-                content_fingerprint=row["content_fingerprint"],
-            )
-        )
-    return parsed
 
 
 async def _count_pending_generation(
@@ -408,69 +341,6 @@ async def _upsert_active_target_rows(
     )
 
 
-async def _migrate_legacy_embeddings(
-    conn: asyncpg.Connection,
-    *,
-    target: EmbeddingTargetDescriptor,
-    provider: str,
-    batch_size: int,
-    require_structured: bool,
-    dry_run: bool,
-    limit: int | None,
-) -> tuple[MigrationStats, set[str]]:
-    stats = MigrationStats()
-    planned_migrated_job_ids: set[str] = set()
-    remaining = limit
-    last_id = ""
-
-    while remaining is None or remaining > 0:
-        take = batch_size if remaining is None else min(batch_size, remaining)
-        rows = await _fetch_legacy_migration_batch(
-            conn,
-            target=target,
-            limit=take,
-            last_id=last_id,
-            require_structured=require_structured,
-        )
-        if not rows:
-            break
-
-        last_id = rows[-1].id
-        stats.scanned += len(rows)
-
-        upsert_rows: list[tuple[str, str, str, str | None]] = []
-        for row in rows:
-            normalized_legacy_model = normalize_embedding_model_identity(
-                provider=provider,
-                model=row.embedding_model,
-            )
-            if normalized_legacy_model != target.embedding_model:
-                stats.skipped_model_mismatch += 1
-                continue
-            if len(row.embedding) != target.embedding_dim:
-                stats.skipped_dim_mismatch += 1
-                continue
-
-            planned_migrated_job_ids.add(row.id)
-            stats.migrated += 1
-            upsert_rows.append(
-                (
-                    str(uuid.uuid4()),
-                    row.id,
-                    _vector_literal(row.embedding),
-                    row.content_fingerprint,
-                )
-            )
-
-        if upsert_rows and not dry_run:
-            await _upsert_active_target_rows(conn, target=target, rows=upsert_rows)
-
-        if remaining is not None:
-            remaining -= len(upsert_rows)
-
-    return stats, planned_migrated_job_ids
-
-
 async def _embed_batch(
     rows: list[JobRow],
     *,
@@ -574,8 +444,6 @@ async def _assert_embedding_schema(conn: asyncpg.Connection) -> None:
         "structured_jd",
         "structured_jd_version",
         "content_fingerprint",
-        "embedding",
-        "embedding_model",
     }
     job_missing = sorted(job_required - job_existing)
     if job_missing:
@@ -685,29 +553,7 @@ async def run(args: argparse.Namespace) -> None:
         print(f"pending_generation={pending_generation_before}")
         print(f"missing_content={missing_content_before}")
 
-        migration_limit = args.limit
-        migration_stats, planned_migrated_job_ids = await _migrate_legacy_embeddings(
-            conn,
-            target=target,
-            provider=embedding_config.provider,
-            batch_size=batch_size,
-            require_structured=args.require_structured,
-            dry_run=args.dry_run,
-            limit=migration_limit,
-        )
-
         remaining_limit = args.limit
-        if remaining_limit is not None:
-            remaining_limit = max(0, remaining_limit - migration_stats.migrated)
-
-        print(
-            "legacy_migration="
-            f"scanned:{migration_stats.scanned}, "
-            f"migrated:{migration_stats.migrated}, "
-            f"skipped_model_mismatch:{migration_stats.skipped_model_mismatch}, "
-            f"skipped_dim_mismatch:{migration_stats.skipped_dim_mismatch}"
-        )
-
         generation_stats = GenerationStats()
         last_id = ""
         target_total = (
@@ -732,18 +578,8 @@ async def run(args: argparse.Namespace) -> None:
             last_id = rows[-1].id
             generation_stats.scanned += len(rows)
 
-            rows_to_process: list[JobRow] = []
-            for row in rows:
-                if args.dry_run and row.id in planned_migrated_job_ids:
-                    generation_stats.skipped_planned_legacy_migration += 1
-                    continue
-                rows_to_process.append(row)
-
-            if not rows_to_process:
-                continue
-
             updates, failures = await _embed_batch(
-                rows_to_process,
+                rows,
                 embedding_config=embedding_config,
                 dim=target.embedding_dim,
                 concurrency=args.concurrency,
@@ -753,12 +589,12 @@ async def run(args: argparse.Namespace) -> None:
                 tpm_limiter=tpm_limiter,
             )
 
-            generation_stats.considered += len(rows_to_process)
+            generation_stats.considered += len(rows)
             generation_stats.generated += len(updates)
             generation_stats.failed += failures
 
             if updates and not args.dry_run:
-                content_by_job_id = {row.id: row.content_fingerprint for row in rows_to_process}
+                content_by_job_id = {row.id: row.content_fingerprint for row in rows}
                 upsert_rows = [
                     (
                         str(uuid.uuid4()),
@@ -771,7 +607,7 @@ async def run(args: argparse.Namespace) -> None:
                 await _upsert_active_target_rows(conn, target=target, rows=upsert_rows)
 
             if remaining_limit is not None:
-                remaining_limit -= len(rows_to_process)
+                remaining_limit -= len(rows)
 
             progress = (
                 0.0 if target_total == 0 else (generation_stats.considered / target_total) * 100.0
@@ -784,19 +620,9 @@ async def run(args: argparse.Namespace) -> None:
 
         print("=== SUMMARY ===")
         print(f"already_fresh={fresh_before}")
-        print(f"legacy_migrated={migration_stats.migrated}")
-        print(
-            "legacy_skips="
-            f"model_mismatch:{migration_stats.skipped_model_mismatch}, "
-            f"dim_mismatch:{migration_stats.skipped_dim_mismatch}"
-        )
         print(f"generation_considered={generation_stats.considered}")
         print(f"generation_success={generation_stats.generated}")
         print(f"generation_failed={generation_stats.failed}")
-        print(
-            "dry_run_skipped_due_to_planned_legacy_migration="
-            f"{generation_stats.skipped_planned_legacy_migration}"
-        )
         print(f"missing_content={missing_content_before}")
         print(f"dry_run={args.dry_run}")
 

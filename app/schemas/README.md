@@ -55,7 +55,6 @@ Job data returned to client:
     "title": "Senior Engineer",
     "apply_url": "https://example.com/apply",
     "status": "open",
-    "ingested_at": "2024-01-01T00:00:00Z",
     "last_seen_at": "2024-01-01T00:00:00Z",
     "created_at": "2024-01-01T00:00:00Z",
     "updated_at": "2024-01-01T00:00:00Z",
