@@ -11,8 +11,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.database import engine
 from app.models import PlatformType, Source, SyncRun, SyncRunStatus, build_source_key
-from app.services.application.sync import SyncService
-from app.services.application.sync_handlers import SUPPORTED_PLATFORMS
+from app.services.application.sync import SUPPORTED_PLATFORMS, SyncService
 
 
 async def _load_candidate_sources(

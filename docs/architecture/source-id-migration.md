@@ -27,7 +27,7 @@ Today the codebase uses `build_source_key(platform, identifier)` as the concrete
 - `app/models/sync_run.py`: `SyncRun.source_id` is authoritative; legacy `SyncRun.source` is retained for compatibility/reads
 - `app/services/application/full_snapshot_sync/`: same-source upsert and close-missing logic are keyed by `source_id`
 - `app/services/application/sync.py`: overlap guard and sync-run creation are keyed by `source_id`
-- `app/services/application/source.py`: delete/update protection checks `Job` and `SyncRun` references by `source_id`
+- `app/services/application/source_service/service.py`: delete/update protection checks `Job` and `SyncRun` references by `source_id`
 - `app/schemas/job.py` and `app/schemas/sync_run.py`: public payloads expose `source`, not `source_id`
 
 The architecture docs already describe the intended end state: `job` and `syncrun` should reference `sources.id`, with `source_key` retained only as a transitional field.
@@ -250,7 +250,7 @@ Preferred end state:
 
 - `app/services/application/full_snapshot_sync/`
 - `app/services/application/sync.py`
-- `app/services/application/source.py`
+- `app/services/application/source_service/service.py`
 - `app/services/application/job.py`
 
 ### Scripts

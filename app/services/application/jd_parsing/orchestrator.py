@@ -1,4 +1,4 @@
-"""Service for batch JD parsing workflows."""
+"""Batch JD parsing orchestrator."""
 
 from collections.abc import Collection
 
@@ -9,10 +9,11 @@ from app.repositories.job import JobRepository
 from app.schemas.structured_jd import BatchStructuredJD
 from app.schemas.structured_jd import BatchStructuredJDItem
 from app.services.application.blob.job_blob import JobBlobManager
-from app.services.application.jd_parsing import parse_jd_batch
-from app.services.application.structured_jd import StructuredJDService
+from app.services.application.jd_parsing.structured_jd import StructuredJDService
 from app.services.infra.blob_storage import BlobNotFoundError, BlobStorageNotConfiguredError
 from app.services.infra.text import html_to_text
+
+from .batch import parse_jd_batch
 
 
 class JDParseServiceError(Exception):

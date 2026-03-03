@@ -7,12 +7,12 @@ import pytest
 from app.models import Job
 from app.schemas.job import JobCreate, JobUpdate
 from app.schemas.structured_jd import BatchStructuredJDItem
-from app.services.application.job import (
+from app.services.application.job_service import (
     JobNotFoundError,
     JobService,
     SourceResolutionError,
 )
-from app.services.application.structured_jd import (
+from app.services.application.jd_parsing.structured_jd import (
     JobStructuredJDMappingError,
     StructuredJDService,
 )

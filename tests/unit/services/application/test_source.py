@@ -19,7 +19,7 @@ class TestSourceServiceDelete:
         from app.models import PlatformType, Source
         from app.repositories.source import SourceRepository
         from app.repositories.sync_run import SyncRunRepository
-        from app.services.application.source import SourceService
+        from app.services.application.source_service import SourceService
 
         source_repo = SourceRepository(session)
         sync_run_repo = SyncRunRepository(session)
@@ -42,7 +42,7 @@ class TestSourceServiceDelete:
         from app.models import PlatformType, Source
         from app.repositories.source import SourceRepository
         from app.repositories.sync_run import SyncRunRepository
-        from app.services.application.source import HasReferencesError, SourceService
+        from app.services.application.source_service import HasReferencesError, SourceService
 
         source_repo = SourceRepository(session)
         sync_run_repo = SyncRunRepository(session)
@@ -72,7 +72,7 @@ class TestSourceServiceDelete:
         from app.models import PlatformType, Source
         from app.repositories.source import SourceRepository
         from app.repositories.sync_run import SyncRunRepository
-        from app.services.application.source import HasReferencesError, SourceService
+        from app.services.application.source_service import HasReferencesError, SourceService
 
         source_repo = SourceRepository(session)
         sync_run_repo = SyncRunRepository(session)
@@ -100,7 +100,7 @@ class TestSourceServiceDelete:
         from app.models import Job, JobStatus, PlatformType, Source
         from app.repositories.job import JobRepository
         from app.repositories.source import SourceRepository
-        from app.services.application.source import HasReferencesError, SourceService
+        from app.services.application.source_service import HasReferencesError, SourceService
 
         source_repo = SourceRepository(session)
         job_repo = JobRepository(session)
@@ -134,7 +134,7 @@ class TestSourceServiceDelete:
         from app.repositories.job import JobRepository
         from app.repositories.source import SourceRepository
         from app.schemas.source import SourceUpdate
-        from app.services.application.source import HasMutationBlockError, SourceService
+        from app.services.application.source_service import HasMutationBlockError, SourceService
 
         source_repo = SourceRepository(session)
         job_repo = JobRepository(session)
