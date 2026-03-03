@@ -1,13 +1,12 @@
-from datetime import datetime, timezone
+from datetime import datetime
+
+from app.core.time import to_naive_utc as core_to_naive_utc
+from app.core.time import utc_now_naive
 
 
 def to_naive_utc(value: datetime | None) -> datetime | None:
-    if value is None:
-        return None
-    if value.tzinfo is not None:
-        return value.astimezone(timezone.utc).replace(tzinfo=None)
-    return value
+    return core_to_naive_utc(value)
 
 
 def now_naive_utc() -> datetime:
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return utc_now_naive()

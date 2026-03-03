@@ -1,7 +1,6 @@
 """Job service for business logic."""
 
-from datetime import datetime, timezone
-
+from app.core.time import utc_now_naive
 from app.models import Job, JobStatus
 from app.repositories.job import JobRepository
 from app.repositories.source import SourceRepository
@@ -135,7 +134,7 @@ class JobService:
         drop_legacy_job_payload_fields(update_data, include_source=True)
         for key, value in update_data.items():
             setattr(job, key, value)
-        job.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        job.updated_at = utc_now_naive()
         blob_kwargs: dict[str, object] = {}
         if "description_html" in explicit_fields:
             blob_kwargs["description_html"] = description_html

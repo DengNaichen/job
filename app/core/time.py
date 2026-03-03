@@ -1,0 +1,19 @@
+"""Shared UTC timestamp helpers."""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+
+
+def utc_now_naive() -> datetime:
+    """Return current UTC time as timezone-naive datetime."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def to_naive_utc(value: datetime | None) -> datetime | None:
+    """Convert datetime to naive UTC while preserving None."""
+    if value is None:
+        return None
+    if value.tzinfo is not None:
+        return value.astimezone(timezone.utc).replace(tzinfo=None)
+    return value

@@ -18,6 +18,8 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5434/job_db"
+    # None: auto-detect (sqlite => True, others => False). Set explicitly to override.
+    database_auto_create: bool | None = None
 
     # Blob storage
     storage_provider: str = "none"
