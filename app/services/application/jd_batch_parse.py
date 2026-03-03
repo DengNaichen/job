@@ -8,7 +8,7 @@ from app.models.job import Job
 from app.repositories.job import JobRepository
 from app.schemas.structured_jd import BatchStructuredJD
 from app.schemas.structured_jd import BatchStructuredJDItem
-from app.services.application.jd_parser import parse_jd_batch
+from app.services.application.jd_parsing import parse_jd_batch
 from app.services.application.structured_jd import StructuredJDService
 
 

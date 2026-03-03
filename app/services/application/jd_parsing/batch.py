@@ -23,10 +23,13 @@ async def parse_jd_batch(
     jobs: list[dict[str, str]],
     is_html: bool = False,
     *,
-    complete_json_fn: CompleteJSONFn = complete_json,
-    get_llm_config_fn: GetLLMConfigFn = get_llm_config,
+    complete_json_fn: CompleteJSONFn | None = None,
+    get_llm_config_fn: GetLLMConfigFn | None = None,
 ) -> BatchStructuredJD:
     """Batch parse multiple JDs and return ordered results."""
+    complete_json_impl = complete_json_fn or complete_json
+    get_llm_config_impl = get_llm_config_fn or get_llm_config
+
     if not jobs:
         return BatchStructuredJD(jobs=[])
 
@@ -53,12 +56,12 @@ async def parse_jd_batch(
     jobs_text = "\n".join(jobs_parts)
     prompt = BATCH_EXTRACT_PROMPT.format(count=len(jobs), jobs_text=jobs_text)
 
-    config = get_llm_config_fn()
+    config = get_llm_config_impl()
     batch_max_tokens = (
         GEMINI_BATCH_MAX_TOKENS if config.provider == "gemini" else DEFAULT_BATCH_MAX_TOKENS
     )
 
-    result = await complete_json_fn(
+    result = await complete_json_impl(
         prompt=prompt,
         system_prompt="You are an expert job description analyzer. Process all jobs accurately.",
         config=config,
