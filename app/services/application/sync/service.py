@@ -12,10 +12,8 @@ from app.models import PlatformType, Source, SyncRun, SyncRunStatus
 from app.repositories.job import JobRepository
 from app.repositories.sync_run import SyncRunRepository
 from app.services.application.full_snapshot_sync import FullSnapshotSyncService
-from app.services.application.sync_handlers import (
-    PLATFORM_SYNC_HANDLERS,
-    PlatformSyncHandlers,
-)
+
+from .handlers import PLATFORM_SYNC_HANDLERS, PlatformSyncHandlers
 
 
 class SourceSyncAttemptFailed(Exception):

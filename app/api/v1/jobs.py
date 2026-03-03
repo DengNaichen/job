@@ -13,7 +13,7 @@ from app.repositories.job import JobRepository
 from app.schemas.location import JobLocationRead
 from app.repositories.source import SourceRepository
 from app.schemas.job import JobCreate, JobRead, JobUpdate
-from app.services.application.job import JobNotFoundError, JobService, SourceResolutionError
+from app.services.application.job_service import JobNotFoundError, JobService, SourceResolutionError
 from app.services.infra.blob_storage import BlobNotFoundError, BlobStorageNotConfiguredError
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
