@@ -41,14 +41,14 @@ class TestSmartRecruitersMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.source == "smartrecruiters"
+        assert result.model_dump()["source"] == "smartrecruiters"
         assert result.external_job_id == "744000111982085"
         assert result.title == "Director, Visa Pay - APAC"
         assert (
             result.apply_url
             == "https://jobs.smartrecruiters.com/Visa/744000111982085-director-visa-pay-apac?oga=true"
         )
-        assert result.location_text == "Singapore"
+        assert result.model_dump()["location_text"] == "Singapore"
         assert result.department == "Product"
         assert result.team == "Product Management"
         assert result.employment_type == "Full-time"
@@ -93,10 +93,10 @@ class TestSmartRecruitersMapper:
         result = mapper.map(raw_job)
 
         assert result.apply_url == "https://jobs.smartrecruiters.com/acme/1-engineer"
-        assert result.location_text == "Montreal, QC, Canada"
-        assert result.location_city == "Montreal"
-        assert result.location_region == "QC"
-        assert result.location_country_code == "CA"
+        assert result.model_dump()["location_text"] == "Montreal, QC, Canada"
+        assert result.model_dump()["location_city"] == "Montreal"
+        assert result.model_dump()["location_region"] == "QC"
+        assert result.model_dump()["location_country_code"] == "CA"
         assert result.description_html is None
         assert result.description_plain is None
 
@@ -109,7 +109,7 @@ class TestSmartRecruitersMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.location_text is None
+        assert result.model_dump()["location_text"] is None
         assert result.department is None
         assert result.team is None
         assert result.employment_type is None

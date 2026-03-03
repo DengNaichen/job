@@ -8,21 +8,14 @@ from app.contracts.sync import SourceSyncStats
 from app.models import Job, JobStatus
 from app.repositories.job import JobRepository
 from app.services.application.blob.job_blob import JobBlobManager, JobBlobPointers
-from app.services.infra.text import html_to_text
+from app.services.application.job_payload import (
+    drop_legacy_job_payload_fields,
+    hydrate_description_plain,
+)
 
 from .time_utils import to_naive_utc
 
 DEFAULT_BLOB_SYNC_CONCURRENCY = 16
-
-_LOCATION_COMPAT_FIELDS = {
-    "location_text",
-    "location_city",
-    "location_region",
-    "location_country_code",
-    "location_workplace_type",
-    "location_remote_scope",
-}
-
 
 async def build_existing_map(
     *,
@@ -94,13 +87,7 @@ async def persist_staged_jobs(*, job_repository: JobRepository, staged_jobs: lis
 
 def build_new_job(payload: dict[str, Any], sync_started_at: datetime) -> Job:
     data = dict(payload)
-    description_html = data.get("description_html")
-    if (
-        not data.get("description_plain")
-        and isinstance(description_html, str)
-        and description_html.strip()
-    ):
-        data["description_plain"] = html_to_text(description_html)
+    hydrate_description_plain(data, description_html=data.get("description_html"))
     data["published_at"] = to_naive_utc(data.get("published_at"))
     data["source_updated_at"] = to_naive_utc(data.get("source_updated_at"))
     data["status"] = JobStatus.open
@@ -109,10 +96,7 @@ def build_new_job(payload: dict[str, Any], sync_started_at: datetime) -> Job:
     data["updated_at"] = sync_started_at
     data.pop("description_html", None)
     data.pop("raw_payload", None)
-    data.pop("source", None)
-    data.pop("location_hints", None)
-    for field in _LOCATION_COMPAT_FIELDS:
-        data.pop(field, None)
+    drop_legacy_job_payload_fields(data, include_source=True)
     return Job(**data)
 
 
@@ -122,13 +106,10 @@ def update_existing_job(
     sync_started_at: datetime,
 ) -> None:
     normalized_payload = dict(payload)
-    description_html = normalized_payload.get("description_html")
-    if (
-        not normalized_payload.get("description_plain")
-        and isinstance(description_html, str)
-        and description_html.strip()
-    ):
-        normalized_payload["description_plain"] = html_to_text(description_html)
+    hydrate_description_plain(
+        normalized_payload,
+        description_html=normalized_payload.get("description_html"),
+    )
     normalized_payload["published_at"] = to_naive_utc(normalized_payload.get("published_at"))
     normalized_payload["source_updated_at"] = to_naive_utc(
         normalized_payload.get("source_updated_at")
@@ -138,10 +119,7 @@ def update_existing_job(
     # that was written before the Phase 2 backfill ran (source_id was NULL or wrong).
     normalized_payload.pop("description_html", None)
     normalized_payload.pop("raw_payload", None)
-    normalized_payload.pop("source", None)
-    normalized_payload.pop("location_hints", None)
-    for field in _LOCATION_COMPAT_FIELDS:
-        normalized_payload.pop(field, None)
+    drop_legacy_job_payload_fields(normalized_payload, include_source=True)
     for key, value in normalized_payload.items():
         setattr(job, key, value)
     job.status = JobStatus.open

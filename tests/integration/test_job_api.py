@@ -83,6 +83,22 @@ class TestCreateJob:
 
         assert response.status_code == 422
 
+    def test_create_job_with_unknown_explicit_source_id_fails(self, client: TestClient):
+        """Creating a job with explicit unknown source_id returns 422."""
+        response = client.post(
+            "/api/v1/jobs",
+            json={
+                "source_id": "00000000-0000-0000-0000-000000000000",
+                "source": "greenhouse:anything",
+                "external_job_id": "ext-bad-source-id-1",
+                "title": "Ghost Job",
+                "apply_url": "https://example.com/apply/ghost-id",
+            },
+        )
+
+        assert response.status_code == 422
+        assert "source_id" in str(response.json()["detail"])
+
 
 class TestReadJob:
     """Integration tests for GET /api/v1/jobs and GET /api/v1/jobs/{job_id}."""

@@ -10,6 +10,7 @@ from app.schemas.structured_jd import BatchStructuredJDItem
 from app.services.application.job_service import (
     JobNotFoundError,
     JobService,
+    SourceIdNotFoundError,
     SourceResolutionError,
 )
 from app.services.application.jd_parsing.structured_jd import (
@@ -112,6 +113,28 @@ async def test_create_job_fails_when_source_cannot_be_resolved() -> None:
         await service.create_job(payload)
 
     assert exc_info.value.source_key == "greenhouse:unknown-company"
+    repository.create.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_create_job_fails_when_explicit_source_id_is_unknown() -> None:
+    """create_job should raise SourceIdNotFoundError for explicit unknown source_id."""
+    repository = AsyncMock()
+    source_repository = AsyncMock()
+    source_repository.get_by_id.return_value = None
+    service = JobService(repository=repository, source_repository=source_repository)
+
+    payload = JobCreate(
+        source_id="missing-source-id",
+        external_job_id="123",
+        title="Engineer",
+        apply_url="https://example.com",
+    )
+
+    with pytest.raises(SourceIdNotFoundError) as exc_info:
+        await service.create_job(payload)
+
+    assert exc_info.value.source_id == "missing-source-id"
     repository.create.assert_not_awaited()
 
 

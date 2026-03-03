@@ -1,17 +1,18 @@
 """SyncRun repository for database operations."""
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.core.time import utc_now_naive
 from app.contracts.sync import SourceSyncStats
 from app.models import SyncRun, SyncRunStatus
 
 
 def _now_naive_utc() -> datetime:
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return utc_now_naive()
 
 
 def _apply_stats(run: SyncRun, stats: SourceSyncStats | None) -> None:
@@ -21,6 +22,7 @@ def _apply_stats(run: SyncRun, stats: SourceSyncStats | None) -> None:
     run.mapped_count = stats.mapped_count
     run.unique_count = stats.unique_count
     run.deduped_by_external_id = stats.deduped_by_external_id
+    run.deduped_by_apply_url = stats.deduped_by_apply_url
     run.inserted_count = stats.inserted_count
     run.updated_count = stats.updated_count
     run.closed_count = stats.closed_count

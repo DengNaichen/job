@@ -30,12 +30,12 @@ class TestLeverMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.source == "lever"
+        assert result.model_dump()["source"] == "lever"
         assert result.external_job_id == "job-123"
         assert result.title == "Senior Software Engineer"
         assert result.apply_url == "https://jobs.lever.co/example/job-123/apply"
-        assert result.location_text == "San Francisco, CA"
-        assert result.location_country_code == "US"
+        assert result.model_dump()["location_text"] == "San Francisco, CA"
+        assert result.model_dump()["location_country_code"] == "US"
         assert result.department == "Engineering"
         assert result.team == "Platform"
         assert result.employment_type == "Full-time"
@@ -84,8 +84,8 @@ class TestLeverMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.location_text is None
-        assert result.location_country_code is None
+        assert result.model_dump()["location_text"] is None
+        assert result.model_dump()["location_country_code"] is None
         assert result.department is None
         assert result.team is None
         assert result.employment_type is None
@@ -123,7 +123,7 @@ class TestLeverMapper:
 
         assert result.title == "Engineer"
         assert result.apply_url == "https://jobs.lever.co/example/job-1/apply"
-        assert result.location_text == "Remote"
+        assert result.model_dump()["location_text"] == "Remote"
         assert result.department == "Engineering"
 
     def test_map_single_country_text_produces_canonical_code(self, mapper):
@@ -137,8 +137,8 @@ class TestLeverMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.location_country_code == "GB"
-        assert result.location_city == "London"
+        assert result.model_dump()["location_country_code"] == "GB"
+        assert result.model_dump()["location_city"] == "London"
 
     def test_map_ambiguous_location_returns_null_country(self, mapper):
         """Location text that does not resolve to one country returns null."""
@@ -151,7 +151,7 @@ class TestLeverMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.location_country_code is None
+        assert result.model_dump()["location_country_code"] is None
 
     def test_map_remote_single_country_scope(self, mapper):
         """Remote with a single-country scope infers canonical code."""
@@ -164,7 +164,7 @@ class TestLeverMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.location_country_code == "CA"
+        assert result.model_dump()["location_country_code"] == "CA"
         from app.models.job import WorkplaceType
 
-        assert result.location_workplace_type == WorkplaceType.remote
+        assert result.model_dump()["location_workplace_type"] == WorkplaceType.remote
