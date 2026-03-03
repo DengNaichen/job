@@ -98,9 +98,9 @@ sequenceDiagram
 
     Cron->>Runner: start ingest batch
     Runner->>Sync: sync_source(source)
-    Sync->>Track: check running overlap
-    Track-->>Sync: none
-    Sync->>Track: create running SyncRun
+    Sync->>Track: check running overlap by source_id
+    Track-->>Sync: no active run
+    Sync->>Track: create running SyncRun (source_id guard)
     Sync->>Full: sync_source(source, fetcher, mapper)
     Full->>Fetch: fetch(source.identifier)
     Fetch-->>Full: raw jobs
@@ -112,7 +112,7 @@ sequenceDiagram
 
     Full->>DB: load existing jobs for same source
 
-    loop each mapped job
+    loop each mapped job (bounded concurrency)
         Full->>Blob: sync_job_blobs(job)
         Blob->>Store: upload_if_missing(html / raw)
         Store-->>Blob: pointer state
@@ -126,6 +126,12 @@ sequenceDiagram
     Track-->>Runner: final SyncRun
     Runner-->>Cron: exit code
 ```
+
+Implementation notes:
+
+- `FullSnapshotSyncService` is split into `app/services/application/full_snapshot_sync/` modules (`mapping`, `staging`, `location_sync`, `finalize`, `service`)
+- Blob sync uses bounded concurrency during staging (default concurrency is 8)
+- Overlap protection is keyed by `source_id` and backed by a DB partial unique index for running `SyncRun`
 
 ## 3. Current Database Shape
 

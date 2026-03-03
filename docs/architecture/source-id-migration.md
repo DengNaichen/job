@@ -8,15 +8,26 @@ That compromise made full-snapshot reconcile simple, but it leaves ownership une
 This spec moves authoritative ownership to `sources.id` by adding `source_id` foreign keys to `job` and `syncrun`.
 The legacy string key is kept during rollout as a compatibility and cache field, but it must stop being the authoritative join key.
 
+## Status (2026-03-02)
+
+Most of this migration is now implemented in mainline code:
+
+- `job.source_id` / `syncrun.source_id` are authoritative runtime keys
+- same-source reconcile and close-missing use `source_id`
+- overlap protection uses `source_id` and is guarded by a DB partial unique index for running `SyncRun`
+- legacy `source` is still dual-written as compatibility state
+
+This spec is kept as design history and cleanup guidance.
+
 ## Current State
 
 Today the codebase uses `build_source_key(platform, identifier)` as the concrete same-source identity:
 
-- `app/models/job.py`: `Job.source` is a string and is part of `uq_job_source_external_job_id`
-- `app/models/sync_run.py`: `SyncRun.source` is a string and is used for overlap detection and run history
-- `app/services/application/full_snapshot_sync.py`: same-source upsert and close-missing logic use the string key
-- `app/services/application/sync.py`: overlap guard and sync-run creation use the string key
-- `app/services/application/source.py`: delete protection checks `SyncRun` references by string key only
+- `app/models/job.py`: `Job.source_id` is authoritative; legacy `Job.source` is retained as compatibility state
+- `app/models/sync_run.py`: `SyncRun.source_id` is authoritative; legacy `SyncRun.source` is retained for compatibility/reads
+- `app/services/application/full_snapshot_sync/`: same-source upsert and close-missing logic are keyed by `source_id`
+- `app/services/application/sync.py`: overlap guard and sync-run creation are keyed by `source_id`
+- `app/services/application/source.py`: delete/update protection checks `Job` and `SyncRun` references by `source_id`
 - `app/schemas/job.py` and `app/schemas/sync_run.py`: public payloads expose `source`, not `source_id`
 
 The architecture docs already describe the intended end state: `job` and `syncrun` should reference `sources.id`, with `source_key` retained only as a transitional field.
@@ -155,7 +166,7 @@ Required code changes:
 
 - `app/models/job.py`: add `source_id`, keep legacy `source`
 - `app/models/sync_run.py`: add `source_id`, keep legacy `source`
-- `app/services/application/full_snapshot_sync.py`: write both fields when inserting or updating jobs
+- `app/services/application/full_snapshot_sync/`: write both fields when inserting or updating jobs
 - `app/repositories/sync_run.py`: create runs with both `source_id` and legacy `source`
 - `app/services/application/sync.py`: pass both values into sync-run creation
 - `app/services/application/job.py`: if direct job creation stays supported, require source resolution before create
@@ -237,7 +248,7 @@ Preferred end state:
 
 ### Services
 
-- `app/services/application/full_snapshot_sync.py`
+- `app/services/application/full_snapshot_sync/`
 - `app/services/application/sync.py`
 - `app/services/application/source.py`
 - `app/services/application/job.py`
