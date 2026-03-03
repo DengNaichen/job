@@ -54,7 +54,6 @@ class Job(SQLModel, table=True):
     team: str | None = Field(default=None)
     employment_type: str | None = Field(default=None)
 
-    description_html: str | None = Field(default=None)
     description_html_key: str | None = Field(
         default=None, sa_column=Column(String(255), nullable=True)
     )
@@ -82,7 +81,6 @@ class Job(SQLModel, table=True):
     ingested_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     last_seen_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
 
-    raw_payload: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSONB()))
     raw_payload_key: str | None = Field(default=None, sa_column=Column(String(255), nullable=True))
     raw_payload_hash: str | None = Field(default=None, sa_column=Column(String(64), nullable=True))
 

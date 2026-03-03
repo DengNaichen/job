@@ -18,6 +18,7 @@ from app.services.domain.job_location import (
 )
 from app.services.domain.geonames_resolver import get_geonames_resolver
 from app.services.application.job_blob import JobBlobManager, JobBlobPointers
+from app.services.infra.text import html_to_text
 
 
 def _to_naive_utc(value: datetime | None) -> datetime | None:
@@ -200,10 +201,18 @@ class FullSnapshotSyncService:
         sync_started_at: datetime,
     ) -> tuple[Job, bool]:
         external_job_id = str(payload["external_job_id"])
+        description_html = payload.get("description_html")
+        raw_payload = payload.get("raw_payload")
+        blob_fields = {"description_html", "raw_payload"}
         existing = existing_map.get(external_job_id)
         if existing is None:
             job = self._build_new_job(payload, sync_started_at)
-            await self.blob_manager.sync_job_blobs(job)
+            await self.blob_manager.sync_job_blobs(
+                job,
+                explicit_fields=blob_fields,
+                description_html=description_html,
+                raw_payload=raw_payload,
+            )
             return job, True
 
         existing_pointers = JobBlobPointers.from_job(existing)
@@ -211,6 +220,9 @@ class FullSnapshotSyncService:
         await self.blob_manager.sync_job_blobs(
             existing,
             existing_pointers=existing_pointers,
+            explicit_fields=blob_fields,
+            description_html=description_html,
+            raw_payload=raw_payload,
         )
         return existing, False
 
@@ -324,6 +336,13 @@ class FullSnapshotSyncService:
     @staticmethod
     def _build_new_job(payload: dict[str, Any], sync_started_at: datetime) -> Job:
         data = dict(payload)
+        description_html = data.get("description_html")
+        if (
+            not data.get("description_plain")
+            and isinstance(description_html, str)
+            and description_html.strip()
+        ):
+            data["description_plain"] = html_to_text(description_html)
         data["published_at"] = _to_naive_utc(data.get("published_at"))
         data["source_updated_at"] = _to_naive_utc(data.get("source_updated_at"))
         data["status"] = JobStatus.open
@@ -331,6 +350,8 @@ class FullSnapshotSyncService:
         data["last_seen_at"] = sync_started_at
         data["created_at"] = sync_started_at
         data["updated_at"] = sync_started_at
+        data.pop("description_html", None)
+        data.pop("raw_payload", None)
         data.pop("source", None)
         data.pop("location_hints", None)
         for field in FullSnapshotSyncService._LOCATION_COMPAT_FIELDS:
@@ -344,6 +365,13 @@ class FullSnapshotSyncService:
         sync_started_at: datetime,
     ) -> None:
         normalized_payload = dict(payload)
+        description_html = normalized_payload.get("description_html")
+        if (
+            not normalized_payload.get("description_plain")
+            and isinstance(description_html, str)
+            and description_html.strip()
+        ):
+            normalized_payload["description_plain"] = html_to_text(description_html)
         normalized_payload["published_at"] = _to_naive_utc(normalized_payload.get("published_at"))
         normalized_payload["source_updated_at"] = _to_naive_utc(
             normalized_payload.get("source_updated_at")
@@ -351,6 +379,8 @@ class FullSnapshotSyncService:
         # Overwriting source_id on existing rows is intentional: it self-heals any row
         # that was written before the Phase 2 backfill ran (source_id was NULL or wrong).
         # that was written before the Phase 2 backfill ran (source_id was NULL or wrong).
+        normalized_payload.pop("description_html", None)
+        normalized_payload.pop("raw_payload", None)
         normalized_payload.pop("source", None)
         normalized_payload.pop("location_hints", None)
         for field in FullSnapshotSyncService._LOCATION_COMPAT_FIELDS:

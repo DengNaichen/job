@@ -22,11 +22,10 @@ def _build_job(job_id: str = "job-1") -> Job:
     """Build a minimal Job model for service tests."""
     return Job(
         id=job_id,
-        source="greenhouse",
+        source_id="source-1",
         external_job_id=f"ext-{job_id}",
         title="Backend Engineer",
         apply_url="https://example.com/apply",
-        raw_payload={},
     )
 
 

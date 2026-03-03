@@ -46,12 +46,10 @@ class _InMemoryBlobStorage:
 def _build_job() -> Job:
     return Job(
         id="job-1",
-        source="greenhouse:acme",
+        source_id="source-1",
         external_job_id="123",
         title="Engineer",
         apply_url="https://example.com/jobs/123",
-        description_html="<p>Hello</p>",
-        raw_payload={"b": 2, "a": 1},
     )
 
 
@@ -81,9 +79,11 @@ async def test_job_blob_manager_skips_upload_when_hash_is_unchanged() -> None:
     storage = _InMemoryBlobStorage()
     manager = JobBlobManager(storage)
     job = _build_job()
+    description_html = "<p>Hello</p>"
+    raw_payload = {"b": 2, "a": 1}
 
-    html_blob = build_description_html_blob(job.description_html)
-    raw_blob = build_raw_payload_blob(job.raw_payload)
+    html_blob = build_description_html_blob(description_html)
+    raw_blob = build_raw_payload_blob(raw_payload)
     assert html_blob is not None
     assert raw_blob is not None
 
@@ -94,7 +94,12 @@ async def test_job_blob_manager_skips_upload_when_hash_is_unchanged() -> None:
         raw_payload_hash=raw_blob.sha256,
     )
 
-    result = await manager.sync_job_blobs(job, existing_pointers=existing_pointers)
+    result = await manager.sync_job_blobs(
+        job,
+        existing_pointers=existing_pointers,
+        description_html=description_html,
+        raw_payload=raw_payload,
+    )
 
     assert result.upload_count == 0
     assert storage.upload_calls == []
@@ -116,13 +121,11 @@ async def test_job_blob_manager_loaders_fallback_to_storage() -> None:
 
     job = Job(
         id="job-2",
-        source="greenhouse:acme",
+        source_id="source-1",
         external_job_id="456",
         title="Engineer",
         apply_url="https://example.com/jobs/456",
-        description_html=None,
         description_html_key=html_blob.key,
-        raw_payload={},
         raw_payload_key=raw_blob.key,
     )
 

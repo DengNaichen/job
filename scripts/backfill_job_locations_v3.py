@@ -52,9 +52,10 @@ async def apply_backfill_to_job_v3(session: AsyncSession, job: Job) -> bool:
     source_key = _job_attr(job, "source")
     source_platform = source_key if isinstance(source_key, str) else None
     mapper = MAPPERS.get(source_platform) if source_platform else None
-    if mapper and job.raw_payload:
+    raw_payload = _job_attr(job, "raw_payload")
+    if mapper and raw_payload:
         try:
-            mapped = mapper.map(job.raw_payload)
+            mapped = mapper.map(raw_payload)
             if mapped.location_hints:
                 for hint in mapped.location_hints:
                     loc = StructuredLocation(

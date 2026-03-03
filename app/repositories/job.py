@@ -267,7 +267,7 @@ class JobRepository:
     ) -> list[Job]:
         """List jobs eligible for structured_jd extraction."""
         statement = select(Job).where(
-            (Job.description_html.is_not(None)) | (Job.description_plain.is_not(None))
+            (Job.description_html_key.is_not(None)) | (Job.description_plain.is_not(None))
         )
         if version_only:
             statement = statement.where(Job.structured_jd.is_not(None)).where(
@@ -355,9 +355,7 @@ class JobRepository:
 
     @staticmethod
     def _embeddable_description_expr():
-        return func.coalesce(
-            func.nullif(Job.description_plain, ""), func.nullif(Job.description_html, "")
-        )
+        return func.nullif(Job.description_plain, "")
 
     async def list_embeddable_jobs_for_active_target(
         self,

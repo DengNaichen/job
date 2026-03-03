@@ -1,5 +1,7 @@
 """Job API endpoints with source_id compatibility support."""
 
+import asyncio
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -12,6 +14,7 @@ from app.schemas.location import JobLocationRead
 from app.repositories.source import SourceRepository
 from app.schemas.job import JobCreate, JobRead, JobUpdate
 from app.services.application.job import JobNotFoundError, JobService, SourceResolutionError
+from app.services.infra.blob_storage import BlobNotFoundError, BlobStorageNotConfiguredError
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -23,9 +26,16 @@ def get_job_service(session: AsyncSession = Depends(get_session)) -> JobService:
     return JobService(repository, source_repository=source_repository)
 
 
-def _map_job_to_read(job: Job) -> JobRead:
-    """Helper to map a Job model to JobRead, injecting explicitly loaded locations."""
+async def _map_job_to_read(
+    job: Job,
+    *,
+    service: JobService,
+    include_blob_content: bool,
+) -> JobRead:
+    """Map a Job model to JobRead, injecting locations and optional blob content."""
     data = job.model_dump()
+    data["description_html"] = None
+    data["raw_payload"] = {}
     state = instance_state(job)
     source_record = state.dict.get("source_record")
     if source_record is not None:
@@ -45,6 +55,18 @@ def _map_job_to_read(job: Job) -> JobRead:
     else:
         data["locations"] = []
         data["location_text"] = None
+
+    if include_blob_content:
+        try:
+            data["description_html"] = await service.blob_manager.load_description_html(job)
+        except (BlobNotFoundError, BlobStorageNotConfiguredError):
+            data["description_html"] = None
+        try:
+            raw_payload = await service.blob_manager.load_raw_payload(job)
+            data["raw_payload"] = raw_payload if isinstance(raw_payload, dict) else {}
+        except (BlobNotFoundError, BlobStorageNotConfiguredError):
+            data["raw_payload"] = {}
+
     return JobRead.model_validate(data)
 
 
@@ -53,10 +75,22 @@ async def list_jobs(
     skip: int = 0,
     limit: int = 100,
     status: JobStatus | None = None,
+    include_blob_content: bool = True,
     service: JobService = Depends(get_job_service),
 ) -> list[JobRead]:
     jobs = await service.list_jobs(skip=skip, limit=limit, status=status)
-    return [_map_job_to_read(job) for job in jobs]
+    return list(
+        await asyncio.gather(
+            *(
+                _map_job_to_read(
+                    job,
+                    service=service,
+                    include_blob_content=include_blob_content,
+                )
+                for job in jobs
+            )
+        )
+    )
 
 
 @router.get("/{job_id}", response_model=JobRead)
@@ -66,7 +100,7 @@ async def get_job(
 ) -> JobRead:
     try:
         job = await service.get_job(job_id)
-        return _map_job_to_read(job)
+        return await _map_job_to_read(job, service=service, include_blob_content=True)
     except JobNotFoundError:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -78,7 +112,7 @@ async def create_job(
 ) -> JobRead:
     try:
         job = await service.create_job(job_in)
-        return _map_job_to_read(job)
+        return await _map_job_to_read(job, service=service, include_blob_content=True)
     except SourceResolutionError as e:
         raise HTTPException(status_code=422, detail=e.message)
 
@@ -91,7 +125,7 @@ async def update_job(
 ) -> JobRead:
     try:
         job = await service.update_job(job_id, job_in)
-        return _map_job_to_read(job)
+        return await _map_job_to_read(job, service=service, include_blob_content=True)
     except JobNotFoundError:
         raise HTTPException(status_code=404, detail="Job not found")
 

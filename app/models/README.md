@@ -48,10 +48,8 @@ The system supports multi-level deduplication:
 
 | Field | Description |
 |-------|-------------|
-| `description_html` | HTML formatted job description |
 | `description_html_key` / `description_html_hash` | Supabase Storage pointer for gzip-compressed HTML |
 | `description_plain` | Plain text job description |
-| `raw_payload` | Raw API response, preserves complete information |
 | `raw_payload_key` / `raw_payload_hash` | Supabase Storage pointer for gzip-compressed raw payload JSON |
 
 ### Metadata
@@ -125,7 +123,7 @@ Deduplication breakdown:
 
 ## Design Principles
 
-1. **Preserve Raw Data** - `raw_payload` stays available during transition while the large body can move to object storage
+1. **Blob-First Content** - large HTML/raw payload content is stored in object storage and referenced by DB pointers
 2. **Complete Timestamps** - `ingested_at`, `last_seen_at`, `source_updated_at` support full timeline tracking
 3. **Authoritative Source Ownership** - `source_id` (FK to `sources.id`) is the owner key for job and sync-run records.
 4. **Same-Source Reconcile** - Full snapshot sync uses `source_id` to upsert and close missing jobs

@@ -60,9 +60,10 @@ def apply_backfill_to_job(job: Job) -> bool:
     # 1. Try to extract using the mapper from raw_payload (Explicit Field -> High Confidence)
     mapper = MAPPERS.get(source_platform) if source_platform else None
     mapped = None
-    if mapper and job.raw_payload:
+    raw_payload = _job_attr(job, "raw_payload")
+    if mapper and raw_payload:
         try:
-            mapped = mapper.map(job.raw_payload)
+            mapped = mapper.map(raw_payload)
             new_city = mapped.location_city
             new_region = mapped.location_region
             new_country = mapped.location_country_code

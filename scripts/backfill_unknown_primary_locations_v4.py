@@ -19,6 +19,8 @@ from app.ingest.mappers import (
 from app.models import Job, JobLocation, Location, PlatformType, Source, WorkplaceType
 from app.repositories.job import JobRepository
 from app.repositories.job_location import JobLocationRepository
+from app.services.application.job_blob import JobBlobManager
+from app.services.infra.blob_storage import BlobNotFoundError, BlobStorageNotConfiguredError
 from app.services.domain.canonical_location import build_canonical_key
 from app.services.domain.geonames_resolver import get_geonames_resolver
 from app.services.domain.job_location import (
@@ -139,8 +141,18 @@ def _candidate_from_legacy_or_text(job: Job, *, location_text_hint: str | None) 
     return None
 
 
-async def _candidate_from_mapper(session: AsyncSession, job: Job) -> StructuredLocation | None:
-    if not isinstance(job.raw_payload, dict) or not job.raw_payload:
+async def _candidate_from_mapper(
+    session: AsyncSession,
+    job: Job,
+    *,
+    blob_manager: JobBlobManager,
+) -> StructuredLocation | None:
+    try:
+        raw_payload = await blob_manager.load_raw_payload(job)
+    except (BlobNotFoundError, BlobStorageNotConfiguredError):
+        return None
+
+    if not isinstance(raw_payload, dict) or not raw_payload:
         return None
 
     mapper = MAPPERS.get(await _source_platform(session, source_id=str(job.source_id or "")))
@@ -148,7 +160,7 @@ async def _candidate_from_mapper(session: AsyncSession, job: Job) -> StructuredL
         return None
 
     try:
-        mapped = mapper.map(job.raw_payload)
+        mapped = mapper.map(raw_payload)
     except Exception as exc:  # noqa: BLE001
         logger.warning("Mapper parse failed for job %s: %s", job.id, exc)
         return None
@@ -213,6 +225,8 @@ def _candidate_from_geonames_city_only(
 async def apply_unknown_primary_cleanup_to_job_v4(
     session: AsyncSession,
     job: Job,
+    *,
+    blob_manager: JobBlobManager | None = None,
 ) -> tuple[bool, str | None]:
     """
     Clean one job whose primary location is currently `unknown`.
@@ -224,6 +238,7 @@ async def apply_unknown_primary_cleanup_to_job_v4(
     existing_primary = next((link for link in existing_links if link.is_primary), None)
     if existing_primary is None:
         return False, None
+    blob_manager = blob_manager or JobBlobManager()
 
     location_text_hint = _effective_location_text(job, existing_primary.source_raw)
 
@@ -233,7 +248,7 @@ async def apply_unknown_primary_cleanup_to_job_v4(
         candidate = _candidate_from_geonames_city_only(job, location_text_hint=location_text_hint)
         origin = "geonames_city_only"
     if candidate is None:
-        candidate = await _candidate_from_mapper(session, job)
+        candidate = await _candidate_from_mapper(session, job, blob_manager=blob_manager)
         origin = "mapper"
     if candidate is None:
         return False, None
@@ -286,8 +301,10 @@ async def run_backfill_v4(
     batch_size: int = 500,
     max_jobs: int | None = None,
     dry_run: bool = False,
+    blob_manager: JobBlobManager | None = None,
 ) -> BackfillV4Stats:
     repo = JobRepository(session)
+    blob_manager = blob_manager or JobBlobManager()
     stats = BackfillV4Stats()
     last_id: str | None = None
 
@@ -302,7 +319,11 @@ async def run_backfill_v4(
 
         to_update: list[Job] = []
         for job in jobs:
-            changed, origin = await apply_unknown_primary_cleanup_to_job_v4(session, job)
+            changed, origin = await apply_unknown_primary_cleanup_to_job_v4(
+                session,
+                job,
+                blob_manager=blob_manager,
+            )
             stats.processed += 1
             if changed:
                 to_update.append(job)

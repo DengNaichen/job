@@ -7,6 +7,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import Job, Location, PlatformType, Source
+from app.services.application.job_blob import JobBlobManager
 from app.repositories.job_location import JobLocationRepository
 from app.services.domain.job_location import StructuredLocation, sync_job_location
 from scripts.backfill_unknown_primary_locations_v4 import (
@@ -24,6 +25,31 @@ class _FakeCityMatch:
     population: int
 
 
+class _InMemoryBlobStorage:
+    def __init__(self):
+        self.objects: dict[str, bytes] = {}
+
+    @property
+    def is_enabled(self) -> bool:
+        return True
+
+    async def upload_if_missing(
+        self,
+        *,
+        key: str,
+        data: bytes,
+        content_type: str,
+        content_encoding: str = "gzip",
+    ) -> bool:
+        _ = (content_type, content_encoding)
+        already_exists = key in self.objects
+        self.objects.setdefault(key, data)
+        return not already_exists
+
+    async def download(self, *, key: str) -> bytes:
+        return self.objects[key]
+
+
 async def _create_job_with_unknown_primary(
     session: AsyncSession,
     *,
@@ -32,6 +58,7 @@ async def _create_job_with_unknown_primary(
     location_text: str | None,
     source_raw: str = "backfill",
     raw_payload: dict | None = None,
+    blob_manager: JobBlobManager | None = None,
 ) -> str:
     platform, identifier = source.split(":", 1)
     source_platform = PlatformType(platform)
@@ -58,11 +85,19 @@ async def _create_job_with_unknown_primary(
         external_job_id=external_job_id,
         title=f"Title {external_job_id}",
         apply_url=f"https://example.com/{external_job_id}",
-        raw_payload=raw_payload or {},
     )
     session.add(job)
     await session.commit()
     await session.refresh(job)
+    if raw_payload is not None and blob_manager is not None:
+        await blob_manager.sync_job_blobs(
+            job,
+            explicit_fields={"raw_payload"},
+            raw_payload=raw_payload,
+        )
+        session.add(job)
+        await session.commit()
+        await session.refresh(job)
 
     # Seed historical unknown primary link.
     await sync_job_location(
@@ -176,6 +211,8 @@ async def test_apply_unknown_primary_cleanup_from_geonames_city_only(
 
 @pytest.mark.asyncio
 async def test_run_backfill_v4_only_targets_backfill_unknown_links(session: AsyncSession) -> None:
+    storage = _InMemoryBlobStorage()
+    blob_manager = JobBlobManager(storage)
     target_job_id = await _create_job_with_unknown_primary(
         session,
         source="greenhouse:airbnb",
@@ -188,6 +225,7 @@ async def test_run_backfill_v4_only_targets_backfill_unknown_links(session: Asyn
             "absolute_url": "https://example.com/gh-unknown-3",
             "location": {"name": "Mexico City, Mexico"},
         },
+        blob_manager=blob_manager,
     )
     control_job_id = await _create_job_with_unknown_primary(
         session,
@@ -201,9 +239,10 @@ async def test_run_backfill_v4_only_targets_backfill_unknown_links(session: Asyn
             "absolute_url": "https://example.com/gh-unknown-4",
             "location": {"name": "Mexico City, Mexico"},
         },
+        blob_manager=blob_manager,
     )
 
-    stats = await run_backfill_v4(session, batch_size=50)
+    stats = await run_backfill_v4(session, batch_size=50, blob_manager=blob_manager)
     assert stats.processed == 1
     assert stats.updated == 1
     assert stats.updated_from_mapper == 1

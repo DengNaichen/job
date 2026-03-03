@@ -22,6 +22,8 @@ from app.services.infra.blob_storage import (
     create_blob_storage,
 )
 
+_UNSET = object()
+
 
 @dataclass(frozen=True)
 class JobBlobPointers:
@@ -84,8 +86,10 @@ class JobBlobManager:
         *,
         existing_pointers: JobBlobPointers | None = None,
         explicit_fields: set[str] | None = None,
+        description_html: object = _UNSET,
+        raw_payload: object = _UNSET,
     ) -> JobBlobSyncResult:
-        """Upload changed job blobs first, then update DB pointers on the model."""
+        """Upload changed blobs first, then update DB pointers on the model."""
         import asyncio
 
         existing_pointers = existing_pointers or JobBlobPointers()
@@ -93,13 +97,26 @@ class JobBlobManager:
         needs_html = explicit_fields is None or "description_html" in explicit_fields
         needs_raw = explicit_fields is None or "raw_payload" in explicit_fields
 
+        if needs_html and description_html is _UNSET:
+            raise ValueError("description_html must be provided when syncing description_html blob")
+        if needs_raw and raw_payload is _UNSET:
+            raise ValueError("raw_payload must be provided when syncing raw_payload blob")
+
         html_coro = (
-            self._sync_html_blob(job, existing_pointers=existing_pointers)
+            self._sync_html_blob(
+                job,
+                description_html=self._coerce_description_html(description_html),
+                existing_pointers=existing_pointers,
+            )
             if needs_html
             else self._mock_sync_result()
         )
         raw_coro = (
-            self._sync_raw_payload_blob(job, existing_pointers=existing_pointers)
+            self._sync_raw_payload_blob(
+                job,
+                raw_payload=None if raw_payload is _UNSET else raw_payload,
+                existing_pointers=existing_pointers,
+            )
             if needs_raw
             else self._mock_sync_result()
         )
@@ -122,45 +139,73 @@ class JobBlobManager:
         self,
         jobs: list[Job],
         *,
+        description_htmls: list[str | None],
+        raw_payloads: list[Any],
         max_concurrent: int = 20,
     ) -> list[JobBlobSyncResult]:
         """Batch concurrent sync with semaphore protection to avoid rate limiting."""
         import asyncio
 
+        if len(jobs) != len(description_htmls) or len(jobs) != len(raw_payloads):
+            raise ValueError("jobs, description_htmls, and raw_payloads must have the same length")
+
         semaphore = asyncio.Semaphore(max_concurrent)
 
-        async def _sync_with_semaphore(job: Job) -> JobBlobSyncResult:
+        async def _sync_with_semaphore(
+            job: Job,
+            *,
+            description_html_value: str | None,
+            raw_payload_value: Any,
+        ) -> JobBlobSyncResult:
             async with semaphore:
-                return await self.sync_job_blobs(job)
+                return await self.sync_job_blobs(
+                    job,
+                    description_html=description_html_value,
+                    raw_payload=raw_payload_value,
+                )
 
-        tasks = [_sync_with_semaphore(job) for job in jobs]
+        tasks = [
+            _sync_with_semaphore(
+                job,
+                description_html_value=description_html,
+                raw_payload_value=raw_payload,
+            )
+            for job, description_html, raw_payload in zip(
+                jobs, description_htmls, raw_payloads, strict=True
+            )
+        ]
         return await asyncio.gather(*tasks)
 
     async def load_description_html(self, job: Job) -> str | None:
-        """Return HTML from the DB column first, then storage if needed."""
-        if job.description_html:
-            return job.description_html
+        """Load HTML content from blob storage by key."""
         if not job.description_html_key:
             return None
         raw_bytes = await self.storage.download(key=job.description_html_key)
         return gzip.decompress(raw_bytes).decode("utf-8")
 
     async def load_raw_payload(self, job: Job) -> Any:
-        """Return raw payload from the DB column first, then storage if needed."""
-        if job.raw_payload not in (None, {}, []):
-            return job.raw_payload
+        """Load raw payload JSON from blob storage by key."""
         if not job.raw_payload_key:
             return None
         raw_bytes = await self.storage.download(key=job.raw_payload_key)
         return json.loads(gzip.decompress(raw_bytes).decode("utf-8"))
 
+    @staticmethod
+    def _coerce_description_html(value: object) -> str | None:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return value
+        raise TypeError("description_html must be str | None")
+
     async def _sync_html_blob(
         self,
         job: Job,
         *,
+        description_html: str | None,
         existing_pointers: JobBlobPointers,
     ) -> tuple[bool, bool]:
-        prepared = build_description_html_blob(job.description_html)
+        prepared = build_description_html_blob(description_html)
         if prepared is None:
             updated = (
                 existing_pointers.description_html_key is not None
@@ -195,9 +240,10 @@ class JobBlobManager:
         self,
         job: Job,
         *,
+        raw_payload: Any,
         existing_pointers: JobBlobPointers,
     ) -> tuple[bool, bool]:
-        prepared = build_raw_payload_blob(job.raw_payload)
+        prepared = build_raw_payload_blob(raw_payload)
         if prepared is None:
             updated = (
                 existing_pointers.raw_payload_key is not None

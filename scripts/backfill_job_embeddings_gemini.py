@@ -178,7 +178,7 @@ async def _fetch_generation_batch(
         SELECT
             j.id,
             j.title,
-            COALESCE(NULLIF(j.description_plain, ''), NULLIF(j.description_html, '')) AS description,
+            NULLIF(j.description_plain, '') AS description,
             j.content_fingerprint
         FROM job j
         LEFT JOIN job_embedding je
@@ -188,7 +188,7 @@ async def _fetch_generation_batch(
          AND je.embedding_model = $3
          AND je.embedding_dim = $4
         WHERE j.id > $5
-          AND COALESCE(NULLIF(j.description_plain, ''), NULLIF(j.description_html, '')) IS NOT NULL
+          AND NULLIF(j.description_plain, '') IS NOT NULL
           {_structured_filter_sql(require_structured)}
           {stale_filter}
         ORDER BY j.id
@@ -280,7 +280,7 @@ async def _count_pending_generation(
          AND je.embedding_target_revision = $2
          AND je.embedding_model = $3
          AND je.embedding_dim = $4
-        WHERE COALESCE(NULLIF(j.description_plain, ''), NULLIF(j.description_html, '')) IS NOT NULL
+        WHERE NULLIF(j.description_plain, '') IS NOT NULL
           {_structured_filter_sql(require_structured)}
           {stale_filter}
         """,
@@ -305,7 +305,7 @@ async def _count_fresh_active_rows(
          AND je.embedding_target_revision = $2
          AND je.embedding_model = $3
          AND je.embedding_dim = $4
-        WHERE COALESCE(NULLIF(j.description_plain, ''), NULLIF(j.description_html, '')) IS NOT NULL
+        WHERE NULLIF(j.description_plain, '') IS NOT NULL
           {_structured_filter_sql(require_structured)}
           AND je.content_fingerprint IS NOT DISTINCT FROM j.content_fingerprint
         """,
@@ -336,7 +336,7 @@ async def _count_missing_content_rows(
          AND je.embedding_target_revision = $2
          AND je.embedding_model = $3
          AND je.embedding_dim = $4
-        WHERE COALESCE(NULLIF(j.description_plain, ''), NULLIF(j.description_html, '')) IS NULL
+        WHERE NULLIF(j.description_plain, '') IS NULL
           {_structured_filter_sql(require_structured)}
           {stale_filter}
         """,
@@ -571,7 +571,6 @@ async def _assert_embedding_schema(conn: asyncpg.Connection) -> None:
         "id",
         "title",
         "description_plain",
-        "description_html",
         "structured_jd",
         "structured_jd_version",
         "content_fingerprint",
