@@ -14,7 +14,8 @@ from dataclasses import dataclass
 from typing import Any
 
 import sqlalchemy as sa
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import get_settings
 from app.services.application.blob.job_blob import JobBlobManager, JobBlobPointers, JobBlobSyncResult
@@ -164,7 +165,7 @@ async def _fetch_batch(
     )
     if last_id is not None:
         statement = statement.where(_JOB_TABLE.c.id > last_id)
-    result = await session.execute(statement)
+    result = await session.exec(statement)
     return [_to_blob_row(row) for row in result.mappings().all()]
 
 
@@ -282,7 +283,7 @@ async def migrate_job_blobs(
                 continue
 
             try:
-                await session.execute(
+                await session.exec(
                     sa.update(_JOB_TABLE).where(_JOB_TABLE.c.id == row.id).values(**update_values)
                 )
             except Exception:

@@ -24,11 +24,11 @@ class TestAppleMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.source == "apple"
+        assert result.model_dump()["source"] == "apple"
         assert result.external_job_id == "114438004"
         assert result.title == "CA-Specialist"
         assert result.apply_url == "https://jobs.apple.com/en-us/details/114438004/ca-specialist"
-        assert result.location_text == "Canada"
+        assert result.model_dump()["location_text"] == "Canada"
         assert "Description:" in result.description_plain
         assert "Minimum Qualifications:" in result.description_plain
         assert result.published_at == datetime(2026, 2, 28, 22, 16, 2, 947000, tzinfo=timezone.utc)
@@ -44,9 +44,9 @@ class TestAppleMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.location_country_code == "CA"
-        assert result.location_city == "Toronto"
-        assert result.location_region == "ON"
+        assert result.model_dump()["location_country_code"] == "CA"
+        assert result.model_dump()["location_city"] == "Toronto"
+        assert result.model_dump()["location_region"] == "ON"
 
 
 class TestUberMapper:
@@ -74,14 +74,14 @@ class TestUberMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.source == "uber"
+        assert result.model_dump()["source"] == "uber"
         assert result.external_job_id == "154940"
         assert result.title == "Software Engineer II"
         assert result.apply_url == "https://www.uber.com/global/en/careers/list/154940/"
-        assert result.location_text == "San Francisco, California, United States"
-        assert result.location_city == "San Francisco"
-        assert result.location_region == "California"
-        assert result.location_country_code == "US"
+        assert result.model_dump()["location_text"] == "San Francisco, California, United States"
+        assert result.model_dump()["location_city"] == "San Francisco"
+        assert result.model_dump()["location_region"] == "California"
+        assert result.model_dump()["location_country_code"] == "US"
         assert result.department == "Engineering"
         assert result.team == "Delivery"
         assert result.employment_type == "Full-Time"
@@ -113,13 +113,13 @@ class TestTikTokMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.source == "tiktok"
+        assert result.model_dump()["source"] == "tiktok"
         assert result.external_job_id == "7610346089650063621"
         assert result.title == "General Policy Manager"
         assert result.apply_url == "https://lifeattiktok.com/search/7610346089650063621"
-        assert result.location_text == "Kuala Lumpur, Malaysia"
-        assert result.location_city == "Kuala Lumpur"
-        assert result.location_country_code == "MY"
+        assert result.model_dump()["location_text"] == "Kuala Lumpur, Malaysia"
+        assert result.model_dump()["location_city"] == "Kuala Lumpur"
+        assert result.model_dump()["location_country_code"] == "MY"
         assert result.department == "Operations"
         assert result.team == "Trust & Safety"
         assert result.employment_type == "Regular"

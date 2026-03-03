@@ -62,12 +62,12 @@ async def _persist_job(session: AsyncSession, job: Job) -> Job:
 
 
 async def _ensure_legacy_blob_columns(session: AsyncSession) -> None:
-    result = await session.execute(sa.text("PRAGMA table_info(job)"))
+    result = await session.exec(sa.text("PRAGMA table_info(job)"))
     existing = {row[1] for row in result.all()}
     if "description_html" not in existing:
-        await session.execute(sa.text("ALTER TABLE job ADD COLUMN description_html TEXT"))
+        await session.exec(sa.text("ALTER TABLE job ADD COLUMN description_html TEXT"))
     if "raw_payload" not in existing:
-        await session.execute(sa.text("ALTER TABLE job ADD COLUMN raw_payload JSON"))
+        await session.exec(sa.text("ALTER TABLE job ADD COLUMN raw_payload JSON"))
     await session.commit()
 
 
@@ -81,7 +81,7 @@ async def _set_legacy_blob_columns(
     raw_payload_key: str | None = None,
 ) -> None:
     await _ensure_legacy_blob_columns(session)
-    await session.execute(
+    await session.exec(
         sa.text(
             """
             UPDATE job
@@ -92,7 +92,7 @@ async def _set_legacy_blob_columns(
             WHERE id = :job_id
             """
         ),
-        {
+        params={
             "description_html": description_html,
             "raw_payload": json.dumps({} if raw_payload is None else raw_payload),
             "description_html_key": description_html_key,
@@ -104,7 +104,7 @@ async def _set_legacy_blob_columns(
 
 
 async def _fetch_job_row(session: AsyncSession, job_id: str) -> dict:
-    result = await session.execute(
+    result = await session.exec(
         sa.text(
             """
             SELECT
@@ -118,7 +118,7 @@ async def _fetch_job_row(session: AsyncSession, job_id: str) -> dict:
             WHERE id = :job_id
             """
         ),
-        {"job_id": job_id},
+        params={"job_id": job_id},
     )
     row = result.mappings().one()
     return dict(row)

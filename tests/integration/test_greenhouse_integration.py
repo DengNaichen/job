@@ -44,7 +44,7 @@ async def test_greenhouse_fetch_and_map(fetcher, mapper):
             result = mapper.map(raw_job)
 
             # Verify required fields
-            assert result.source == "greenhouse"
+            assert result.model_dump()["source"] == "greenhouse"
             assert result.external_job_id, "external_job_id cannot be empty"
             assert result.title, "title cannot be empty"
             assert result.apply_url, "apply_url cannot be empty"

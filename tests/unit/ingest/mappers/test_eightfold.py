@@ -33,15 +33,15 @@ class TestEightfoldMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.source == "eightfold"
+        assert result.model_dump()["source"] == "eightfold"
         assert result.external_job_id == "12345"
         assert result.title == "Senior Software Engineer"
         assert result.apply_url == "https://apply.careers.microsoft.com/us/en/job/12345"
-        assert result.location_text == "Toronto, ON, Canada"
-        assert result.location_city == "Toronto"
-        assert result.location_region == "ON"
-        assert result.location_country_code == "CA"
-        assert result.location_workplace_type == WorkplaceType.remote
+        assert result.model_dump()["location_text"] == "Toronto, ON, Canada"
+        assert result.model_dump()["location_city"] == "Toronto"
+        assert result.model_dump()["location_region"] == "ON"
+        assert result.model_dump()["location_country_code"] == "CA"
+        assert result.model_dump()["location_workplace_type"] == WorkplaceType.remote
         assert result.department == "Engineering"
         assert result.team is None
         assert result.employment_type == "Up to 50% work from home"
@@ -64,8 +64,8 @@ class TestEightfoldMapper:
         result = mapper.map(raw_job)
 
         assert result.apply_url == "https://nvidia.eightfold.ai/careers/job/1"
-        assert result.location_text == "Santa Clara, CA, United States"
-        assert result.location_country_code == "US"
+        assert result.model_dump()["location_text"] == "Santa Clara, CA, United States"
+        assert result.model_dump()["location_country_code"] == "US"
         assert result.description_plain is None
         assert result.published_at is None
         assert result.source_updated_at is None
@@ -91,8 +91,8 @@ class TestEightfoldMapper:
 
         assert result.title == "ML Engineer"
         assert result.apply_url == "https://nvidia.eightfold.ai/careers/job/2"
-        assert result.location_text == "Austin, TX, United States"
-        assert result.location_country_code == "US"
+        assert result.model_dump()["location_text"] == "Austin, TX, United States"
+        assert result.model_dump()["location_country_code"] == "US"
         assert result.department is None
         assert result.employment_type is None
         assert result.description_plain is None
@@ -125,8 +125,8 @@ class TestEightfoldMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.location_country_code == "DE"
-        assert result.location_city == "Berlin"
+        assert result.model_dump()["location_country_code"] == "DE"
+        assert result.model_dump()["location_city"] == "Berlin"
 
     def test_map_ambiguous_multi_country_returns_null(self, mapper: EightfoldMapper) -> None:
         """When location text does not identify a single country, country_code stays None."""
@@ -140,5 +140,5 @@ class TestEightfoldMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.location_country_code is None
-        assert result.location_workplace_type == WorkplaceType.remote
+        assert result.model_dump()["location_country_code"] is None
+        assert result.model_dump()["location_workplace_type"] == WorkplaceType.remote

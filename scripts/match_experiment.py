@@ -8,12 +8,12 @@ import asyncio
 import json
 from pathlib import Path
 
+from pydantic import ValidationError
+
 from app.schemas.match import CandidateProfile, MatchRequest
 from app.services.application.match_service import (
-    CandidateProfileValidationError,
     MatchExperimentService,
     MatchServiceError,
-    validate_candidate_profile,
 )
 
 DEFAULT_USER_JSON = str(Path(__file__).resolve().parents[1] / "app" / "schemas" / "user.json")
@@ -24,7 +24,7 @@ def load_user_json_as_candidate_profile(user_path: Path) -> CandidateProfile:
         raise FileNotFoundError(f"user_json not found: {user_path}")
 
     raw_candidate = json.loads(user_path.read_text(encoding="utf-8"))
-    return validate_candidate_profile(raw_candidate)
+    return CandidateProfile.model_validate(raw_candidate)
 
 
 def build_match_request_from_args(
@@ -118,8 +118,9 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     try:
         asyncio.run(run(parse_args()))
-    except (CandidateProfileValidationError, MatchServiceError) as exc:
-        raise SystemExit(exc.message) from exc
+    except (ValidationError, MatchServiceError) as exc:
+        message = getattr(exc, "message", None) or str(exc)
+        raise SystemExit(message) from exc
 
 
 if __name__ == "__main__":
