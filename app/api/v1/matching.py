@@ -1,8 +1,9 @@
+from functools import lru_cache
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.schemas.match import MatchRequest, MatchResponse
 from app.services.application.match_service import (
-    CandidateProfileValidationError,
     LLMRerankConfigurationError,
     MatchExperimentService,
     MatchQueryError,
@@ -11,6 +12,7 @@ from app.services.application.match_service import (
 router = APIRouter(prefix="/matching", tags=["matching"])
 
 
+@lru_cache
 def get_match_service() -> MatchExperimentService:
     return MatchExperimentService()
 
@@ -19,7 +21,6 @@ def get_match_service() -> MatchExperimentService:
     "/recommendations",
     response_model=MatchResponse,
     responses={
-        422: {"description": "Invalid candidate profile"},
         503: {"description": "Matching dependencies unavailable"},
     },
 )
@@ -29,11 +30,6 @@ async def get_match_recommendations(
 ) -> MatchResponse:
     try:
         return await service.run(request)
-    except CandidateProfileValidationError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"code": exc.code, "message": exc.message},
-        ) from exc
     except (MatchQueryError, LLMRerankConfigurationError) as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

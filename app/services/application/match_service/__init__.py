@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-from pydantic import ValidationError
-
 from app.core.config import get_settings
 from app.schemas.match import (
-    CandidateProfile,
     HardFilterSummary,
     LLMRerankSummary,
     MatchRequest,
@@ -48,13 +45,6 @@ class MatchServiceError(Exception):
         super().__init__(message)
 
 
-class CandidateProfileValidationError(MatchServiceError):
-    """Raised when candidate input cannot be parsed into the typed schema."""
-
-    def __init__(self, message: str):
-        super().__init__("CANDIDATE_PROFILE_INVALID", message)
-
-
 class MatchQueryError(MatchServiceError):
     """Raised when the candidate recall query fails."""
 
@@ -67,15 +57,6 @@ class LLMRerankConfigurationError(MatchServiceError):
 
     def __init__(self, message: str = "LLM rerank requested but LLM is not configured"):
         super().__init__("LLM_RERANK_CONFIG_ERROR", message)
-
-
-def validate_candidate_profile(candidate_data: dict[str, object]) -> CandidateProfile:
-    """Parse raw user JSON into the typed candidate schema."""
-
-    try:
-        return CandidateProfile.model_validate(candidate_data)
-    except ValidationError as exc:
-        raise CandidateProfileValidationError(str(exc)) from exc
 
 
 class MatchExperimentService:
