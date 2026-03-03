@@ -12,7 +12,7 @@ from app.ingest.mappers.base import BaseMapper
 from app.models import Job, JobLocation, JobStatus, Location, PlatformType, Source
 from app.schemas.job import JobCreate
 from app.services.application.full_snapshot_sync import FullSnapshotSyncService
-from app.services.application.job_blob import JobBlobManager
+from app.services.application.blob.job_blob import JobBlobManager
 
 
 class _FakeFetcher(BaseFetcher):

@@ -7,7 +7,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import Job, Location, PlatformType, Source
-from app.services.application.job_blob import JobBlobManager
+from app.services.application.blob.job_blob import JobBlobManager
 from app.repositories.job_location import JobLocationRepository
 from app.services.domain.job_location import StructuredLocation, sync_job_location
 from scripts.backfill_unknown_primary_locations_v4 import (

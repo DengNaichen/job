@@ -7,7 +7,7 @@ from typing import Any
 from app.contracts.sync import SourceSyncStats
 from app.models import Job, JobStatus
 from app.repositories.job import JobRepository
-from app.services.application.job_blob import JobBlobManager, JobBlobPointers
+from app.services.application.blob.job_blob import JobBlobManager, JobBlobPointers
 from app.services.infra.text import html_to_text
 
 from .time_utils import to_naive_utc

@@ -7,7 +7,7 @@ import httpx
 import pytest
 
 from app.models import Job
-from app.services.application.job_blob import JobBlobManager, JobBlobPointers
+from app.services.application.blob.job_blob import JobBlobManager, JobBlobPointers
 from app.services.infra.blob_storage import (
     build_description_html_blob,
     build_raw_payload_blob,

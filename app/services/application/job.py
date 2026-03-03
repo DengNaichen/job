@@ -6,7 +6,7 @@ from app.models import Job, JobStatus
 from app.repositories.job import JobRepository
 from app.repositories.source import SourceRepository
 from app.schemas.job import JobCreate, JobUpdate
-from app.services.application.job_blob import JobBlobManager, JobBlobPointers
+from app.services.application.blob.job_blob import JobBlobManager, JobBlobPointers
 from app.services.infra.text import html_to_text
 
 

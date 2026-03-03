@@ -19,7 +19,7 @@ from app.ingest.mappers import (
 from app.models import Job, JobLocation, Location, PlatformType, Source, WorkplaceType
 from app.repositories.job import JobRepository
 from app.repositories.job_location import JobLocationRepository
-from app.services.application.job_blob import JobBlobManager
+from app.services.application.blob.job_blob import JobBlobManager
 from app.services.infra.blob_storage import BlobNotFoundError, BlobStorageNotConfiguredError
 from app.services.domain.canonical_location import build_canonical_key
 from app.services.domain.geonames_resolver import get_geonames_resolver

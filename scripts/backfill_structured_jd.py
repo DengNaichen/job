@@ -19,7 +19,7 @@ from app.schemas.structured_jd import (
     build_structured_jd_projection,
     build_structured_jd_storage_payload,
 )
-from app.services.application.job_blob import JobBlobManager
+from app.services.application.blob.job_blob import JobBlobManager
 from app.services.application.jd_parsing import parse_jd
 from app.services.infra.blob_storage import BlobNotFoundError, BlobStorageNotConfiguredError
 from app.services.infra.llm import get_token_usage

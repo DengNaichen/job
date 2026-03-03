@@ -17,7 +17,7 @@ import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.core.config import get_settings
-from app.services.application.job_blob import JobBlobManager, JobBlobPointers, JobBlobSyncResult
+from app.services.application.blob.job_blob import JobBlobManager, JobBlobPointers, JobBlobSyncResult
 from app.services.infra.blob_storage import build_description_html_blob, build_raw_payload_blob
 from app.services.infra.text import html_to_text
 
