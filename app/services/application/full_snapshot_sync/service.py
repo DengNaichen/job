@@ -7,7 +7,7 @@ from app.ingest.fetchers.base import BaseFetcher
 from app.ingest.mappers.base import BaseMapper
 from app.models import Source, build_source_key
 from app.repositories.job import JobRepository
-from app.services.infra.blob_storage import JobBlobManager
+from app.services.application.job_blob import JobBlobManager
 
 from .finalize import finalize_snapshot
 from .mapping import dedupe_by_external_job_id, map_raw_jobs
