@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from app.models import Job, WorkplaceType
+from app.models import Job
 from app.schemas.job import JobCreate, JobUpdate
 from app.schemas.structured_jd import BatchStructuredJDItem
 from app.services.application.job import (
@@ -22,11 +22,10 @@ def _build_job(job_id: str = "job-1") -> Job:
     """Build a minimal Job model for service tests."""
     return Job(
         id=job_id,
-        source="greenhouse",
+        source_id="source-1",
         external_job_id=f"ext-{job_id}",
         title="Backend Engineer",
         apply_url="https://example.com/apply",
-        raw_payload={},
     )
 
 
@@ -46,24 +45,19 @@ async def test_create_job() -> None:
     """create_job should map JobCreate into model and call repository.create."""
     repository = AsyncMock()
     created = _build_job()
-    created.location_city = "San Francisco"
-    created.location_workplace_type = WorkplaceType.onsite
     repository.create.return_value = created
     service = JobService(repository=repository)
 
     payload = JobCreate(
         source="greenhouse",
+        source_id="src-001",
         external_job_id="123",
         title="Engineer",
         apply_url="https://example.com",
-        location_city="San Francisco",
-        location_workplace_type=WorkplaceType.onsite,
     )
     result = await service.create_job(payload)
 
     assert result == created
-    assert result.location_city == "San Francisco"
-    assert result.location_workplace_type == WorkplaceType.onsite
     repository.create.assert_awaited_once()
 
 
@@ -131,9 +125,7 @@ async def test_update_job_updates_timestamp() -> None:
     repository.update.return_value = job
     service = JobService(repository=repository)
 
-    updated = await service.update_job(
-        "job-1", JobUpdate(title="Senior Engineer", location_city="San Jose")
-    )
+    updated = await service.update_job("job-1", JobUpdate(title="Senior Engineer"))
 
     previous_updated_at_naive = (
         previous_updated_at.replace(tzinfo=None)
@@ -141,7 +133,6 @@ async def test_update_job_updates_timestamp() -> None:
         else previous_updated_at
     )
     assert updated.title == "Senior Engineer"
-    assert updated.location_city == "San Jose"
     assert updated.updated_at >= previous_updated_at_naive
     repository.update.assert_awaited_once_with(job)
 

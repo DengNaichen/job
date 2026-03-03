@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -32,34 +33,42 @@ class SyncRunRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_running(self, *, source: str, source_id: str | None = None) -> SyncRun:
-        """Create a running sync run. Dual-writes source_id when provided."""
+    async def create_running(self, *, source_id: str | None = None) -> SyncRun:
+        """Create a running sync run keyed by source_id."""
+        run = await self.try_create_running(source_id=source_id)
+        if run is None:
+            raise RuntimeError("running sync already exists for source")
+        return run
+
+    async def try_create_running(self, *, source_id: str | None = None) -> SyncRun | None:
+        """Create a running sync run, returning None on unique-running conflict."""
         now = _now_naive_utc()
         run = SyncRun(
-            source=source,
             source_id=source_id,
             status=SyncRunStatus.running,
             started_at=now,
             created_at=now,
         )
         self.session.add(run)
-        await self.session.commit()
+        try:
+            await self.session.commit()
+        except IntegrityError:
+            await self.session.rollback()
+            return None
         await self.session.refresh(run)
         return run
 
     async def create_finished(
         self,
         *,
-        source: str,
         source_id: str | None = None,
         status: SyncRunStatus,
         error_summary: str | None = None,
         stats: SourceSyncStats | None = None,
     ) -> SyncRun:
-        """Create a finished (terminal) sync run. Dual-writes source_id when provided."""
+        """Create a finished (terminal) sync run keyed by source_id."""
         now = _now_naive_utc()
         run = SyncRun(
-            source=source,
             source_id=source_id,
             status=status,
             started_at=now,
@@ -96,23 +105,6 @@ class SyncRunRepository:
         )
         return result.first() is not None
 
-    # ------------------------------------------------------------------ #
-    # Legacy string-based helpers                                          #
-    # LEGACY-FALLBACK: remove after enforcement revision (Phase 6).        #
-    # ------------------------------------------------------------------ #
-
-    async def get_running_by_source(self, *, source: str) -> SyncRun | None:
-        """LEGACY-FALLBACK: find a running sync run by legacy source key."""
-        result = await self.session.exec(
-            select(SyncRun)
-            .where(
-                SyncRun.source == source,
-                SyncRun.status == SyncRunStatus.running,
-            )
-            .order_by(SyncRun.started_at.desc())
-        )
-        return result.first()
-
     async def finish(
         self,
         *,
@@ -129,10 +121,3 @@ class SyncRunRepository:
         await self.session.commit()
         await self.session.refresh(run)
         return run
-
-    async def has_any_for_source(self, *, source: str) -> bool:
-        """LEGACY-FALLBACK: return True if any sync run uses the given legacy source key."""
-        result = await self.session.exec(
-            select(SyncRun.id).where(SyncRun.source == source).limit(1)
-        )
-        return result.first() is not None

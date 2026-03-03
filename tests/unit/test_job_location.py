@@ -1,4 +1,7 @@
+from dataclasses import dataclass
+
 from app.models.job import Job, WorkplaceType
+from app.models.job_location import JobLocation
 from app.services.domain.job_location import (
     StructuredLocation,
     extract_workplace_type,
@@ -6,6 +9,7 @@ from app.services.domain.job_location import (
     sync_job_location,
     sync_primary_to_job,
 )
+from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 import pytest
 
@@ -42,6 +46,65 @@ def test_parse_location_text():
     loc4 = parse_location_text("London")
     assert loc4.city is None  # Since naive logic checks len(parts) >= 2
     assert loc4.workplace_type == WorkplaceType.unknown
+
+
+@dataclass
+class _FakeGeoMatch:
+    geonames_id: int
+    name: str
+    country_code: str
+    admin1_code: str | None
+    population: int
+
+
+def test_parse_location_text_uses_geonames_for_region_name(monkeypatch: pytest.MonkeyPatch):
+    class _FakeResolver:
+        def resolve_city(self, *, city: str | None, region: str | None = None, country_code=None):
+            _ = country_code
+            if city == "San Francisco" and region == "California":
+                return _FakeGeoMatch(
+                    geonames_id=1,
+                    name="San Francisco",
+                    country_code="US",
+                    admin1_code="CA",
+                    population=100,
+                )
+            return None
+
+    monkeypatch.setattr(
+        "app.services.domain.job_location.get_geonames_resolver",
+        lambda: _FakeResolver(),
+    )
+
+    loc = parse_location_text("San Francisco, California")
+    assert loc.city == "San Francisco"
+    assert loc.region == "California"
+    assert loc.country_code == "US"
+
+
+def test_parse_location_text_uses_geonames_for_city_only(monkeypatch: pytest.MonkeyPatch):
+    class _FakeResolver:
+        def resolve_city(self, *, city: str | None, region: str | None = None, country_code=None):
+            _ = (region, country_code)
+            if city == "Mexico City":
+                return _FakeGeoMatch(
+                    geonames_id=2,
+                    name="Mexico City",
+                    country_code="MX",
+                    admin1_code="CMX",
+                    population=100,
+                )
+            return None
+
+    monkeypatch.setattr(
+        "app.services.domain.job_location.get_geonames_resolver",
+        lambda: _FakeResolver(),
+    )
+
+    loc = parse_location_text("Mexico City")
+    assert loc.city == "Mexico City"
+    assert loc.region == "CMX"
+    assert loc.country_code == "MX"
 
 
 # ---------------------------------------------------------------------------
@@ -214,6 +277,13 @@ async def test_sync_job_location_idempotency(session: AsyncSession):
     )
 
     assert loc1.id == loc2.id
+    links = (
+        await session.exec(
+            select(JobLocation).where(JobLocation.job_id == job.id, JobLocation.location_id == loc1.id)
+        )
+    ).all()
+    assert len(links) == 1
+    assert links[0].workplace_type == "onsite"
 
 
 @pytest.mark.asyncio
@@ -246,7 +316,8 @@ async def test_sync_primary_to_job_compatibility(session: AsyncSession):
         workplace_type=structured.workplace_type,
     )
 
-    assert job.location_city == "Seattle"
-    assert job.location_region == "WA"
-    assert job.location_country_code == "US"
-    assert job.location_workplace_type == WorkplaceType.hybrid
+    # Structured location fields are no longer stored on `job`.
+    # Function should be safe to call after column removal.
+    assert not hasattr(job, "location_city")
+    assert not hasattr(job, "location_region")
+    assert not hasattr(job, "location_country_code")

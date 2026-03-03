@@ -31,9 +31,9 @@ from app.services.infra.embedding import (
     get_embedding_config,
     resolve_active_job_embedding_target,
 )
-from app.services.infra.llm_match_recommendation import LLMMatchReranker
-from app.services.infra.match_query import MatchCandidateGateway
-from app.services.infra.match_query import (
+from app.services.infra.matching.llm_rerank import LLMMatchReranker
+from app.services.infra.matching.query import MatchCandidateGateway
+from app.services.infra.matching.query import (
     build_sql_prefilter,
     vector_literal,
 )

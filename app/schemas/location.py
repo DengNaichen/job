@@ -33,6 +33,8 @@ class JobLocationRead(BaseModel):
     location_id: str
     is_primary: bool
     source_raw: str | None
+    workplace_type: str
+    remote_scope: str | None
     created_at: datetime
 
     # Optional nested location for API responses

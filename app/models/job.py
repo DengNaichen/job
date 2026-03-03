@@ -4,10 +4,9 @@ from datetime import datetime, timezone
 from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    pass
+    from app.models.source import Source
 
-from pgvector.sqlalchemy import Vector
-from sqlalchemy import Column, ForeignKey, Index, String, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.types import DateTime
 from sqlmodel import Field, SQLModel, Relationship
@@ -29,8 +28,6 @@ class WorkplaceType(str, enum.Enum):
 
 class Job(SQLModel, table=True):
     __table_args__ = (
-        UniqueConstraint("source", "external_job_id", name="uq_job_source_external_job_id"),
-        Index("ix_job_source_status_last_seen_at", "source", "status", "last_seen_at"),
         # ix_job_source_id_status_last_seen_at is created by the Alembic migration (Phase 2).
         # Do NOT re-declare it here — SQLModel.metadata.create_all (used in tests) would
         # try to create it again and conflict with the migration-managed index.
@@ -44,8 +41,6 @@ class Job(SQLModel, table=True):
             String(36), ForeignKey("sources.id", ondelete="RESTRICT"), nullable=True, index=True
         ),
     )
-    # Compatibility source key (legacy string). Preserved throughout migration; renamed in a future cleanup.
-    source: str = Field(index=True)
     external_job_id: str = Field(index=True)
     title: str
     apply_url: str
@@ -54,18 +49,10 @@ class Job(SQLModel, table=True):
     dedupe_group_id: str | None = Field(default=None, index=True)
     status: JobStatus = Field(default=JobStatus.open, index=True)
 
-    location_text: str | None = Field(default=None)
-    location_city: str | None = Field(default=None)
-    location_region: str | None = Field(default=None)
-    location_country_code: str | None = Field(default=None, index=True)
-    location_workplace_type: WorkplaceType = Field(default=WorkplaceType.unknown, index=True)
-    location_remote_scope: str | None = Field(default=None)
-
     department: str | None = Field(default=None)
     team: str | None = Field(default=None)
     employment_type: str | None = Field(default=None)
 
-    description_html: str | None = Field(default=None)
     description_html_key: str | None = Field(
         default=None, sa_column=Column(String(255), nullable=True)
     )
@@ -73,13 +60,6 @@ class Job(SQLModel, table=True):
         default=None, sa_column=Column(String(64), nullable=True)
     )
     description_plain: str | None = Field(default=None)
-    embedding: list[float] | None = Field(
-        default=None, sa_column=Column(Vector(1024), nullable=True)
-    )
-    embedding_model: str | None = Field(default=None, sa_column=Column(String(128), nullable=True))
-    embedding_updated_at: datetime | None = Field(
-        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
 
     sponsorship_not_available: str = Field(default="unknown", index=True)
     job_domain_raw: str | None = Field(default=None)
@@ -90,10 +70,8 @@ class Job(SQLModel, table=True):
 
     published_at: datetime | None = Field(default=None, index=True)
     source_updated_at: datetime | None = Field(default=None)
-    ingested_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     last_seen_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
 
-    raw_payload: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSONB()))
     raw_payload_key: str | None = Field(default=None, sa_column=Column(String(255), nullable=True))
     raw_payload_hash: str | None = Field(default=None, sa_column=Column(String(64), nullable=True))
 
@@ -107,4 +85,5 @@ class Job(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Relationships
+    source_record: "Source" = Relationship()
     job_locations: list[JobLocation] = Relationship(back_populates="job")

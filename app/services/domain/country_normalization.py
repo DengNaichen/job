@@ -4,6 +4,8 @@ from enum import Enum
 from typing import List, Optional
 import pycountry
 
+from app.services.domain.geonames_resolver import get_geonames_resolver
+
 
 class ConfidenceScore(str, Enum):
     HIGH = "high"
@@ -13,7 +15,7 @@ class ConfidenceScore(str, Enum):
 
 class SourceMethod(str, Enum):
     EXPLICIT_FIELD = "explicit_field"
-    ALIAS_MATCH = "alias_match"
+    GEONAMES_MATCH = "geonames_match"
     PYCOUNTRY_MATCH = "pycountry_match"
     UNKNOWN = "unknown"
 
@@ -27,24 +29,6 @@ class CountryNormalizationResult:
     multi_country_detected: bool = False
     matched_country_codes: List[str] = field(default_factory=list)
 
-
-# Common country aliases that mappers/ingest might provide
-COUNTRY_ALIASES = {
-    "usa": "US",
-    "us": "US",
-    "united states of america": "US",
-    "united states": "US",
-    "uk": "GB",
-    "united kingdom": "GB",
-    "great britain": "GB",
-    "uae": "AE",
-    "united arab emirates": "AE",
-    "korea (the republic of)": "KR",
-    "south korea": "KR",
-    "korea": "KR",
-    "vietnam": "VN",
-    "russia": "RU",
-}
 
 # Ambiguous and broad regions that shouldn't match as single countries
 AMBIGUOUS_REGIONS = {
@@ -134,6 +118,12 @@ AMBIGUOUS_ALPHA2 = {
     "YT",
 }
 
+# ISO 3166 exceptional reservations that appear in real-world feeds.
+# These are not canonical alpha-2 but can be normalized deterministically.
+ISO_EXCEPTIONAL_ALPHA2 = {
+    "UK": "GB",
+}
+
 
 def normalize_country(
     text: str | None, is_explicit_field: bool = False
@@ -154,26 +144,47 @@ def normalize_country(
     if text_lower in AMBIGUOUS_REGIONS:
         return CountryNormalizationResult(is_ambiguous=True)
 
-    # Check aliases
-    if text_lower in COUNTRY_ALIASES:
+    alpha_lookup = text_lower.upper()
+    compact_alpha = re.sub(r"[^A-Z]", "", alpha_lookup)
+
+    if compact_alpha in ISO_EXCEPTIONAL_ALPHA2:
+        normalized = ISO_EXCEPTIONAL_ALPHA2[compact_alpha]
         return CountryNormalizationResult(
-            country_code=COUNTRY_ALIASES[text_lower],
+            country_code=normalized,
             confidence=ConfidenceScore.HIGH if is_explicit_field else ConfidenceScore.LOW,
-            source=SourceMethod.ALIAS_MATCH
+            source=SourceMethod.PYCOUNTRY_MATCH
             if not is_explicit_field
             else SourceMethod.EXPLICIT_FIELD,
-            matched_country_codes=[COUNTRY_ALIASES[text_lower]],
+            matched_country_codes=[normalized],
+        )
+
+    if len(alpha_lookup) == 2 and alpha_lookup.isalpha() and not is_explicit_field:
+        # Non-explicit alpha-2 tokens like "CA"/"ON" are often state/province abbreviations.
+        if alpha_lookup in AMBIGUOUS_ALPHA2:
+            return CountryNormalizationResult(is_ambiguous=True)
+
+    geonames_codes = sorted(get_geonames_resolver().lookup_country_codes(original_text))
+    if len(geonames_codes) == 1:
+        return CountryNormalizationResult(
+            country_code=geonames_codes[0],
+            confidence=ConfidenceScore.HIGH if is_explicit_field else ConfidenceScore.LOW,
+            source=SourceMethod.GEONAMES_MATCH
+            if not is_explicit_field
+            else SourceMethod.EXPLICIT_FIELD,
+            matched_country_codes=geonames_codes,
+        )
+    if len(geonames_codes) > 1:
+        return CountryNormalizationResult(
+            is_ambiguous=True,
+            multi_country_detected=True,
+            matched_country_codes=geonames_codes,
         )
 
     # Check pycountry strict matches (alpha-2, alpha-3)
-    alpha_lookup = text_lower.upper()
     try:
         country = None
         if len(alpha_lookup) == 2 and alpha_lookup.isalpha():
             country = pycountry.countries.get(alpha_2=alpha_lookup)
-            # If it's a non-explicit field and it's a known US/CA state/province, it's ambiguous
-            if not is_explicit_field and alpha_lookup in AMBIGUOUS_ALPHA2:
-                return CountryNormalizationResult(is_ambiguous=True)
 
         elif len(alpha_lookup) == 3 and alpha_lookup.isalpha():
             country = pycountry.countries.get(alpha_3=alpha_lookup)
@@ -189,6 +200,21 @@ def normalize_country(
             )
     except Exception:
         pass
+
+    # Explicit country fields can use fuzzy matching safely because caller intent
+    # is "this token is a country". We still reject multi-match ambiguity.
+    if is_explicit_field:
+        try:
+            fuzzy_codes = sorted({c.alpha_2 for c in pycountry.countries.search_fuzzy(original_text)})
+            if len(fuzzy_codes) == 1:
+                return CountryNormalizationResult(
+                    country_code=fuzzy_codes[0],
+                    confidence=ConfidenceScore.HIGH,
+                    source=SourceMethod.EXPLICIT_FIELD,
+                    matched_country_codes=fuzzy_codes,
+                )
+        except Exception:
+            pass
 
     # Name lookup (case-insensitive)
     matched_countries = []

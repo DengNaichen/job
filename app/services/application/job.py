@@ -6,7 +6,8 @@ from app.models import Job, JobStatus
 from app.repositories.job import JobRepository
 from app.repositories.source import SourceRepository
 from app.schemas.job import JobCreate, JobUpdate
-from app.services.infra.blob_storage import JobBlobManager, JobBlobPointers
+from app.services.application.blob.job_blob import JobBlobManager, JobBlobPointers
+from app.services.infra.text import html_to_text
 
 
 class JobError(Exception):
@@ -38,6 +39,16 @@ class SourceResolutionError(JobError):
 
 class JobService:
     """Service for Job business logic."""
+
+    _LEGACY_STRUCTURED_LOCATION_FIELDS = {
+        "source",
+        "location_text",
+        "location_city",
+        "location_region",
+        "location_country_code",
+        "location_workplace_type",
+        "location_remote_scope",
+    }
 
     def __init__(
         self,
@@ -72,16 +83,36 @@ class JobService:
     async def create_job(self, job_in: JobCreate) -> Job:
         """Create a new job, resolving source_id from the legacy source string when needed."""
         job_data = job_in.model_dump()
+        description_html = job_data.pop("description_html", None)
+        raw_payload = job_data.pop("raw_payload", {})
+        if (
+            not job_data.get("description_plain")
+            and isinstance(description_html, str)
+            and description_html.strip()
+        ):
+            job_data["description_plain"] = html_to_text(description_html)
+        legacy_source_key = job_data.get("source")
+        job_data.pop("location_hints", None)
+        for field in self._LEGACY_STRUCTURED_LOCATION_FIELDS:
+            job_data.pop(field, None)
 
-        # Resolve source_id from legacy source string when not already supplied
-        if not job_data.get("source_id") and job_data.get("source") and self.source_repository:
-            source = await self.source_repository.get_by_source_key(job_data["source"])
-            if source is None:
-                raise SourceResolutionError(job_data["source"])
-            job_data["source_id"] = source.id
+        # Resolve source_id from legacy source string when not already supplied.
+        if not job_data.get("source_id"):
+            source_key = legacy_source_key if isinstance(legacy_source_key, str) else None
+            if source_key and self.source_repository:
+                source = await self.source_repository.get_by_source_key(source_key)
+                if source is None:
+                    raise SourceResolutionError(source_key)
+                job_data["source_id"] = source.id
+            else:
+                raise SourceResolutionError(source_key or "<missing-source-key>")
 
         job = Job(**job_data)
-        await self.blob_manager.sync_job_blobs(job)
+        await self.blob_manager.sync_job_blobs(
+            job,
+            description_html=description_html,
+            raw_payload=raw_payload,
+        )
         return await self.repository.create(job)
 
     async def update_job(self, job_id: str, job_in: JobUpdate) -> Job:
@@ -92,13 +123,32 @@ class JobService:
 
         existing_pointers = JobBlobPointers.from_job(job)
         update_data = job_in.model_dump(exclude_unset=True)
+        explicit_fields = set(update_data)
+        description_html = update_data.pop("description_html", None)
+        raw_payload = update_data.pop("raw_payload", None)
+        if (
+            "description_html" in explicit_fields
+            and "description_plain" not in update_data
+            and isinstance(description_html, str)
+            and description_html.strip()
+        ):
+            update_data["description_plain"] = html_to_text(description_html)
+        update_data.pop("location_hints", None)
+        for field in self._LEGACY_STRUCTURED_LOCATION_FIELDS:
+            update_data.pop(field, None)
         for key, value in update_data.items():
             setattr(job, key, value)
         job.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        blob_kwargs: dict[str, object] = {}
+        if "description_html" in explicit_fields:
+            blob_kwargs["description_html"] = description_html
+        if "raw_payload" in explicit_fields:
+            blob_kwargs["raw_payload"] = raw_payload
         await self.blob_manager.sync_job_blobs(
             job,
             existing_pointers=existing_pointers,
-            explicit_fields=set(update_data),
+            explicit_fields=explicit_fields,
+            **blob_kwargs,
         )
 
         return await self.repository.update(job)

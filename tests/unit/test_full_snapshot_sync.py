@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 
 from copy import deepcopy
@@ -11,7 +12,7 @@ from app.ingest.mappers.base import BaseMapper
 from app.models import Job, JobLocation, JobStatus, Location, PlatformType, Source
 from app.schemas.job import JobCreate
 from app.services.application.full_snapshot_sync import FullSnapshotSyncService
-from app.services.infra.blob_storage import JobBlobManager
+from app.services.application.blob.job_blob import JobBlobManager
 
 
 class _FakeFetcher(BaseFetcher):
@@ -48,6 +49,12 @@ class _FakeMapper(BaseMapper):
             apply_url=str(raw_job["absolute_url"]),
             description_html=str(raw_job.get("content") or ""),
             raw_payload=raw_job,
+            location_text=raw_job.get("location_text"),  # type: ignore[arg-type]
+            location_city=raw_job.get("location_city"),  # type: ignore[arg-type]
+            location_region=raw_job.get("location_region"),  # type: ignore[arg-type]
+            location_country_code=raw_job.get("location_country_code"),  # type: ignore[arg-type]
+            location_workplace_type=raw_job.get("location_workplace_type", "unknown"),  # type: ignore[arg-type]
+            location_remote_scope=raw_job.get("location_remote_scope"),  # type: ignore[arg-type]
             location_hints=raw_job.get("location_hints") or [],  # type: ignore
         )
 
@@ -75,6 +82,60 @@ class _InMemoryBlobStorage:
 
     async def download(self, *, key: str) -> bytes:
         return self.objects[key]
+
+
+class _SlowTrackingBlobStorage(_InMemoryBlobStorage):
+    def __init__(self, delay_seconds: float = 0.01):
+        super().__init__()
+        self.delay_seconds = delay_seconds
+        self.in_flight = 0
+        self.max_in_flight = 0
+
+    async def upload_if_missing(
+        self,
+        *,
+        key: str,
+        data: bytes,
+        content_type: str,
+        content_encoding: str = "gzip",
+    ) -> bool:
+        self.in_flight += 1
+        self.max_in_flight = max(self.max_in_flight, self.in_flight)
+        try:
+            await asyncio.sleep(self.delay_seconds)
+            return await super().upload_if_missing(
+                key=key,
+                data=data,
+                content_type=content_type,
+                content_encoding=content_encoding,
+            )
+        finally:
+            self.in_flight -= 1
+
+
+class _FailingBlobStorage(_InMemoryBlobStorage):
+    def __init__(self, *, fail_after_calls: int = 3):
+        super().__init__()
+        self.fail_after_calls = fail_after_calls
+        self.upload_calls = 0
+
+    async def upload_if_missing(
+        self,
+        *,
+        key: str,
+        data: bytes,
+        content_type: str,
+        content_encoding: str = "gzip",
+    ) -> bool:
+        self.upload_calls += 1
+        if self.upload_calls >= self.fail_after_calls:
+            raise RuntimeError("blob boom")
+        return await super().upload_if_missing(
+            key=key,
+            data=data,
+            content_type=content_type,
+            content_encoding=content_encoding,
+        )
 
 
 _SOURCE = Source(
@@ -108,9 +169,13 @@ async def _all_jobs(session: AsyncSession) -> list[Job]:
 
 
 def _service(session: AsyncSession) -> FullSnapshotSyncService:
+    return _service_with_storage(session, _InMemoryBlobStorage())
+
+
+def _service_with_storage(session: AsyncSession, storage: Any) -> FullSnapshotSyncService:
     return FullSnapshotSyncService(
         session,
-        blob_manager=JobBlobManager(_InMemoryBlobStorage()),
+        blob_manager=JobBlobManager(storage),
     )
 
 
@@ -133,8 +198,7 @@ async def test_full_snapshot_sync_first_import_inserts_all_rows(session: AsyncSe
     assert result.stats.updated_count == 0
     assert result.stats.closed_count == 0
     assert [row.external_job_id for row in rows] == ["A", "B", "C"]
-    assert all(row.source == "greenhouse:airbnb" for row in rows)
-    # Phase 3: source_id must be dual-written alongside legacy source string
+    # Authoritative source ownership is keyed by source_id.
     assert all(row.source_id == str(source.id) for row in rows)
     assert all(row.status == JobStatus.open for row in rows)
     assert all(row.description_html_key for row in rows)
@@ -361,13 +425,6 @@ async def test_full_snapshot_sync_persists_canonical_locations(session: AsyncSes
 
     assert result.ok is True
 
-    # Verify Job models (compatibility fields)
-    job_rows = {j.external_job_id: j for j in await _all_jobs(session)}
-    assert job_rows["job-1"].location_city == "San Francisco"
-    assert job_rows["job-1"].location_country_code == "US"
-    assert job_rows["job-2"].location_country_code == "CA"
-    assert job_rows["job-2"].location_workplace_type == "remote"
-
     # Verify Location models
     loc_rows = (await session.exec(select(Location))).all()
     assert len(loc_rows) == 2
@@ -379,3 +436,134 @@ async def test_full_snapshot_sync_persists_canonical_locations(session: AsyncSes
     link_rows = (await session.exec(select(JobLocation))).all()
     assert len(link_rows) == 2
     assert all(link.is_primary is True for link in link_rows)
+
+
+@pytest.mark.asyncio
+async def test_full_snapshot_sync_falls_back_to_legacy_location_fields_when_hints_missing(
+    session: AsyncSession,
+) -> None:
+    service = _service(session)
+    source = _source()
+    jobs = [
+        {
+            "id": "job-legacy",
+            "title": "Engineer Toronto",
+            "absolute_url": "https://example.com/legacy",
+            "location_text": "Toronto, ON, Canada",
+            "location_city": "Toronto",
+            "location_region": "ON",
+            "location_country_code": "CA",
+            "location_workplace_type": "hybrid",
+            "location_remote_scope": None,
+        }
+    ]
+
+    result = await service.sync_source(
+        source=source,
+        fetcher=_FakeFetcher(jobs),
+        mapper=_FakeMapper(),
+    )
+
+    assert result.ok is True
+
+    loc_rows = (await session.exec(select(Location))).all()
+    assert len(loc_rows) == 1
+    assert loc_rows[0].canonical_key == "ca-on-toronto"
+
+    link_rows = (await session.exec(select(JobLocation))).all()
+    assert len(link_rows) == 1
+    assert link_rows[0].is_primary is True
+    assert link_rows[0].workplace_type == "hybrid"
+
+
+@pytest.mark.asyncio
+async def test_full_snapshot_sync_enriches_country_from_geonames_when_legacy_country_missing(
+    session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _FakeResolver:
+        class _Match:
+            geonames_id = 1
+            name = "San Francisco"
+            country_code = "US"
+            admin1_code = "CA"
+            population = 100
+
+        def resolve_city(self, *, city: str | None, region: str | None = None, country_code=None):
+            _ = country_code
+            if city == "San Francisco" and region == "California":
+                return self._Match()
+            return None
+
+    monkeypatch.setattr(
+        "app.services.application.full_snapshot_sync.get_geonames_resolver",
+        lambda: _FakeResolver(),
+    )
+
+    service = _service(session)
+    source = _source()
+    jobs = [
+        {
+            "id": "job-geonames-fallback",
+            "title": "Engineer SF",
+            "absolute_url": "https://example.com/geonames",
+            "location_hints": [],
+            "location_text": None,
+            "location_city": "San Francisco",
+            "location_region": "California",
+            "location_country_code": None,
+            "location_workplace_type": "onsite",
+        }
+    ]
+
+    result = await service.sync_source(
+        source=source,
+        fetcher=_FakeFetcher(jobs),
+        mapper=_FakeMapper(),
+    )
+    assert result.ok is True
+
+    loc_rows = (await session.exec(select(Location))).all()
+    assert len(loc_rows) == 1
+    assert loc_rows[0].country_code == "US"
+    assert loc_rows[0].canonical_key == "us-california-san-francisco"
+
+
+@pytest.mark.asyncio
+async def test_full_snapshot_sync_blob_stage_bounded_to_16(session: AsyncSession) -> None:
+    storage = _SlowTrackingBlobStorage(delay_seconds=0.01)
+    service = _service_with_storage(session, storage)
+    source = _source()
+
+    result = await service.sync_source(
+        source=source,
+        fetcher=_FakeFetcher(_jobs([f"job-{i}" for i in range(40)])),
+        mapper=_FakeMapper(),
+    )
+
+    assert result.ok is True
+    # Outer sync stage is bounded to 16 jobs, and each job may upload 2 blobs in parallel.
+    assert storage.max_in_flight <= 32
+    assert storage.max_in_flight > 1
+
+
+@pytest.mark.asyncio
+async def test_full_snapshot_sync_blob_failure_rolls_back_under_parallelism(
+    session: AsyncSession,
+) -> None:
+    storage = _FailingBlobStorage(fail_after_calls=3)
+    service = _service_with_storage(session, storage)
+    source = _source()
+
+    result = await service.sync_source(
+        source=source,
+        fetcher=_FakeFetcher(_jobs([f"job-{i}" for i in range(20)])),
+        mapper=_FakeMapper(),
+    )
+
+    rows = await _all_jobs(session)
+
+    assert result.ok is False
+    assert result.error is not None
+    assert "blob boom" in result.error
+    assert rows == []

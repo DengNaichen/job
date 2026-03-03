@@ -1,12 +1,15 @@
 from dataclasses import dataclass
 import re
 
+import pycountry
+
 from app.models.job import WorkplaceType
 from app.models.location import Location
 from app.repositories.job_location import JobLocationRepository
 from app.repositories.location import LocationRepository
 from app.services.domain.canonical_location import build_canonical_key, normalize_display_name
 from app.services.domain.country_normalization import normalize_country
+from app.services.domain.geonames_resolver import get_geonames_resolver
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 
@@ -23,6 +26,13 @@ class StructuredLocation:
     country_code: str | None = None
     workplace_type: WorkplaceType = WorkplaceType.unknown
     remote_scope: str | None = None
+
+    def __post_init__(self) -> None:
+        if isinstance(self.workplace_type, str):
+            try:
+                self.workplace_type = WorkplaceType(self.workplace_type)
+            except ValueError:
+                self.workplace_type = WorkplaceType.unknown
 
 
 def extract_workplace_type(
@@ -59,6 +69,16 @@ def extract_workplace_type(
         return WorkplaceType.onsite
 
     return default
+
+
+def _is_us_state_code(value: str | None) -> bool:
+    code = (value or "").strip().upper()
+    if len(code) != 2 or not code.isalpha():
+        return False
+    try:
+        return pycountry.subdivisions.get(code=f"US-{code}") is not None
+    except Exception:
+        return False
 
 
 def parse_location_text(location_str: str | None) -> StructuredLocation:
@@ -109,17 +129,27 @@ def parse_location_text(location_str: str | None) -> StructuredLocation:
             if country_res.country_code:
                 loc.country_code = country_res.country_code
                 loc.city = parts[0]
-                if len(parts) == 3:
+                if len(parts) >= 3:
                     loc.region = parts[1]
-                elif len(parts) == 2 and not country_res.country_code:
-                    # check if parts[1] is a 2-letter state code, very naive check
-                    if len(parts[1]) == 2 and parts[1].isupper():
-                        loc.city = parts[0]
-                        loc.region = parts[1]
-                        loc.country_code = "US"
+                elif len(parts) == 2:
+                    # Try GeoNames to recover region when country exists in text.
+                    city_match = get_geonames_resolver().resolve_city(
+                        city=parts[0], country_code=loc.country_code
+                    )
+                    if city_match and city_match.admin1_code:
+                        loc.region = city_match.admin1_code
             else:
-                # Retain existing naive behavior
-                if len(parts[1]) == 2 and parts[1].isupper():
+                region_hint = parts[1]
+                city_match = get_geonames_resolver().resolve_city(
+                    city=parts[0],
+                    region=region_hint,
+                )
+                if city_match:
+                    loc.city = parts[0]
+                    loc.region = region_hint
+                    loc.country_code = city_match.country_code
+                elif len(parts[1]) == 2 and parts[1].isupper() and _is_us_state_code(parts[1]):
+                    # Compatibility fallback when GeoNames reference data is unavailable.
                     loc.city = parts[0]
                     loc.region = parts[1]
                     loc.country_code = "US"
@@ -127,6 +157,14 @@ def parse_location_text(location_str: str | None) -> StructuredLocation:
             country_res = normalize_country(parts[0], is_explicit_field=False)
             if country_res.country_code:
                 loc.country_code = country_res.country_code
+            elif len(parts[0]) > 3:
+                # City-only strings (e.g. "San Francisco") are resolved only if
+                # GeoNames returns a high-confidence unique candidate.
+                city_match = get_geonames_resolver().resolve_city(city=parts[0])
+                if city_match:
+                    loc.city = parts[0]
+                    loc.region = city_match.admin1_code
+                    loc.country_code = city_match.country_code
 
     return loc
 
@@ -175,6 +213,8 @@ async def sync_job_location(
         location_id=location.id,
         is_primary=is_primary,
         source_raw=source_raw,
+        workplace_type=structured.workplace_type.value,
+        remote_scope=structured.remote_scope,
     )
     return location
 
@@ -188,9 +228,16 @@ def sync_primary_to_job(
 ) -> None:
     """
     Sync primary canonical location fields back to the Job model for legacy compatibility.
+    After structured location columns are removed from `job`, this becomes a safe no-op.
     """
-    job.location_city = location.city
-    job.location_region = location.region
-    job.location_country_code = location.country_code
-    job.location_workplace_type = workplace_type
-    job.location_remote_scope = remote_scope
+    model_fields = getattr(job.__class__, "model_fields", {})
+    if "location_city" in model_fields:
+        job.location_city = location.city  # type: ignore[attr-defined]
+    if "location_region" in model_fields:
+        job.location_region = location.region  # type: ignore[attr-defined]
+    if "location_country_code" in model_fields:
+        job.location_country_code = location.country_code  # type: ignore[attr-defined]
+    if "location_workplace_type" in model_fields:
+        job.location_workplace_type = workplace_type  # type: ignore[attr-defined]
+    if "location_remote_scope" in model_fields:
+        job.location_remote_scope = remote_scope  # type: ignore[attr-defined]

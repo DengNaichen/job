@@ -32,6 +32,11 @@ class JobLocation(SQLModel, table=True):
         default=False, sa_column=Column(Boolean, server_default=text("false"), nullable=False)
     )
     source_raw: str | None = Field(default=None)
+    workplace_type: str = Field(
+        default="unknown",
+        sa_column=Column(String(32), server_default=text("'unknown'"), nullable=False),
+    )
+    remote_scope: str | None = Field(default=None)
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         sa_column=Column(DateTime(timezone=True), server_default=text("now()"), nullable=False),

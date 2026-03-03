@@ -78,9 +78,6 @@ async def test_run_writes_new_active_target_rows_to_job_embedding(
     fake_conn = _FakeConn()
     upsert_calls: list[list[tuple[str, str, str, str | None]]] = []
 
-    async def fake_migrate(*_args, **_kwargs):
-        return module.MigrationStats(), set()
-
     calls = {"fetch": 0}
 
     async def fake_fetch_generation_batch(*_args, **_kwargs):
@@ -118,7 +115,6 @@ async def test_run_writes_new_active_target_rows_to_job_embedding(
     monkeypatch.setattr(module, "_count_fresh_active_rows", _async_return(0))
     monkeypatch.setattr(module, "_count_pending_generation", _async_return(1))
     monkeypatch.setattr(module, "_count_missing_content_rows", _async_return(0))
-    monkeypatch.setattr(module, "_migrate_legacy_embeddings", fake_migrate)
     monkeypatch.setattr(module, "_fetch_generation_batch", fake_fetch_generation_batch)
     monkeypatch.setattr(module, "_embed_batch", fake_embed_batch)
     monkeypatch.setattr(module, "_upsert_active_target_rows", fake_upsert)
@@ -145,9 +141,6 @@ async def test_run_rerun_with_no_pending_rows_skips_provider_call(
     async def fake_fetch_generation_batch(*_args, **_kwargs):
         return []
 
-    async def fake_migrate(*_args, **_kwargs):
-        return module.MigrationStats(), set()
-
     async def fake_connect(_dsn: str):  # noqa: ARG001
         return fake_conn
 
@@ -163,7 +156,6 @@ async def test_run_rerun_with_no_pending_rows_skips_provider_call(
     monkeypatch.setattr(module, "_count_fresh_active_rows", _async_return(4))
     monkeypatch.setattr(module, "_count_pending_generation", _async_return(0))
     monkeypatch.setattr(module, "_count_missing_content_rows", _async_return(0))
-    monkeypatch.setattr(module, "_migrate_legacy_embeddings", fake_migrate)
     monkeypatch.setattr(module, "_fetch_generation_batch", fake_fetch_generation_batch)
     monkeypatch.setattr(module, "_embed_batch", fake_embed_batch)
 
@@ -174,73 +166,11 @@ async def test_run_rerun_with_no_pending_rows_skips_provider_call(
 
 
 @pytest.mark.asyncio
-async def test_migrate_legacy_embeddings_only_moves_compatible_rows(
+async def test_run_dry_run_skips_db_writes(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     module = _load_backfill_module()
     fake_conn = _FakeConn()
-    upserted_job_ids: list[str] = []
-
-    calls = {"count": 0}
-
-    async def fake_fetch_legacy(*_args, **_kwargs):
-        calls["count"] += 1
-        if calls["count"] > 1:
-            return []
-        return [
-            module.LegacyEmbeddingRow(
-                id="job-ok",
-                embedding=[0.1] * 1024,
-                embedding_model="gemini-embedding-001",
-                content_fingerprint="fp-ok",
-            ),
-            module.LegacyEmbeddingRow(
-                id="job-model-mismatch",
-                embedding=[0.4] * 1024,
-                embedding_model="text-embedding-3-small",
-                content_fingerprint="fp-other",
-            ),
-            module.LegacyEmbeddingRow(
-                id="job-dim-mismatch",
-                embedding=[0.7, 0.8],
-                embedding_model="gemini-embedding-001",
-                content_fingerprint="fp-dim",
-            ),
-        ]
-
-    async def fake_upsert(*_args, rows, **_kwargs):  # noqa: ANN001
-        upserted_job_ids.extend(row[1] for row in rows)
-
-    monkeypatch.setattr(module, "_fetch_legacy_migration_batch", fake_fetch_legacy)
-    monkeypatch.setattr(module, "_upsert_active_target_rows", fake_upsert)
-
-    stats, migrated_ids = await module._migrate_legacy_embeddings(
-        fake_conn,
-        target=_target(module),
-        provider="gemini",
-        batch_size=10,
-        require_structured=False,
-        dry_run=False,
-        limit=None,
-    )
-
-    assert stats.scanned == 3
-    assert stats.migrated == 1
-    assert stats.skipped_model_mismatch == 1
-    assert stats.skipped_dim_mismatch == 1
-    assert migrated_ids == {"job-ok"}
-    assert upserted_job_ids == ["job-ok"]
-
-
-@pytest.mark.asyncio
-async def test_run_dry_run_skips_provider_for_planned_legacy_migration(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    module = _load_backfill_module()
-    fake_conn = _FakeConn()
-
-    async def fake_migrate(*_args, **_kwargs):
-        return module.MigrationStats(scanned=1, migrated=1), {"job-legacy"}
 
     fetch_calls = {"count": 0}
 
@@ -289,7 +219,6 @@ async def test_run_dry_run_skips_provider_for_planned_legacy_migration(
     monkeypatch.setattr(module, "_count_fresh_active_rows", _async_return(0))
     monkeypatch.setattr(module, "_count_pending_generation", _async_return(2))
     monkeypatch.setattr(module, "_count_missing_content_rows", _async_return(0))
-    monkeypatch.setattr(module, "_migrate_legacy_embeddings", fake_migrate)
     monkeypatch.setattr(module, "_fetch_generation_batch", fake_fetch_generation_batch)
     monkeypatch.setattr(module, "_embed_batch", fake_embed_batch)
     monkeypatch.setattr(module, "_upsert_active_target_rows", fake_upsert)
@@ -297,5 +226,5 @@ async def test_run_dry_run_skips_provider_for_planned_legacy_migration(
     await module.run(_build_args(dry_run=True))
 
     assert fake_conn.closed is True
-    assert observed_rows == [["job-stale"]]
+    assert observed_rows == [["job-legacy", "job-stale"]]
     assert upsert_called["value"] is False

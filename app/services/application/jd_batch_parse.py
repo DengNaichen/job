@@ -8,8 +8,11 @@ from app.models.job import Job
 from app.repositories.job import JobRepository
 from app.schemas.structured_jd import BatchStructuredJD
 from app.schemas.structured_jd import BatchStructuredJDItem
-from app.services.application.jd_parser import parse_jd_batch
+from app.services.application.blob.job_blob import JobBlobManager
+from app.services.application.jd_parsing import parse_jd_batch
 from app.services.application.structured_jd import StructuredJDService
+from app.services.infra.blob_storage import BlobNotFoundError, BlobStorageNotConfiguredError
+from app.services.infra.text import html_to_text
 
 
 class JDParseServiceError(Exception):
@@ -21,6 +24,7 @@ class JDBatchParseService:
 
     def __init__(self, session: AsyncSession):
         self.structured_jd_service = StructuredJDService(JobRepository(session))
+        self.blob_manager = JobBlobManager()
 
     async def fetch_pending_jobs(
         self,
@@ -47,7 +51,14 @@ class JDBatchParseService:
 
         jobs_data: list[dict[str, str]] = []
         for job in jobs:
-            description = job.description_html or job.description_plain or ""
+            description = (job.description_plain or "").strip()
+            if not description and job.description_html_key:
+                try:
+                    html_description = await self.blob_manager.load_description_html(job)
+                except (BlobNotFoundError, BlobStorageNotConfiguredError):
+                    html_description = None
+                if html_description:
+                    description = html_to_text(html_description)
             jobs_data.append(
                 {
                     "job_id": str(job.id),
@@ -56,7 +67,7 @@ class JDBatchParseService:
                 }
             )
 
-        parsed = await parse_jd_batch(jobs_data, is_html=True)
+        parsed = await parse_jd_batch(jobs_data, is_html=False)
 
         if persist:
             try:

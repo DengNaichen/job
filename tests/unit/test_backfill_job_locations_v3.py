@@ -1,9 +1,12 @@
 import pytest
 
-
 from app.models.job import Job, WorkplaceType
 from sqlmodel.ext.asyncio.session import AsyncSession
 from scripts.backfill_job_locations_v3 import apply_backfill_to_job_v3
+
+pytestmark = pytest.mark.skip(
+    reason="Legacy `job.location_*` columns were removed; use normalized location backfill tests."
+)
 
 
 class TestBackfillJobLocationsV3:

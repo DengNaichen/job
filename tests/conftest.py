@@ -42,14 +42,17 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 
 
 @pytest.fixture
-def test_engine() -> AsyncEngine:
-    """Create test database engine with in-memory SQLite."""
+async def test_engine() -> AsyncGenerator[AsyncEngine, None]:
+    """Create test database engine with in-memory SQLite and dispose it after each test."""
     engine = create_async_engine(
         TEST_DATABASE_URL,
         echo=False,
         future=True,
     )
-    return engine
+    try:
+        yield engine
+    finally:
+        await engine.dispose()
 
 
 @pytest.fixture
@@ -58,11 +61,12 @@ async def session(test_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None
     async with test_engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 
-    async with AsyncSession(test_engine) as session:
-        yield session
-
-    async with test_engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.drop_all)
+    try:
+        async with AsyncSession(test_engine) as session:
+            yield session
+    finally:
+        async with test_engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.drop_all)
 
 
 @pytest.fixture

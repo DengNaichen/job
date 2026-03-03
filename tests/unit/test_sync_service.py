@@ -177,7 +177,6 @@ async def test_sync_service_skips_overlap_without_running_snapshot(
             repo = SyncRunRepository(session)
             # Seed with source_id so the authoritative overlap check finds it
             await repo.create_running(
-                source=build_source_key(source.platform, source.identifier),
                 source_id=str(source.id),
             )
 
@@ -198,6 +197,42 @@ async def test_sync_service_skips_overlap_without_running_snapshot(
 
         rows = await _list_sync_runs(test_engine)
         assert len(rows) == 2
+    finally:
+        await test_engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_sync_service_handles_running_conflict_during_create(
+    test_engine,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    await _init_tables(test_engine)
+    try:
+        source = _make_source("figma")
+        service = SyncService(engine=test_engine)
+
+        async def fake_try_create_running(self, *, source_id: str | None = None):  # noqa: ANN001
+            _ = (self, source_id)
+            return None
+
+        called = {"value": False}
+
+        async def fake_execute_snapshot_sync(**kwargs):  # noqa: ANN001
+            _ = kwargs
+            called["value"] = True
+            raise AssertionError("should not be called")
+
+        monkeypatch.setattr(SyncRunRepository, "try_create_running", fake_try_create_running)
+        monkeypatch.setattr(service, "_execute_snapshot_sync", fake_execute_snapshot_sync)
+
+        sync_run = await service.sync_source(source=source, retry_attempts=1)
+
+        assert called["value"] is False
+        assert sync_run.status == SyncRunStatus.failed
+        assert sync_run.error_summary == "overlap: source already running"
+
+        rows = await _list_sync_runs(test_engine)
+        assert len(rows) == 1
     finally:
         await test_engine.dispose()
 

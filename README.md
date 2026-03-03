@@ -89,16 +89,15 @@ The ingest path is intentionally layered:
 3. `Mapper`
    Converts raw payloads into the internal `JobCreate` schema
 4. `FullSnapshotSyncService`
-   Dedupes by `external_job_id`, upserts open jobs, and closes missing jobs after a successful full snapshot. Ownership is keyed by `source_id` (FK to `sources.id`).
+   Dedupes by `external_job_id`, upserts open jobs, and closes missing jobs after a successful full snapshot. Ownership is keyed by `source_id` (FK to `sources.id`). The implementation is modularized under `app/services/application/full_snapshot_sync/` and uses bounded blob-sync concurrency.
 5. `SyncRun`
    Records each source-level execution status and stats, linked to `sources` via `source_id`
 6. `run_scheduled_ingests.py`
-   Thin orchestration layer for scheduled source syncs with retry and overlap protection
+   Thin orchestration layer for scheduled source syncs with retry and overlap protection. Overlap guard is keyed by `source_id` and backed by a DB-level unique running-run guard.
 
-> **Note on `source` string field**: Both `job.source` and `syncrun.source` retain the legacy
-> `platform:identifier` string (e.g. `greenhouse:airbnb`) as a **compatibility field**.
-> It is dual-written alongside `source_id` and preserved for backward-compatible reads.
-> `source_id` (FK to `sources.id`) is the authoritative owner key for all runtime behavior.
+> **Note on source ownership key**: Runtime ownership is now keyed only by `source_id`
+> (FK to `sources.id`) on both `job` and `syncrun`. Legacy string columns were removed
+> in migration `f7a8b9c0d1e2_drop_legacy_source_columns`.
 
 ## Quick Start
 
@@ -250,7 +249,7 @@ Current behavior:
 - supported platforms only
 - source-level `SyncRun` records
 - source-level retry via `tenacity`
-- overlap guard for already-running sources
+- overlap guard for already-running sources (source_id + DB unique running guard)
 - sequential execution
 - non-zero exit code if any source fails
 

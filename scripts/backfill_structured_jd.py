@@ -19,8 +19,11 @@ from app.schemas.structured_jd import (
     build_structured_jd_projection,
     build_structured_jd_storage_payload,
 )
-from app.services.application.jd_parser import parse_jd
+from app.services.application.blob.job_blob import JobBlobManager
+from app.services.application.jd_parsing import parse_jd
+from app.services.infra.blob_storage import BlobNotFoundError, BlobStorageNotConfiguredError
 from app.services.infra.llm import get_token_usage
+from app.services.infra.text import html_to_text
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -70,7 +73,7 @@ async def _fetch_pending_jobs(
     result = await session.execute(
         select(Job)
         .where(pending_filter)
-        .where((Job.description_html.is_not(None)) | (Job.description_plain.is_not(None)))
+        .where((Job.description_html_key.is_not(None)) | (Job.description_plain.is_not(None)))
         .order_by(Job.updated_at, Job.id)
         .limit(limit)
     )
@@ -93,6 +96,7 @@ async def run(args: argparse.Namespace) -> None:
         raise ValueError("concurrency must be > 0")
 
     semaphore = asyncio.Semaphore(concurrency)
+    blob_manager = JobBlobManager()
     get_token_usage().reset()
 
     success_total = 0
@@ -115,8 +119,13 @@ async def run(args: argparse.Namespace) -> None:
             for job in jobs:
                 if job.description_plain:
                     job_payloads.append((job.id, job.description_plain, False))
-                elif job.description_html:
-                    job_payloads.append((job.id, job.description_html, True))
+                elif job.description_html_key:
+                    try:
+                        html_description = await blob_manager.load_description_html(job)
+                    except (BlobNotFoundError, BlobStorageNotConfiguredError):
+                        html_description = None
+                    description_text = html_to_text(html_description) if html_description else ""
+                    job_payloads.append((job.id, description_text, False))
                 else:
                     # Shouldn't happen due SQL filter, but keep safe.
                     job_payloads.append((job.id, "", False))

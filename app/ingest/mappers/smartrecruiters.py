@@ -4,7 +4,7 @@ from typing import Any
 from app.ingest.mappers.base import BaseMapper
 from app.models.job import WorkplaceType
 from app.schemas.job import JobCreate
-from app.services.infra.html_utils import html_to_text
+from app.services.infra.text import html_to_text
 
 
 class SmartRecruitersMapper(BaseMapper):

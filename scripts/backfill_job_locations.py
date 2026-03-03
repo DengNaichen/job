@@ -38,6 +38,10 @@ MAPPERS: dict[str, BaseMapper] = {
 HIGH_CONFIDENCE_SOURCES = {"smartrecruiters", "apple", "uber", "tiktok", "eightfold"}
 
 
+def _job_attr(job: Job, field: str, default: object = None) -> object:
+    return getattr(job, field, default)
+
+
 def apply_backfill_to_job(job: Job) -> bool:
     """
     Apply structured location backfill to a job in-place.
@@ -49,14 +53,17 @@ def apply_backfill_to_job(job: Job) -> bool:
     new_country = None
     new_workplace = WorkplaceType.unknown
 
-    is_high_confidence = job.source in HIGH_CONFIDENCE_SOURCES
+    source_key = _job_attr(job, "source")
+    source_platform = source_key if isinstance(source_key, str) else None
+    is_high_confidence = source_platform in HIGH_CONFIDENCE_SOURCES
 
     # 1. Try to extract using the mapper from raw_payload (Explicit Field -> High Confidence)
-    mapper = MAPPERS.get(job.source) if job.source else None
+    mapper = MAPPERS.get(source_platform) if source_platform else None
     mapped = None
-    if mapper and job.raw_payload:
+    raw_payload = _job_attr(job, "raw_payload")
+    if mapper and raw_payload:
         try:
-            mapped = mapper.map(job.raw_payload)
+            mapped = mapper.map(raw_payload)
             new_city = mapped.location_city
             new_region = mapped.location_region
             new_country = mapped.location_country_code
@@ -69,14 +76,16 @@ def apply_backfill_to_job(job: Job) -> bool:
     heuristic_country = None
     if not (new_country and is_high_confidence):
         # Try remote_scope first if it exists
-        if job.location_remote_scope:
-            res = normalize_country(job.location_remote_scope, is_explicit_field=False)
+        remote_scope = _job_attr(job, "location_remote_scope")
+        if isinstance(remote_scope, str) and remote_scope:
+            res = normalize_country(remote_scope, is_explicit_field=False)
             if res.country_code:
                 heuristic_country = res.country_code
 
         # Then try location_text
-        if not heuristic_country and job.location_text:
-            parsed = parse_location_text(job.location_text)
+        location_text = _job_attr(job, "location_text")
+        if not heuristic_country and isinstance(location_text, str) and location_text:
+            parsed = parse_location_text(location_text)
             heuristic_country = parsed.country_code
 
             # Also sync city/region/workplace if they are still missing
@@ -92,30 +101,44 @@ def apply_backfill_to_job(job: Job) -> bool:
     # Country update rules
     target_country = new_country or heuristic_country
     if target_country:
-        current_canonical = is_canonical_country_code(job.location_country_code)
+        existing_country = _job_attr(job, "location_country_code")
+        current_canonical = is_canonical_country_code(
+            existing_country if isinstance(existing_country, str) else None
+        )
         # Overwrite if:
         # - Current is not canonical (null or raw string)
         # - OR current is canonical but our new value is high-confidence from mapper
         if not current_canonical or (target_country == new_country and is_high_confidence):
-            if job.location_country_code != target_country:
-                job.location_country_code = target_country
+            if _job_attr(job, "location_country_code") != target_country and hasattr(
+                job.__class__, "model_fields"
+            ) and "location_country_code" in job.__class__.model_fields:
+                job.location_country_code = target_country  # type: ignore[attr-defined]
                 changed = True
 
     # City/Region/Workplace update rules (staying with basic "empty or high confidence" for now)
-    has_existing_city_region = bool(job.location_city or job.location_region)
+    has_existing_city_region = bool(_job_attr(job, "location_city") or _job_attr(job, "location_region"))
     if not has_existing_city_region or is_high_confidence:
-        if new_city and new_city != job.location_city:
-            job.location_city = new_city
+        if (
+            new_city
+            and new_city != _job_attr(job, "location_city")
+            and "location_city" in job.__class__.model_fields
+        ):
+            job.location_city = new_city  # type: ignore[attr-defined]
             changed = True
-        if new_region and new_region != job.location_region:
-            job.location_region = new_region
+        if (
+            new_region
+            and new_region != _job_attr(job, "location_region")
+            and "location_region" in job.__class__.model_fields
+        ):
+            job.location_region = new_region  # type: ignore[attr-defined]
             changed = True
 
     if (
-        job.location_workplace_type == WorkplaceType.unknown
+        _job_attr(job, "location_workplace_type", WorkplaceType.unknown) == WorkplaceType.unknown
         and new_workplace != WorkplaceType.unknown
+        and "location_workplace_type" in job.__class__.model_fields
     ):
-        job.location_workplace_type = new_workplace
+        job.location_workplace_type = new_workplace  # type: ignore[attr-defined]
         changed = True
 
     return changed
