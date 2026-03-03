@@ -17,16 +17,17 @@ async def parse_jd(
     is_html: bool = False,
     *,
     title: str | None = None,
-    complete_json_fn: CompleteJSONFn = complete_json,
+    complete_json_fn: CompleteJSONFn | None = None,
 ) -> StructuredJD:
     """Parse a JD and return normalized structured fields."""
+    complete_json_impl = complete_json_fn or complete_json
     normalized_description = prepare_job_description(job_description, is_html=is_html)
     prompt = EXTRACT_KEYWORDS_PROMPT.format(
         job_title=title or "Unknown",
         job_description=normalized_description,
     )
 
-    result = await complete_json_fn(
+    result = await complete_json_impl(
         prompt=prompt,
         system_prompt="You are an expert job description analyzer.",
         max_tokens=1200,
