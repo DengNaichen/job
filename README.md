@@ -122,17 +122,23 @@ Optional features:
 - `STORAGE_PROVIDER=supabase` and related storage vars for blob offload
 - embedding / LLM settings for structured JD parsing and matching
 
-### 3. Start PostgreSQL
+### 3. Start local Supabase (and optionally Metabase)
 
 ```bash
-docker compose up -d postgres
+npx supabase start
+```
+
+Start Metabase for local BI/dashboarding:
+
+```bash
+docker compose up -d metabase
 docker compose ps
 ```
 
 Default local database:
 
 ```text
-postgresql+asyncpg://postgres:postgres@localhost:5434/job_db
+postgresql+asyncpg://postgres:postgres@127.0.0.1:55322/postgres
 ```
 
 ### 4. Apply database migrations
@@ -159,6 +165,22 @@ Useful URLs:
 - API docs: `http://127.0.0.1:8000/docs`
 - Health: `http://127.0.0.1:8000/health`
 - Metrics: `http://127.0.0.1:8000/metrics`
+- Metabase: `http://127.0.0.1:3001`
+
+## Metabase Setup (Local)
+
+After `docker compose up -d metabase`, open `http://127.0.0.1:3001` and finish the first-run setup.
+
+When adding this app database in Metabase, use:
+
+- Database type: `PostgreSQL`
+- Host: `host.docker.internal` (when Metabase runs in Docker)
+- Port: `55322`
+- Database name: `postgres`
+- Username: `postgres`
+- Password: `postgres`
+
+If you run Metabase outside Docker, set host to `127.0.0.1` and port to `55322`.
 
 ## Database Architecture
 

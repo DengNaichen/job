@@ -49,7 +49,7 @@ class JobEmbedding(SQLModel, table=True):
     embedding_model: str = Field(sa_column=Column(String(255), nullable=False))
     embedding_dim: int = Field(sa_column=Column(Integer, nullable=False))
     embedding: list[float] = Field(
-        default_factory=list, sa_column=Column(Vector(1024), nullable=False)
+        default_factory=list, sa_column=Column(Vector(768), nullable=False)
     )
     content_fingerprint: str | None = Field(
         default=None,

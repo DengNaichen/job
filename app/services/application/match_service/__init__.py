@@ -104,7 +104,9 @@ class MatchExperimentService:
         )
         user_vec_literal = vector_literal(user_embedding)
         sql_prefilter, sql_prefilter_params, sql_prefilter_summary = build_sql_prefilter(
-            start_index=2,
+            # fetch_candidates uses $1..$5 for vector + active embedding target fields.
+            # Prefilter params must start after those placeholders.
+            start_index=6,
             needs_sponsorship=needs_sponsorship,
             user_degree_rank=user_degree_rank,
             preferred_country_code=request.preferred_country_code,

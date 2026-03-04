@@ -1,21 +1,14 @@
 services:
-  postgres:
-    image: pgvector/pgvector:pg16
-    container_name: job-postgres
+  metabase:
+    image: metabase/metabase:latest
+    container_name: job-metabase
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: job_db
     ports:
-      - "5434:5432"
+      - "3001:3000"
     volumes:
-      - job_postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d job_db"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
+      - job_metabase_data:/metabase-data
+    environment:
+      MB_DB_FILE: /metabase-data/metabase.db
 
 volumes:
-  job_postgres_data:
+  job_metabase_data:
