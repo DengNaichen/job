@@ -13,6 +13,7 @@ scripts/local/*
 !scripts/local/.gitkeep
 
 # Generated ATS audit and verification reports
+reports/
 reports/*_missing_identifiers.csv
 reports/*_verification_report.csv
 reports/final_source_import_candidates.csv
@@ -23,6 +24,7 @@ backups/
 logs/
 *.dump
 .DS_Store
+data/geonames/*.zip
 
 # Python
 __pycache__/
