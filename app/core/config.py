@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     embedding_api_key: str | None = None  # defaults to gemini_api_key if not set
     embedding_api_base: str | None = None
     embedding_model: str = "gemini-embedding-001"
-    embedding_dim: int = 1024
+    embedding_dim: int = 768
     embedding_batch_size: int = 32
 
     # LLM (for JD parsing)

@@ -3,6 +3,7 @@ node_modules
 .env
 .env.*
 !.env.example
+gcp.env
 
 /generated/prisma
 notebooks/
@@ -12,10 +13,18 @@ scripts/local/*
 !scripts/local/.gitkeep
 
 # Generated ATS audit and verification reports
+reports/
 reports/*_missing_identifiers.csv
 reports/*_verification_report.csv
 reports/final_source_import_candidates.csv
 reports/cross_platform_overlap_resolution.csv
+
+# Runtime artifacts / local backups
+backups/
+logs/
+*.dump
+.DS_Store
+data/geonames/*.zip
 
 # Python
 __pycache__/
