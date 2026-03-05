@@ -8,10 +8,11 @@
 [PRINCIPLE_1_DESCRIPTION]
 <!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Lint Gate (NON-NEGOTIABLE)
+
+- MUST: Run `./scripts/lint` before every commit and verify zero errors.
+- MUST: A commit that introduces lint failures is non-compliant and must be fixed before push.
+- Rationale: CI runs `ruff check` on every PR. Catching lint locally avoids broken builds.
 
 ### [PRINCIPLE_3_NAME]
 <!-- Example: III. Test-First (NON-NEGOTIABLE) -->
