@@ -11,14 +11,14 @@ class SmartRecruitersFetcher(BaseFetcher):
     BASE_URL = "https://api.smartrecruiters.com/v1/companies"
     PAGE_SIZE = 100
     REQUEST_TIMEOUT_SECONDS = 60.0
-    DETAIL_CONCURRENCY = 8
+    DETAIL_CONCURRENCY = 6
 
-    # Detail endpoint retry config: fixed delay, no 429, returns None on failure
+    # Detail endpoint retry config: fixed delay and graceful failure semantics.
     detail_retry_config = RetryConfig(
         max_retries=2,
-        retryable_status_codes={500, 502, 503, 504},  # No 429
+        retryable_status_codes={429, 500, 502, 503, 504},
         backoff_base_seconds=0.25,
-        exponential_backoff=False,  # Fixed delay
+        exponential_backoff=False,
     )
 
     @property
@@ -52,9 +52,12 @@ class SmartRecruitersFetcher(BaseFetcher):
             url = f"{self.BASE_URL}/{slug}/postings"
             params = {"limit": self.PAGE_SIZE, "offset": offset}
 
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            data = response.json()
+            data = await self.request_json_with_retry(
+                client,
+                method="GET",
+                url=url,
+                params=params,
+            )
 
             content = data.get("content", [])
             if not isinstance(content, list):

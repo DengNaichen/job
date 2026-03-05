@@ -44,6 +44,20 @@ class RetryConfig:
 | `UberFetcher` | Uber | 自建招聘系统 |
 | `TikTokFetcher` | TikTok | 自建招聘系统 |
 
+## US1 Contributor Rules
+
+为保持 US1 稳定性，请遵循以下规则：
+
+- 具体平台 fetcher 中禁止直接调用 `client.get()` / `client.post()`。
+- 统一使用 `BaseFetcher` 的 `request_with_retry()` 或 `request_json_with_retry()`。
+- summary + detail 模式的 fetcher 默认 `DETAIL_CONCURRENCY = 6`。
+- 如定义 detail 专用重试配置，`retryable_status_codes` 必须至少包含：
+  - `429`
+  - `500`
+  - `502`
+  - `503`
+  - `504`
+
 ## 添加新的 Fetcher
 
 ```python
