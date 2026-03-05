@@ -4,12 +4,8 @@ from __future__ import annotations
 
 import re
 
-from app.schemas.structured_jd import (
-    degree_level_to_rank,
-    normalize_degree_level,
-    normalize_job_domain_name,
-    normalize_sponsorship,
-)
+from app.schemas.structured_jd import normalize_job_domain_name, normalize_sponsorship
+from app.services.domain.rule_parsing.education import extract_min_degree_level
 
 _YEAR_PATTERN = re.compile(
     r"(?P<low>\d{1,2})\s*(?:\+|plus)?\s*(?:[-–—to]{1,3}\s*(?P<high>\d{1,2}))?\s+years?",
@@ -23,32 +19,6 @@ _EXPERIENCE_CONTEXT_MARKERS = (
     "relevant",
     "background",
 )
-
-_DEGREE_CONTEXT_MARKERS = (
-    "degree",
-    "bachelor",
-    "master",
-    "phd",
-    "doctorate",
-    "associate",
-    "diploma",
-    "undergraduate",
-)
-
-_NONE_DEGREE_MARKERS = (
-    "no degree",
-    "degree not required",
-    "not required",
-    "equivalent experience",
-)
-
-_DEGREE_MARKERS: list[tuple[str, tuple[str, ...]]] = [
-    ("associate", ("associate", "community college", "advanced diploma", "diploma")),
-    ("bachelor", ("bachelor", "b.a", "ba ", "b.s", "bs ", "undergraduate")),
-    ("master", ("master", "m.s", "ms ", "m.sc", "msc", "mba", "m.a", "ma ")),
-    ("doctorate", ("doctorate", "doctoral", "phd", "ph.d", "m.d", "md ", "juris doctor")),
-]
-
 
 def normalize_text(text: str) -> str:
     """Collapse whitespace for regex parsing."""
@@ -82,48 +52,6 @@ def extract_experience(text: str) -> tuple[int | None, list[str]]:
             matched_lines.append(line)
 
     return (max(years) if years else None, matched_lines[:2])
-
-
-def _extract_degree_levels(line: str) -> list[str]:
-    lowered = line.lower()
-    if any(marker in lowered for marker in _NONE_DEGREE_MARKERS):
-        return ["none"]
-
-    levels: list[str] = []
-    for level, markers in _DEGREE_MARKERS:
-        if any(marker in lowered for marker in markers):
-            levels.append(level)
-    return levels
-
-
-def extract_min_degree_level(text: str) -> tuple[str, list[str]]:
-    """Extract minimum degree level and source lines."""
-    matched_lines: list[str] = []
-    levels: list[str] = []
-
-    for line in split_nonempty_lines(text):
-        lowered = line.lower()
-        if not any(marker in lowered for marker in _DEGREE_CONTEXT_MARKERS):
-            continue
-        line_levels = _extract_degree_levels(line)
-        if not line_levels:
-            continue
-        levels.extend(line_levels)
-        if line not in matched_lines:
-            matched_lines.append(line)
-
-    if not levels:
-        return "unknown", []
-
-    if "none" in levels:
-        return "none", matched_lines[:2]
-
-    ranked_levels = [level for level in levels if degree_level_to_rank(level) >= 0]
-    if not ranked_levels:
-        return "unknown", matched_lines[:2]
-
-    min_level = min(ranked_levels, key=degree_level_to_rank)
-    return normalize_degree_level(min_level), matched_lines[:2]
 
 
 def infer_seniority_level(title: str | None, experience_years: int | None = None) -> str | None:
