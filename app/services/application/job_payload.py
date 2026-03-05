@@ -6,15 +6,6 @@ from typing import Any
 
 from app.services.infra.text import html_to_text
 
-LEGACY_LOCATION_FIELDS: set[str] = {
-    "location_text",
-    "location_city",
-    "location_region",
-    "location_country_code",
-    "location_workplace_type",
-    "location_remote_scope",
-}
-
 
 def hydrate_description_plain(
     payload: dict[str, Any],
@@ -35,9 +26,7 @@ def drop_legacy_job_payload_fields(
     *,
     include_source: bool = False,
 ) -> None:
-    """Remove deprecated compatibility fields before constructing/updating Job."""
+    """Remove non-Job columns before constructing/updating Job rows."""
     payload.pop("location_hints", None)
     if include_source:
         payload.pop("source", None)
-    for field in LEGACY_LOCATION_FIELDS:
-        payload.pop(field, None)

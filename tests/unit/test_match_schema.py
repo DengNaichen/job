@@ -1,5 +1,8 @@
 """Unit tests for typed matching schemas."""
 
+import pytest
+from pydantic import ValidationError
+
 from app.schemas.match import CandidateProfile, MatchRequest, MatchResponse, MatchResultItem
 
 
@@ -134,17 +137,19 @@ def test_match_response_model_dump_preserves_existing_json_shape() -> None:
                     "source": "greenhouse",
                     "title": "Business Intelligence Analyst",
                     "apply_url": "https://example.com/job-1",
-                    "location_text": "Toronto, ON",
-                    "city": "Toronto",
-                    "region": "Ontario",
-                    "country_code": "CA",
-                    "workplace_type": "hybrid",
+                    "locations": [
+                        {
+                            "source_raw": "Toronto, ON",
+                            "city": "Toronto",
+                            "region": "Ontario",
+                            "country_code": "CA",
+                            "workplace_type": "hybrid",
+                            "is_primary": True,
+                        }
+                    ],
                     "department": "Analytics",
                     "team": "BI",
                     "employment_type": "full-time",
-                    "job_domain_normalized": "data_ai",
-                    "min_degree_rank": 2,
-                    "jd_experience_years": 3,
                     "cosine_score": 0.88,
                     "skill_overlap_score": 1.0,
                     "domain_match_score": 1.0,
@@ -181,42 +186,38 @@ def test_match_response_model_dump_preserves_existing_json_shape() -> None:
 
     dumped = response.model_dump(mode="json")
     assert dumped["meta"]["user_json"] == "/tmp/user.json"
-    assert dumped["results"][0]["job_domain_normalized"] == "data_ai"
+    assert dumped["results"][0]["locations"][0]["country_code"] == "CA"
     assert dumped["results"][0]["penalties"]["total_penalty"] == 0.0
     assert dumped["results"][0]["llm_recommendation"] is None
 
 
-def test_match_result_item_keeps_extra_fields_in_dump() -> None:
-    item = MatchResultItem.model_validate(
-        {
-            "job_id": "job-1",
-            "title": "Analyst",
-            "apply_url": "https://example.com/job-1",
-            "city": "Toronto",
-            "region": "Ontario",
-            "country_code": "CA",
-            "workplace_type": "hybrid",
-            "cosine_score": 0.8,
-            "skill_overlap_score": 0.5,
-            "domain_match_score": 1.0,
-            "seniority_match_score": 1.0,
-            "experience_gap": 0,
-            "education_gap": 0,
-            "penalties": {
-                "experience_penalty": 0.0,
-                "education_penalty": 0.0,
-                "total_penalty": 0.0,
-            },
-            "score_breakdown": {
-                "cosine_component": 0.56,
-                "skill_component": 0.075,
-                "domain_component": 0.1,
-                "seniority_component": 0.05,
-            },
-            "final_score": 0.785,
-            "llm_adjusted_score": 0.785,
-            "job_domain_normalized": "data_ai",
-        }
-    )
-
-    assert item.model_dump()["job_domain_normalized"] == "data_ai"
+def test_match_result_item_forbids_legacy_or_unknown_extras() -> None:
+    with pytest.raises(ValidationError):
+        MatchResultItem.model_validate(
+            {
+                "job_id": "job-1",
+                "title": "Analyst",
+                "apply_url": "https://example.com/job-1",
+                "locations": [],
+                "cosine_score": 0.8,
+                "skill_overlap_score": 0.5,
+                "domain_match_score": 1.0,
+                "seniority_match_score": 1.0,
+                "experience_gap": 0,
+                "education_gap": 0,
+                "penalties": {
+                    "experience_penalty": 0.0,
+                    "education_penalty": 0.0,
+                    "total_penalty": 0.0,
+                },
+                "score_breakdown": {
+                    "cosine_component": 0.56,
+                    "skill_component": 0.075,
+                    "domain_component": 0.1,
+                    "seniority_component": 0.05,
+                },
+                "final_score": 0.785,
+                "llm_adjusted_score": 0.785,
+                "location_text": "Toronto, ON",
+            }
+        )

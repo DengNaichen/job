@@ -13,6 +13,10 @@ class AppleMapper(BaseMapper):
         return "apple"
 
     def map(self, raw_job: dict[str, Any]) -> JobCreate:
+        location_text = self._location_text(raw_job)
+        city = self._get_location_part(raw_job, "city")
+        region = self._get_location_part(raw_job, "stateProvince")
+        country_code = self.normalize_country_field(self._get_location_part(raw_job, "countryName"))
         return JobCreate(
             source=self.source_name,
             external_job_id=self._clean(raw_job.get("positionId")) or str(raw_job.get("id", "")),
@@ -20,12 +24,16 @@ class AppleMapper(BaseMapper):
             apply_url=self._build_apply_url(raw_job),
             normalized_apply_url=None,
             status="open",
-            location_text=self._location_text(raw_job),
-            location_city=self._get_location_part(raw_job, "city"),
-            location_region=self._get_location_part(raw_job, "stateProvince"),
-            location_country_code=self.normalize_country_field(
-                self._get_location_part(raw_job, "countryName")
-            ),
+            location_hints=[
+                {
+                    "source_raw": location_text,
+                    "city": city,
+                    "region": region,
+                    "country_code": country_code,
+                }
+            ]
+            if (location_text or city or region or country_code)
+            else [],
             department=self._team_name(raw_job),
             team=None,
             employment_type=None,

@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
+from app.schemas.location import MatchLocationRead
+
 
 class CandidateEducation(BaseModel):
     model_config = ConfigDict(
@@ -167,7 +169,7 @@ class HardFilterResult(BaseModel):
 
 class MatchResultItem(BaseModel):
     model_config = ConfigDict(
-        extra="allow",
+        extra="forbid",
         populate_by_name=True,
     )
 
@@ -175,11 +177,7 @@ class MatchResultItem(BaseModel):
     source: str | None = None
     title: str
     apply_url: str
-    location_text: str | None = None
-    city: str | None = None
-    region: str | None = None
-    country_code: str | None = None
-    workplace_type: str | None = None
+    locations: list[MatchLocationRead] = Field(default_factory=list)
     department: str | None = None
     team: str | None = None
     employment_type: str | None = None

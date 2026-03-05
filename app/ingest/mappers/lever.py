@@ -16,6 +16,7 @@ class LeverMapper(BaseMapper):
         location_text = self._clean(self._get_category(raw_job, "location"))
         commitment = self._clean(self._get_category(raw_job, "commitment"))
         parsed_loc = parse_location_text(location_text)
+        workplace_type = extract_workplace_type([location_text, commitment])
 
         return JobCreate(
             source=self.source_name,
@@ -24,22 +25,22 @@ class LeverMapper(BaseMapper):
             apply_url=self._clean(raw_job.get("applyUrl")),
             normalized_apply_url=None,
             status="open",
-            location_text=location_text,
-            location_city=parsed_loc.city,
-            location_region=parsed_loc.region,
-            location_country_code=parsed_loc.country_code,
-            location_workplace_type=extract_workplace_type([location_text, commitment]),
-            location_remote_scope=parsed_loc.remote_scope,
             location_hints=[
                 {
+                    "source_raw": location_text,
                     "city": parsed_loc.city,
                     "region": parsed_loc.region,
                     "country_code": parsed_loc.country_code,
-                    "workplace_type": extract_workplace_type([location_text, commitment]),
+                    "workplace_type": workplace_type,
                     "remote_scope": parsed_loc.remote_scope,
                 }
             ]
-            if location_text
+            if (
+                location_text
+                or parsed_loc.city
+                or parsed_loc.region
+                or parsed_loc.country_code
+            )
             else [],
             department=self._clean(self._get_category(raw_job, "department")),
             team=self._clean(self._get_category(raw_job, "team")),

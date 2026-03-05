@@ -32,7 +32,10 @@ class TestAshbyMapper:
         assert result.external_job_id == "145ff46b-1441-4773-bcd3-c8c90baa598a"
         assert result.title == "Engineer Who Can Design, Americas"
         assert result.apply_url == "https://jobs.ashbyhq.com/ashby/job-1/application"
-        assert result.model_dump()["location_text"] == "Remote - North to South America"
+        assert (
+            result.model_dump()["location_hints"][0]["source_raw"]
+            == "Remote - North to South America"
+        )
         assert result.department == "Engineering"
         assert result.team == "Americas Engineering"
         assert result.employment_type == "FullTime"
@@ -92,8 +95,7 @@ class TestAshbyMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.model_dump()["location_text"] is None
-        assert result.model_dump()["location_country_code"] is None
+        assert result.model_dump()["location_hints"] == []
         assert result.department is None
         assert result.team is None
         assert result.employment_type is None
@@ -112,7 +114,7 @@ class TestAshbyMapper:
 
         assert result.title == "Engineer"
         assert result.apply_url == "https://jobs.ashbyhq.com/example/job-1/application"
-        assert result.model_dump()["location_text"] == "Remote"
+        assert result.model_dump()["location_hints"][0]["source_raw"] == "Remote"
 
     def test_map_single_country_text_infers_canonical_code(self, mapper):
         """Location text with a single clear country infers canonical alpha-2."""
@@ -125,8 +127,9 @@ class TestAshbyMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.model_dump()["location_country_code"] == "DE"
-        assert result.model_dump()["location_city"] == "Berlin"
+        hint = result.model_dump()["location_hints"][0]
+        assert hint["country_code"] == "DE"
+        assert hint["city"] == "Berlin"
 
     def test_map_ambiguous_multi_country_returns_null(self, mapper):
         """Multi-country or region text should not produce a country code."""
@@ -139,7 +142,7 @@ class TestAshbyMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.model_dump()["location_country_code"] is None
+        assert result.model_dump()["location_hints"][0]["country_code"] is None
 
     def test_map_remote_single_country_scope(self, mapper):
         """Remote with a single-country scope infers canonical code."""
@@ -152,7 +155,8 @@ class TestAshbyMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.model_dump()["location_country_code"] == "CA"
+        hint = result.model_dump()["location_hints"][0]
+        assert hint["country_code"] == "CA"
         from app.models.job import WorkplaceType
 
-        assert result.model_dump()["location_workplace_type"] == WorkplaceType.remote
+        assert hint["workplace_type"] == WorkplaceType.remote
