@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 
-from app.schemas.structured_jd import normalize_job_domain_name
 from app.services.domain.rule_parsing.education import extract_min_degree_level
 from app.services.domain.rule_parsing.experience import extract_experience
 from app.services.domain.rule_parsing.seniority import infer_seniority_level
@@ -34,9 +33,3 @@ def extract_rule_based_fields(text: str, *, title: str | None = None) -> dict[st
         "min_degree_level": min_degree_level,
         "seniority_level": infer_seniority_level(title, experience_years),
     }
-
-
-def fallback_job_domain(title: str | None, text: str) -> str:
-    """Cheap fallback for role domain when LLM returns unknown."""
-    seed = " ".join(part for part in (title or "", text[:800]) if part).strip()
-    return normalize_job_domain_name(seed)

@@ -4,18 +4,29 @@ from collections.abc import Mapping
 from typing import Any
 
 from app.schemas.structured_jd import StructuredJD
-from app.services.domain.jd_rules import extract_rule_based_fields, fallback_job_domain
+from app.services.domain.jd_rules import extract_rule_based_fields
 from app.services.infra.text import html_to_text
 
 from .prompts import MAX_JD_PARSE_CHARS
 
 
-def prepare_job_description(job_description: str, *, is_html: bool) -> str:
-    """Normalize raw JD content before parsing."""
+def prepare_job_description(
+    job_description: str,
+    *,
+    is_html: bool,
+    max_chars: int | None = MAX_JD_PARSE_CHARS,
+) -> str:
+    """Normalize raw JD content before parsing.
+
+    Args:
+        job_description: Raw job description input.
+        is_html: Whether input is HTML and requires conversion.
+        max_chars: Optional truncation limit. ``None`` keeps full text.
+    """
     if is_html:
         job_description = html_to_text(job_description)
-    if len(job_description) > MAX_JD_PARSE_CHARS:
-        job_description = job_description[:MAX_JD_PARSE_CHARS]
+    if max_chars is not None and len(job_description) > max_chars:
+        job_description = job_description[:max_chars]
     return job_description
 
 
@@ -42,9 +53,6 @@ def merge_llm_and_rule_fields(
         keywords = []
         job_domain_raw = None
         job_domain_normalized = llm_payload.get("d", "unknown")
-
-    if str(job_domain_normalized or "unknown") == "unknown":
-        job_domain_normalized = fallback_job_domain(title, description)
 
     merged = {
         "required_skills": required_skills,

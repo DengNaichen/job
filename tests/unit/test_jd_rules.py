@@ -1,6 +1,6 @@
 """Unit tests for rule-based JD extraction helpers."""
 
-from app.services.domain.jd_rules import extract_rule_based_fields, fallback_job_domain
+from app.services.domain.jd_rules import extract_rule_based_fields
 
 
 def test_extract_rule_based_fields_parses_sponsorship_years_degree_and_seniority() -> None:
@@ -20,12 +20,3 @@ def test_extract_rule_based_fields_parses_sponsorship_years_degree_and_seniority
     assert payload["seniority_level"] == "senior"
     assert payload["experience_requirements"]
     assert payload["education_requirements"]
-
-
-def test_fallback_job_domain_uses_title_and_text() -> None:
-    domain = fallback_job_domain(
-        "Threat Researcher",
-        "Research malware, threat actors, SIEM detections, and security controls.",
-    )
-
-    assert domain == "cybersecurity"

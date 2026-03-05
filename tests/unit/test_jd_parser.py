@@ -44,7 +44,7 @@ async def test_parse_jd_normalizes_new_fields(monkeypatch: pytest.MonkeyPatch) -
     )
 
     assert parsed.sponsorship_not_available == "unknown"
-    assert parsed.job_domain_normalized == "cybersecurity"
+    assert parsed.job_domain_normalized == "unknown"
     assert parsed.min_degree_level == "bachelor"
     assert parsed.experience_years == 2
     assert parsed.required_skills == ["malware analysis", "Python"]
@@ -86,3 +86,56 @@ async def test_parse_jd_batch_merges_compact_llm_output_with_rules(
     assert parsed.jobs[0].experience_years == 8
     assert parsed.jobs[1].job_domain_normalized == "software_engineering"
     assert parsed.jobs[1].experience_years == 3
+
+
+@pytest.mark.asyncio
+async def test_parse_jd_rules_use_untruncated_description(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def fake_complete_json(**kwargs):  # noqa: ANN003
+        return {
+            "d": "software_engineering",
+            "s": ["python"],
+        }
+
+    monkeypatch.setattr("app.services.application.jd_parsing.single.complete_json", fake_complete_json)
+
+    long_description = (
+        ("Experience with distributed systems. " * 220)
+        + "\n"
+        + "Bachelor's degree in Computer Science required."
+    )
+
+    parsed = await parse_jd(long_description, title="Backend Engineer")
+
+    assert parsed.min_degree_level == "bachelor"
+
+
+@pytest.mark.asyncio
+async def test_parse_jd_batch_rules_use_untruncated_description(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def fake_complete_json(**kwargs):  # noqa: ANN003
+        return {
+            "jobs": [
+                {"i": "job-1", "d": "software_engineering", "s": ["python"]},
+            ]
+        }
+
+    monkeypatch.setattr("app.services.application.jd_parsing.batch.complete_json", fake_complete_json)
+
+    long_description = (
+        ("Design scalable backend services. " * 220)
+        + "\n"
+        + "Master's degree in Computer Science preferred."
+    )
+
+    parsed = await parse_jd_batch(
+        [
+            {
+                "job_id": "job-1",
+                "title": "Backend Engineer",
+                "description": long_description,
+            }
+        ]
+    )
+
+    assert parsed.jobs[0].min_degree_level == "master"
