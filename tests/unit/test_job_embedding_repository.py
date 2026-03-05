@@ -8,8 +8,11 @@ from app.models import Job, JobEmbedding
 from app.repositories.job_embedding import JobEmbeddingRepository
 
 
+EMBEDDING_DIM = 768
+
+
 def _vec(value: float) -> list[float]:
-    return [value] * 1024
+    return [value] * EMBEDDING_DIM
 
 
 def _build_job(
@@ -45,7 +48,7 @@ async def test_upsert_for_target_creates_and_refreshes_one_active_row(
         embedding_kind="job_description",
         embedding_target_revision=1,
         embedding_model="gemini/gemini-embedding-001",
-        embedding_dim=1024,
+        embedding_dim=EMBEDDING_DIM,
     )
     await session.commit()
 
@@ -56,7 +59,7 @@ async def test_upsert_for_target_creates_and_refreshes_one_active_row(
         embedding_kind="job_description",
         embedding_target_revision=1,
         embedding_model="gemini/gemini-embedding-001",
-        embedding_dim=1024,
+        embedding_dim=EMBEDDING_DIM,
     )
     await session.commit()
 
@@ -87,7 +90,7 @@ async def test_list_fresh_job_ids_for_target_uses_content_fingerprint(
         embedding_kind="job_description",
         embedding_target_revision=1,
         embedding_model="gemini/gemini-embedding-001",
-        embedding_dim=1024,
+        embedding_dim=EMBEDDING_DIM,
     )
     await repo.upsert_for_target(
         job_id=stale_job_id,
@@ -96,7 +99,7 @@ async def test_list_fresh_job_ids_for_target_uses_content_fingerprint(
         embedding_kind="job_description",
         embedding_target_revision=1,
         embedding_model="gemini/gemini-embedding-001",
-        embedding_dim=1024,
+        embedding_dim=EMBEDDING_DIM,
     )
     await session.commit()
 
@@ -108,7 +111,7 @@ async def test_list_fresh_job_ids_for_target_uses_content_fingerprint(
         embedding_kind="job_description",
         embedding_target_revision=1,
         embedding_model="gemini/gemini-embedding-001",
-        embedding_dim=1024,
+        embedding_dim=EMBEDDING_DIM,
     )
 
     assert fresh_ids == {fresh_job_id}
