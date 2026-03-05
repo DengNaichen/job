@@ -51,7 +51,7 @@ class TestSmartRecruitersMapper:
         assert result.model_dump()["location_hints"][0]["source_raw"] == "Singapore"
         assert result.department == "Product"
         assert result.team == "Product Management"
-        assert result.employment_type == "Full-time"
+        assert result.employment_type == "full-time"
         assert result.published_at == datetime(2026, 2, 28, 2, 43, 38, 353000, tzinfo=timezone.utc)
         assert result.source_updated_at is None
 

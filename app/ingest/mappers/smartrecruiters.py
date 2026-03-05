@@ -50,7 +50,7 @@ class SmartRecruitersMapper(BaseMapper):
             else [],
             department=self._clean(self._get_label(raw_job, "department")),
             team=self._clean(self._get_label(raw_job, "function")),
-            employment_type=self._clean(self._get_label(raw_job, "typeOfEmployment")),
+            employment_type=self._normalize_employment_type(self._get_label(raw_job, "typeOfEmployment")),
             description_html=description_html,
             description_plain=html_to_text(description_html) if description_html else None,
             published_at=self._to_datetime_or_none(raw_job.get("releasedDate")),

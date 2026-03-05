@@ -74,7 +74,7 @@ class TestGreenhouseMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.employment_type == "Full-time"
+        assert result.employment_type == "full-time"
 
     def test_map_with_description(self, mapper):
         """Test description field mapping."""
