@@ -2,6 +2,7 @@ import asyncio
 from typing import Any
 
 from copy import deepcopy
+from types import SimpleNamespace
 
 import pytest
 from sqlmodel import select
@@ -9,10 +10,14 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.ingest.fetchers.base import BaseFetcher
 from app.ingest.mappers.base import BaseMapper
-from app.models import Job, JobLocation, JobStatus, Location, PlatformType, Source
+from app.models import Job, JobEmbedding, JobLocation, JobStatus, Location, PlatformType, Source
 from app.schemas.job import JobCreate
+from app.services.application.embedding_refresh import EmbeddingRefreshService
 from app.services.application.full_snapshot_sync import FullSnapshotSyncService
 from app.services.application.blob.job_blob import JobBlobManager
+from app.services.infra.embedding import EmbeddingConfig, EmbeddingTargetDescriptor
+
+EMBEDDING_DIM = 768
 
 
 class _FakeFetcher(BaseFetcher):
@@ -555,3 +560,113 @@ async def test_full_snapshot_sync_blob_failure_rolls_back_under_parallelism(
     assert result.error is not None
     assert "blob boom" in result.error
     assert rows == []
+
+
+def _refresh_target() -> EmbeddingTargetDescriptor:
+    return EmbeddingTargetDescriptor(
+        embedding_kind="job_description",
+        embedding_target_revision=1,
+        embedding_model="gemini/gemini-embedding-001",
+        embedding_dim=EMBEDDING_DIM,
+    )
+
+
+def _refresh_service(session: AsyncSession) -> EmbeddingRefreshService:
+    async def fake_embed_texts(texts: list[str], **_kwargs):  # noqa: ANN003
+        return [[0.1] * EMBEDDING_DIM for _ in texts]
+
+    return EmbeddingRefreshService(
+        session=session,
+        embedding_fn=fake_embed_texts,
+        settings_provider=lambda: SimpleNamespace(
+            embedding_refresh_enabled=True,
+            embedding_refresh_batch_size=10,
+            embedding_dim=EMBEDDING_DIM,
+        ),
+        embedding_config_provider=lambda: EmbeddingConfig(
+            provider="gemini",
+            model="gemini-embedding-001",
+        ),
+        target_resolver=lambda **_: _refresh_target(),
+    )
+
+
+@pytest.mark.asyncio
+async def test_snapshot_embedding_refresh_excludes_jobs_closed_by_latest_snapshot(
+    session: AsyncSession,
+) -> None:
+    source = _source()
+    snapshot_service = _service(session)
+    await snapshot_service.sync_source(
+        source=source,
+        fetcher=_FakeFetcher(_jobs(["A", "B", "C"])),
+        mapper=_FakeMapper(),
+    )
+    await snapshot_service.sync_source(
+        source=source,
+        fetcher=_FakeFetcher(_jobs(["A", "B"])),
+        mapper=_FakeMapper(),
+    )
+
+    refresh_service = _refresh_service(session)
+    refresh_result = await refresh_service.refresh_for_source(
+        source_id=str(source.id),
+        snapshot_run_id="run-closed-filter",
+    )
+
+    job_rows = (await session.exec(select(Job))).all()
+    open_job_ids = {row.id for row in job_rows if row.status == JobStatus.open}
+    rows = (
+        await session.exec(
+            select(JobEmbedding).where(
+                JobEmbedding.embedding_kind == "job_description",
+                JobEmbedding.embedding_target_revision == 1,
+                JobEmbedding.embedding_model == "gemini/gemini-embedding-001",
+                JobEmbedding.embedding_dim == EMBEDDING_DIM,
+            )
+        )
+    ).all()
+    embedded_job_ids = {row.job_id for row in rows}
+
+    assert refresh_result.triggered is True
+    assert refresh_result.selected_jobs == 2
+    assert embedded_job_ids == open_job_ids
+    assert len(embedded_job_ids) == 2
+
+
+@pytest.mark.asyncio
+async def test_snapshot_embedding_refresh_rerun_is_idempotent_for_active_target_rows(
+    session: AsyncSession,
+) -> None:
+    source = _source()
+    snapshot_service = _service(session)
+    await snapshot_service.sync_source(
+        source=source,
+        fetcher=_FakeFetcher(_jobs(["A", "B"])),
+        mapper=_FakeMapper(),
+    )
+
+    refresh_service = _refresh_service(session)
+    first = await refresh_service.refresh_for_source(
+        source_id=str(source.id),
+        snapshot_run_id="run-first",
+    )
+    second = await refresh_service.refresh_for_source(
+        source_id=str(source.id),
+        snapshot_run_id="run-second",
+    )
+    rows = (
+        await session.exec(
+            select(JobEmbedding).where(
+                JobEmbedding.embedding_kind == "job_description",
+                JobEmbedding.embedding_target_revision == 1,
+                JobEmbedding.embedding_model == "gemini/gemini-embedding-001",
+                JobEmbedding.embedding_dim == EMBEDDING_DIM,
+            )
+        )
+    ).all()
+
+    assert first.refreshed_jobs == 2
+    assert second.selected_jobs == 0
+    assert second.refreshed_jobs == 0
+    assert len(rows) == 2

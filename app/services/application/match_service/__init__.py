@@ -70,10 +70,12 @@ class MatchExperimentService:
         embedding_fn=None,
         embedding_config_provider=None,
         settings_provider=None,
+        active_target_resolver=None,
     ):
         self.settings_provider = settings_provider or get_settings
         self.embedding_fn = embedding_fn or embed_text
         self.embedding_config_provider = embedding_config_provider or get_embedding_config
+        self.active_target_resolver = active_target_resolver or resolve_active_job_embedding_target
         self.candidate_gateway = candidate_gateway or MatchCandidateGateway(
             settings_provider=self.settings_provider
         )
@@ -112,7 +114,7 @@ class MatchExperimentService:
             preferred_country_code=request.preferred_country_code,
         )
 
-        active_target = resolve_active_job_embedding_target(
+        active_target = self.active_target_resolver(
             config=self.embedding_config_provider(),
             embedding_dim=settings.embedding_dim,
         )

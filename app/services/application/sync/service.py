@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlmodel.ext.asyncio.session import AsyncSession
 from tenacity import AsyncRetrying, stop_after_attempt, wait_exponential
@@ -11,6 +13,10 @@ from app.ingest.mappers.base import BaseMapper
 from app.models import PlatformType, Source, SyncRun, SyncRunStatus
 from app.repositories.job import JobRepository
 from app.repositories.sync_run import SyncRunRepository
+from app.services.application.embedding_refresh import (
+    EmbeddingRefreshService,
+    EmbeddingRefreshServiceInterface,
+)
 from app.services.application.full_snapshot_sync import FullSnapshotSyncService
 
 from .handlers import PLATFORM_SYNC_HANDLERS, PlatformSyncHandlers
@@ -27,8 +33,42 @@ class SourceSyncAttemptFailed(Exception):
 class SyncService:
     """Orchestrates one source sync run with overlap guard and retries."""
 
-    def __init__(self, engine: AsyncEngine = default_engine):
+    def __init__(
+        self,
+        engine: AsyncEngine = default_engine,
+        embedding_refresh_factory: (
+            Callable[[AsyncSession], EmbeddingRefreshServiceInterface] | None
+        ) = None,
+    ):
         self.engine = engine
+        self.embedding_refresh_factory = embedding_refresh_factory or (
+            lambda session: EmbeddingRefreshService(session=session)
+        )
+
+    def _build_embedding_refresh_service(
+        self,
+        session: AsyncSession,
+    ) -> EmbeddingRefreshServiceInterface:
+        return self.embedding_refresh_factory(session)
+
+    async def _refresh_embeddings_if_needed(
+        self,
+        *,
+        source_id: str,
+        sync_run: SyncRun,
+        dry_run: bool,
+    ) -> None:
+        if dry_run or sync_run.status != SyncRunStatus.success:
+            return
+        async with AsyncSession(self.engine) as refresh_session:
+            refresh_service = self._build_embedding_refresh_service(refresh_session)
+            try:
+                await refresh_service.refresh_for_source(
+                    source_id=source_id,
+                    snapshot_run_id=str(sync_run.id),
+                )
+            except Exception:  # noqa: BLE001
+                await refresh_session.rollback()
 
     async def sync_source(
         self,
@@ -97,11 +137,17 @@ class SyncService:
                         error_summary="source sync produced no result",
                     )
 
-                return await sync_run_repository.finish(
+                finished_run = await sync_run_repository.finish(
                     run=sync_run,
                     status=SyncRunStatus.success,
                     stats=last_result.stats,
                 )
+                await self._refresh_embeddings_if_needed(
+                    source_id=str(source.id),
+                    sync_run=finished_run,
+                    dry_run=dry_run,
+                )
+                return finished_run
             except SourceSyncAttemptFailed as exc:
                 failed_result = last_result or exc.result
                 return await sync_run_repository.finish(

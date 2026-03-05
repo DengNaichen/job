@@ -7,6 +7,7 @@ from sqlmodel import SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import PlatformType, Source, SyncRun
+from app.services.application.embedding_refresh import EmbeddingRefreshExecutionResult
 
 
 def _make_source(
@@ -43,3 +44,49 @@ def list_sync_runs():
             return list(result.all())
 
     return _list
+
+
+@pytest.fixture
+def make_embedding_refresh_stub():
+    class _StubEmbeddingRefreshService:
+        def __init__(
+            self,
+            *,
+            result: EmbeddingRefreshExecutionResult | None = None,
+            error: Exception | None = None,
+        ) -> None:
+            self.result = result or EmbeddingRefreshExecutionResult(
+                source_id="",
+                snapshot_run_id=None,
+                triggered=True,
+            )
+            self.error = error
+            self.calls: list[dict[str, str | None]] = []
+
+        async def refresh_for_source(
+            self,
+            *,
+            source_id: str,
+            snapshot_run_id: str | None = None,
+        ) -> EmbeddingRefreshExecutionResult:
+            self.calls.append(
+                {
+                    "source_id": source_id,
+                    "snapshot_run_id": snapshot_run_id,
+                }
+            )
+            if self.error is not None:
+                raise self.error
+            return EmbeddingRefreshExecutionResult(
+                source_id=source_id,
+                snapshot_run_id=snapshot_run_id,
+                triggered=self.result.triggered,
+                selected_jobs=self.result.selected_jobs,
+                attempted_jobs=self.result.attempted_jobs,
+                refreshed_jobs=self.result.refreshed_jobs,
+                failed_jobs=self.result.failed_jobs,
+                skipped_jobs=self.result.skipped_jobs,
+                error=self.result.error,
+            )
+
+    return _StubEmbeddingRefreshService

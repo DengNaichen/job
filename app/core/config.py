@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     embedding_model: str = "gemini-embedding-001"
     embedding_dim: int = 768
     embedding_batch_size: int = 32
+    embedding_refresh_enabled: bool = True
+    embedding_refresh_batch_size: int = 32
 
     # LLM (for JD parsing)
     llm_provider: str = "gemini"  # openai, anthropic, gemini, deepseek, ollama, openrouter
@@ -53,6 +55,13 @@ class Settings(BaseSettings):
         """Accept common non-boolean environment values like 'release'."""
         if isinstance(value, str) and value.strip().lower() in {"release", "prod", "production"}:
             return False
+        return value
+
+    @field_validator("embedding_refresh_batch_size")
+    @classmethod
+    def validate_embedding_refresh_batch_size(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("embedding_refresh_batch_size must be > 0")
         return value
 
 

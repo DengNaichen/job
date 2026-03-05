@@ -180,17 +180,50 @@ class JobEmbeddingRepository:
         updated_at: datetime | None = None,
     ) -> int:
         """Create or refresh multiple active-target rows in the current transaction."""
-        count = 0
-        for row in rows:
-            await self.upsert_for_target(
-                job_id=row.job_id,
-                embedding=row.embedding,
-                content_fingerprint=row.content_fingerprint,
-                embedding_kind=embedding_kind,
-                embedding_target_revision=embedding_target_revision,
-                embedding_model=embedding_model,
-                embedding_dim=embedding_dim,
-                updated_at=updated_at,
-            )
-            count += 1
-        return count
+        if not rows:
+            return 0
+
+        # Preserve caller order while ensuring one write per job in this batch.
+        deduped_rows: list[JobEmbeddingUpsertPayload] = []
+        seen: set[str] = set()
+        for row in reversed(rows):
+            if not row.job_id or row.job_id in seen:
+                continue
+            seen.add(row.job_id)
+            deduped_rows.append(row)
+        deduped_rows.reverse()
+
+        job_ids = [row.job_id for row in deduped_rows]
+        existing_by_job_id = await self.list_by_job_ids_and_target(
+            job_ids=job_ids,
+            embedding_kind=embedding_kind,
+            embedding_target_revision=embedding_target_revision,
+            embedding_model=embedding_model,
+            embedding_dim=embedding_dim,
+        )
+
+        now = updated_at or datetime.now(timezone.utc)
+        for payload in deduped_rows:
+            existing = existing_by_job_id.get(payload.job_id)
+            if existing is None:
+                row = JobEmbedding(
+                    job_id=payload.job_id,
+                    embedding_kind=embedding_kind,
+                    embedding_target_revision=embedding_target_revision,
+                    embedding_model=embedding_model,
+                    embedding_dim=embedding_dim,
+                    embedding=payload.embedding,
+                    content_fingerprint=payload.content_fingerprint,
+                    created_at=now,
+                    updated_at=now,
+                )
+                self.session.add(row)
+                continue
+
+            existing.embedding = payload.embedding
+            existing.content_fingerprint = payload.content_fingerprint
+            existing.updated_at = now
+            self.session.add(existing)
+
+        await self.session.flush()
+        return len(deduped_rows)

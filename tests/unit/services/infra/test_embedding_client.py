@@ -58,7 +58,7 @@ async def test_embed_texts_empty_input_short_circuit(monkeypatch: pytest.MonkeyP
         calls["count"] += 1
         return SimpleNamespace(data=[{"embedding": [0.1, 0.2]}])
 
-    monkeypatch.setattr("app.services.infra.embedding.litellm.aembedding", fake_aembedding)
+    monkeypatch.setattr("app.services.infra.embedding.client.litellm.aembedding", fake_aembedding)
 
     vectors = await embed_texts(
         [],
@@ -82,7 +82,7 @@ async def test_embed_texts_returns_vectors(monkeypatch: pytest.MonkeyPatch) -> N
             ]
         )
 
-    monkeypatch.setattr("app.services.infra.embedding.litellm.aembedding", fake_aembedding)
+    monkeypatch.setattr("app.services.infra.embedding.client.litellm.aembedding", fake_aembedding)
 
     vectors = await embed_texts(
         ["hello", "world"],
@@ -104,7 +104,7 @@ async def test_embed_texts_fallback_without_dimensions(monkeypatch: pytest.Monke
             raise RuntimeError("unsupported dimensions")
         return SimpleNamespace(data=[{"embedding": [0.1, 0.2, 0.3]}])
 
-    monkeypatch.setattr("app.services.infra.embedding.litellm.aembedding", fake_aembedding)
+    monkeypatch.setattr("app.services.infra.embedding.client.litellm.aembedding", fake_aembedding)
 
     vectors = await embed_texts(
         ["hello"],
@@ -132,7 +132,7 @@ async def test_embed_texts_retries_transient_errors(monkeypatch: pytest.MonkeyPa
             raise _TransientError("service unavailable")
         return SimpleNamespace(data=[{"embedding": [0.4, 0.5]}])
 
-    monkeypatch.setattr("app.services.infra.embedding.litellm.aembedding", fake_aembedding)
+    monkeypatch.setattr("app.services.infra.embedding.client.litellm.aembedding", fake_aembedding)
 
     vectors = await embed_texts(
         ["retry-me"],
@@ -157,7 +157,7 @@ async def test_embed_texts_stops_at_retry_limit(monkeypatch: pytest.MonkeyPatch)
         calls["count"] += 1
         raise _TransientError("service unavailable")
 
-    monkeypatch.setattr("app.services.infra.embedding.litellm.aembedding", fake_aembedding)
+    monkeypatch.setattr("app.services.infra.embedding.client.litellm.aembedding", fake_aembedding)
 
     with pytest.raises(_TransientError):
         await embed_texts(
@@ -180,7 +180,7 @@ async def test_embed_texts_does_not_retry_non_transient_error(
         calls["count"] += 1
         raise ValueError("invalid request payload")
 
-    monkeypatch.setattr("app.services.infra.embedding.litellm.aembedding", fake_aembedding)
+    monkeypatch.setattr("app.services.infra.embedding.client.litellm.aembedding", fake_aembedding)
 
     with pytest.raises(ValueError):
         await embed_texts(
@@ -201,7 +201,7 @@ async def test_embed_texts_invalid_vector_count_has_context(
     async def fake_aembedding(**_kwargs):  # noqa: ANN003
         return SimpleNamespace(data=[{"embedding": [0.1, 0.2]}])
 
-    monkeypatch.setattr("app.services.infra.embedding.litellm.aembedding", fake_aembedding)
+    monkeypatch.setattr("app.services.infra.embedding.client.litellm.aembedding", fake_aembedding)
 
     with pytest.raises(ValueError, match="expected 2 vectors, got 1"):
         await embed_texts(
@@ -220,7 +220,7 @@ async def test_embed_texts_dimension_mismatch_has_context(
     async def fake_aembedding(**_kwargs):  # noqa: ANN003
         return SimpleNamespace(data=[{"embedding": [0.1, 0.2, 0.3]}])
 
-    monkeypatch.setattr("app.services.infra.embedding.litellm.aembedding", fake_aembedding)
+    monkeypatch.setattr("app.services.infra.embedding.client.litellm.aembedding", fake_aembedding)
 
     with pytest.raises(ValueError, match="provider=openai; model=Qwen/Qwen3-Embedding-8B"):
         await embed_texts(
