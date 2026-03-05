@@ -11,7 +11,7 @@ from app.models import PlatformType, Source, SyncRun, SyncRunStatus
 
 
 def _load_module():
-    root = Path(__file__).resolve().parents[2]
+    root = Path(__file__).resolve().parents[3]
     module_path = root / "scripts" / "run_scheduled_ingests.py"
     spec = importlib.util.spec_from_file_location("run_scheduled_ingests_test_module", module_path)
     if spec is None or spec.loader is None:  # pragma: no cover

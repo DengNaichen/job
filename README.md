@@ -354,7 +354,7 @@ Default local ports:
 ### Run a smaller targeted suite
 
 ```bash
-./scripts/uv run pytest tests/unit/test_sync_service.py tests/unit/test_run_scheduled_ingests.py
+./scripts/uv run pytest tests/unit/sync
 ```
 
 ### Common scripts
