@@ -45,3 +45,6 @@ Thumbs.db
 *.swp
 .vscode/
 .idea/
+
+# Codex local state
+.codex/
