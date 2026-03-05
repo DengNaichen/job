@@ -29,3 +29,9 @@ This note documents the runtime behavior of `app.services.infra.embedding.embed_
   - values are coerced to `float`; non-numeric values fail explicitly.
   - optional vector count and dimension checks are enforced when requested.
 - Validation errors include provider/model context for faster diagnostics.
+
+## Snapshot-Aligned Refresh Semantics
+- Embedding refresh orchestration is driven by successful full snapshot sync outcomes.
+- Refresh scope is source-scoped and restricted to open jobs only (closed jobs are excluded).
+- Refresh reads only active-target-missing or fingerprint-stale rows for that source.
+- Writes use active-target upsert semantics in `job_embedding`, so repeated successful snapshots remain idempotent.

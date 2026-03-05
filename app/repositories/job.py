@@ -23,6 +23,16 @@ class EmbeddableJobRow:
     content_fingerprint: str | None
 
 
+@dataclass(frozen=True)
+class SnapshotRefreshCandidateRow:
+    """Projection used for source-scoped snapshot embedding refresh."""
+
+    id: str
+    title: str
+    description: str
+    content_fingerprint: str | None
+
+
 class JobRepository:
     """Repository for Job entity database operations."""
 
@@ -484,3 +494,64 @@ class JobRepository:
             )
         result = await self.session.exec(statement)
         return int(result.one())
+
+    async def list_snapshot_refresh_candidates_for_active_target(
+        self,
+        *,
+        source_id: str,
+        embedding_kind: str,
+        embedding_target_revision: int,
+        embedding_model: str,
+        embedding_dim: int,
+        last_id: str | None = None,
+        limit: int = 100,
+        require_structured: bool = False,
+        force: bool = False,
+    ) -> list[SnapshotRefreshCandidateRow]:
+        """List source-scoped open jobs whose active target is missing or stale."""
+        description_expr = self._embeddable_description_expr().label("description")
+        statement = (
+            select(Job.id, Job.title, description_expr, Job.content_fingerprint)
+            .select_from(Job)
+            .outerjoin(
+                JobEmbedding,
+                self._target_join(
+                    embedding_kind=embedding_kind,
+                    embedding_target_revision=embedding_target_revision,
+                    embedding_model=embedding_model,
+                    embedding_dim=embedding_dim,
+                ),
+            )
+            .where(
+                Job.source_id == source_id,
+                Job.status == JobStatus.open,
+                description_expr.is_not(None),
+            )
+        )
+        if require_structured:
+            statement = statement.where(
+                Job.structured_jd.is_not(None),
+                func.coalesce(Job.structured_jd_version, 0) >= 3,
+            )
+        if last_id is not None:
+            statement = statement.where(Job.id > last_id)
+        if not force:
+            statement = statement.where(
+                or_(
+                    JobEmbedding.id.is_(None),
+                    JobEmbedding.content_fingerprint.is_distinct_from(Job.content_fingerprint),
+                )
+            )
+
+        statement = statement.order_by(Job.id).limit(limit)
+        result = await self.session.exec(statement)
+        rows = result.all()
+        return [
+            SnapshotRefreshCandidateRow(
+                id=row.id,
+                title=row.title,
+                description=row.description,
+                content_fingerprint=row.content_fingerprint,
+            )
+            for row in rows
+        ]

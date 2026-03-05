@@ -9,6 +9,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import PlatformType, Source, SyncRun, SyncRunStatus, build_source_key
 from app.repositories.sync_run import SyncRunRepository
+from app.services.application.embedding_refresh import EmbeddingRefreshService
 from app.services.application.full_snapshot_sync import SourceSyncResult, SourceSyncStats
 from app.services.application.sync import SyncService
 
@@ -31,6 +32,31 @@ async def _list_sync_runs(test_engine) -> Sequence[SyncRun]:
 async def _init_tables(test_engine) -> None:
     async with test_engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
+
+
+def test_sync_service_builds_default_embedding_refresh_service() -> None:
+    service = SyncService()
+
+    refresh_service = service._build_embedding_refresh_service(object())  # type: ignore[arg-type]
+
+    assert isinstance(refresh_service, EmbeddingRefreshService)
+
+
+def test_sync_service_uses_injected_embedding_refresh_factory() -> None:
+    captured: dict[str, object] = {}
+    marker = object()
+
+    def factory(session):  # noqa: ANN001
+        captured["session"] = session
+        return marker
+
+    service = SyncService(embedding_refresh_factory=factory)
+    fake_session = object()
+
+    refresh_service = service._build_embedding_refresh_service(fake_session)  # type: ignore[arg-type]
+
+    assert refresh_service is marker
+    assert captured["session"] is fake_session
 
 
 @pytest.mark.asyncio
@@ -252,5 +278,80 @@ async def test_sync_service_marks_unsupported_platform_failed(test_engine) -> No
         rows = await _list_sync_runs(test_engine)
         assert len(rows) == 1
         assert rows[0].status == SyncRunStatus.failed
+    finally:
+        await test_engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_sync_service_triggers_embedding_refresh_after_success(
+    test_engine,
+    monkeypatch: pytest.MonkeyPatch,
+    make_embedding_refresh_stub,
+) -> None:
+    await _init_tables(test_engine)
+    try:
+        source = _make_source("success-refresh")
+        refresh_stub = make_embedding_refresh_stub()
+
+        service = SyncService(
+            engine=test_engine,
+            embedding_refresh_factory=lambda _session: refresh_stub,
+        )
+
+        async def fake_execute_snapshot_sync(**kwargs):  # noqa: ANN001
+            _ = kwargs
+            return SourceSyncResult(
+                source_id=str(source.id),
+                source_key=build_source_key(source.platform, source.identifier),
+                ok=True,
+                stats=SourceSyncStats(fetched_count=2, unique_count=2),
+            )
+
+        monkeypatch.setattr(service, "_execute_snapshot_sync", fake_execute_snapshot_sync)
+
+        sync_run = await service.sync_source(source=source, retry_attempts=1)
+
+        assert sync_run.status == SyncRunStatus.success
+        assert refresh_stub.calls == [
+            {
+                "source_id": str(source.id),
+                "snapshot_run_id": str(sync_run.id),
+            }
+        ]
+    finally:
+        await test_engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_sync_service_does_not_trigger_embedding_refresh_after_failure(
+    test_engine,
+    monkeypatch: pytest.MonkeyPatch,
+    make_embedding_refresh_stub,
+) -> None:
+    await _init_tables(test_engine)
+    try:
+        source = _make_source("failed-refresh")
+        refresh_stub = make_embedding_refresh_stub()
+        service = SyncService(
+            engine=test_engine,
+            embedding_refresh_factory=lambda _session: refresh_stub,
+        )
+
+        async def fake_execute_snapshot_sync(**kwargs):  # noqa: ANN001
+            _ = kwargs
+            return SourceSyncResult(
+                source_id=str(source.id),
+                source_key=build_source_key(source.platform, source.identifier),
+                ok=False,
+                stats=SourceSyncStats(fetched_count=2, failed_count=2),
+                error="snapshot failed",
+            )
+
+        monkeypatch.setattr(service, "_execute_snapshot_sync", fake_execute_snapshot_sync)
+
+        sync_run = await service.sync_source(source=source, retry_attempts=1)
+
+        assert sync_run.status == SyncRunStatus.failed
+        assert refresh_stub.calls == []
     finally:
         await test_engine.dispose()

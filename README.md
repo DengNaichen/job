@@ -272,6 +272,8 @@ Current behavior:
 - source-level `SyncRun` records
 - source-level retry via `tenacity`
 - overlap guard for already-running sources (source_id + DB unique running guard)
+- embedding refresh runs only after successful non-dry-run snapshots
+- embedding refresh is source-scoped, excludes closed jobs, and writes idempotent active-target upserts
 - sequential execution
 - non-zero exit code if any source fails
 
@@ -281,14 +283,14 @@ This repo also includes downstream enrichment and matching utilities:
 
 - `scripts/backfill_structured_jd.py`
 - `scripts/batch_parse_jd.py`
-- `scripts/backfill_job_embeddings_gemini.py`
 - `scripts/match_experiment.py`
 
-These are separate from the raw ingest flow. A typical lifecycle is:
+Structured JD backfill is separate from raw ingest flow. Embedding refresh is snapshot-aligned and
+is triggered automatically by `SyncService` after successful full snapshots. A typical lifecycle is:
 
 1. ingest jobs
 2. backfill `structured_jd`
-3. backfill embeddings into the `job_embedding` store
+3. run snapshot sync (`scripts/run_scheduled_ingests.py`) to refresh active-target embeddings for open jobs
 4. query recommendations through `/api/v1/matching/recommendations` (matching recall joins through `job_embedding`)
 
 ## Blob Storage
@@ -365,8 +367,6 @@ Default local ports:
   Source-level orchestration runner
 - `scripts/backfill_structured_jd.py`
   Structured JD backfill
-- `scripts/backfill_job_embeddings_gemini.py`
-  Embedding backfill
 - `scripts/migrate_job_blobs_to_storage.py`
   Blob pointer backfill
 
