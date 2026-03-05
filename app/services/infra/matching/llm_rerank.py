@@ -11,7 +11,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.services.domain.jd_rules import infer_seniority_level
+from app.services.domain.rule_parsing import infer_seniority_level
 from app.services.domain.matching import (
     infer_user_degree_rank,
     infer_user_job_domain,

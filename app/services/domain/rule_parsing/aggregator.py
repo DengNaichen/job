@@ -1,27 +1,23 @@
-"""Rule-based extraction helpers for low-cost JD parsing."""
+"""Aggregate deterministic JD rule parsing fields."""
 
 from __future__ import annotations
 
 import re
 
-from app.services.domain.rule_parsing.education import extract_min_degree_level
-from app.services.domain.rule_parsing.experience import extract_experience
-from app.services.domain.rule_parsing.seniority import infer_seniority_level
-from app.services.domain.rule_parsing.sponsorship import extract_sponsorship
+from .education import extract_min_degree_level
+from .experience import extract_experience
+from .seniority import infer_seniority_level
+from .sponsorship import extract_sponsorship
 
-def normalize_text(text: str) -> str:
+
+def _normalize_text(text: str) -> str:
     """Collapse whitespace for regex parsing."""
     return re.sub(r"\s+", " ", text).strip()
 
 
-def split_nonempty_lines(text: str) -> list[str]:
-    """Split text into trimmed non-empty lines."""
-    return [line.strip() for line in text.splitlines() if line.strip()]
-
-
 def extract_rule_based_fields(text: str, *, title: str | None = None) -> dict[str, object]:
     """Extract deterministic JD fields with regex/rules."""
-    normalized = normalize_text(text)
+    normalized = _normalize_text(text)
     experience_years, experience_requirements = extract_experience(text)
     min_degree_level, education_requirements = extract_min_degree_level(text)
 
@@ -33,3 +29,6 @@ def extract_rule_based_fields(text: str, *, title: str | None = None) -> dict[st
         "min_degree_level": min_degree_level,
         "seniority_level": infer_seniority_level(title, experience_years),
     }
+
+
+__all__ = ["extract_rule_based_fields"]

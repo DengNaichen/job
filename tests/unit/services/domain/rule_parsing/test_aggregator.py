@@ -1,6 +1,6 @@
-"""Unit tests for rule-based JD extraction helpers."""
+"""Unit tests for rule parsing aggregation."""
 
-from app.services.domain.jd_rules import extract_rule_based_fields
+from app.services.domain.rule_parsing import extract_rule_based_fields
 
 
 def test_extract_rule_based_fields_parses_sponsorship_years_degree_and_seniority() -> None:

@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from app.schemas.structured_jd import StructuredJD
-from app.services.domain.jd_rules import extract_rule_based_fields
+from app.services.domain.rule_parsing import extract_rule_based_fields
 from app.services.infra.text import html_to_text
 
 from .prompts import MAX_JD_PARSE_CHARS
