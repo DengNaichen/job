@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -43,14 +44,21 @@ def _is_structured_location_usable(location: StructuredLocation) -> bool:
     return bool(location.city or location.region or location.country_code)
 
 
-def _build_structured_locations(payload: dict[str, Any]) -> list[StructuredLocation]:
+@dataclass
+class StructuredLocationPayload:
+    structured: StructuredLocation
+    source_raw: str | None = None
+
+
+def _build_structured_locations(payload: dict[str, Any]) -> list[StructuredLocationPayload]:
     hints = payload.get("location_hints")
-    structured_locations: list[StructuredLocation] = []
+    structured_locations: list[StructuredLocationPayload] = []
 
     if isinstance(hints, list):
         for hint in hints:
             if not isinstance(hint, dict):
                 continue
+            source_raw = _clean_optional_str(hint.get("source_raw"))
             structured = StructuredLocation(
                 city=_clean_optional_str(hint.get("city")),
                 region=_clean_optional_str(hint.get("region")),
@@ -58,42 +66,32 @@ def _build_structured_locations(payload: dict[str, Any]) -> list[StructuredLocat
                 workplace_type=_coerce_workplace_type(hint.get("workplace_type")),
                 remote_scope=_clean_optional_str(hint.get("remote_scope")),
             )
+
+            if source_raw:
+                parsed = parse_location_text(source_raw)
+                structured.city = structured.city or parsed.city
+                structured.region = structured.region or parsed.region
+                structured.country_code = structured.country_code or parsed.country_code
+                if structured.workplace_type == WorkplaceType.unknown:
+                    structured.workplace_type = parsed.workplace_type
+                structured.remote_scope = structured.remote_scope or parsed.remote_scope
+
+            if not structured.country_code and structured.city:
+                city_match = _full_snapshot_geonames_resolver().resolve_city(
+                    city=structured.city,
+                    region=structured.region,
+                )
+                if city_match:
+                    structured.country_code = city_match.country_code
+                    structured.region = structured.region or city_match.admin1_code
+
             if _is_structured_location_usable(structured):
-                structured_locations.append(structured)
+                structured_locations.append(
+                    StructuredLocationPayload(structured=structured, source_raw=source_raw)
+                )
 
     if structured_locations:
         return structured_locations
-
-    # Compatibility fallback for mappers that still emit job-level location fields.
-    location_text = _clean_optional_str(payload.get("location_text"))
-    fallback = StructuredLocation(
-        city=_clean_optional_str(payload.get("location_city")),
-        region=_clean_optional_str(payload.get("location_region")),
-        country_code=_clean_optional_str(payload.get("location_country_code")),
-        workplace_type=_coerce_workplace_type(payload.get("location_workplace_type")),
-        remote_scope=_clean_optional_str(payload.get("location_remote_scope")),
-    )
-
-    if location_text:
-        parsed = parse_location_text(location_text)
-        fallback.city = fallback.city or parsed.city
-        fallback.region = fallback.region or parsed.region
-        fallback.country_code = fallback.country_code or parsed.country_code
-        if fallback.workplace_type == WorkplaceType.unknown:
-            fallback.workplace_type = parsed.workplace_type
-        fallback.remote_scope = fallback.remote_scope or parsed.remote_scope
-
-    if not fallback.country_code and fallback.city:
-        city_match = _full_snapshot_geonames_resolver().resolve_city(
-            city=fallback.city,
-            region=fallback.region,
-        )
-        if city_match:
-            fallback.country_code = city_match.country_code
-            fallback.region = fallback.region or city_match.admin1_code
-
-    if _is_structured_location_usable(fallback):
-        return [fallback]
 
     return []
 
@@ -113,15 +111,16 @@ async def sync_staged_job_locations(
             continue
 
         structured_locations = _build_structured_locations(payload)
-        for i, structured in enumerate(structured_locations):
+        for i, location_payload in enumerate(structured_locations):
             is_primary = i == 0
+            structured = location_payload.structured
 
             location = await sync_job_location(
                 session=session,
                 job_id=str(job.id),
                 structured=structured,
                 is_primary=is_primary,
-                source_raw=payload.get("location_text"),
+                source_raw=location_payload.source_raw,
             )
 
             if is_primary:

@@ -51,15 +51,8 @@ async def _map_job_to_read(
     if "job_locations" in state.dict:
         links = state.dict["job_locations"]
         data["locations"] = [JobLocationRead.model_validate(link).model_dump() for link in links]
-        primary = next((link for link in links if link.is_primary), None)
-        data["location_text"] = (
-            primary.source_raw.strip()
-            if primary and isinstance(primary.source_raw, str) and primary.source_raw.strip()
-            else None
-        )
     else:
         data["locations"] = []
-        data["location_text"] = None
 
     if include_blob_content:
         try:

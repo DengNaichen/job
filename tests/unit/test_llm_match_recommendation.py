@@ -32,11 +32,18 @@ def _make_context_row(job_id: str) -> dict[str, object]:
     return {
         "job_id": job_id,
         "title": f"Job {job_id}",
-        "location_text": "Toronto, ON",
-        "city": "Toronto",
-        "region": "Ontario",
-        "country_code": "CA",
-        "workplace_type": "hybrid",
+        "locations": [
+            {
+                "source_raw": "Toronto, ON",
+                "city": "Toronto",
+                "region": "Ontario",
+                "country_code": "CA",
+                "workplace_type": "hybrid",
+                "remote_scope": None,
+                "display_name": "Toronto, ON, Canada",
+                "is_primary": True,
+            }
+        ],
         "employment_type": "full-time",
         "department": "Analytics",
         "team": "Business Intelligence",
@@ -103,11 +110,8 @@ def test_build_llm_match_payload_shapes_and_sanitizes() -> None:
     job_profile = payload["job_profile"]
     assert set(job_profile) == {
         "title",
-        "location_text",
-        "city",
-        "region",
-        "country_code",
-        "workplace_type",
+        "locations",
+        "primary_location",
         "employment_type",
         "department",
         "team",
@@ -115,6 +119,7 @@ def test_build_llm_match_payload_shapes_and_sanitizes() -> None:
         "min_degree_level",
         "structured_jd",
     }
+    assert job_profile["primary_location"]["country_code"] == "CA"
     structured_jd = job_profile["structured_jd"]
     assert len(structured_jd["required_skills"]) == 8
     assert len(structured_jd["preferred_skills"]) == 8

@@ -169,6 +169,15 @@ class MatchExperimentService:
             raise LLMRerankConfigurationError(str(exc)) from exc
 
         top_results = ranked[: request.top_n]
+        allowed_result_fields = set(MatchResultItem.model_fields.keys())
+        normalized_results: list[dict[str, object]] = []
+        for item in top_results:
+            normalized = {
+                key: value for key, value in dict(item).items() if key in allowed_result_fields
+            }
+            if not isinstance(normalized.get("locations"), list):
+                normalized["locations"] = []
+            normalized_results.append(normalized)
 
         return MatchResponse(
             meta=MatchResponseMeta(
@@ -191,7 +200,7 @@ class MatchExperimentService:
                 candidates_after_hard_filter=len(hard_filtered_rows),
                 hard_filter_summary=HardFilterSummary.model_validate(hard_filter_summary),
                 llm_rerank_summary=LLMRerankSummary.model_validate(llm_rerank_summary),
-                results_returned=len(top_results),
+                results_returned=len(normalized_results),
             ),
-            results=[MatchResultItem.model_validate(item) for item in top_results],
+            results=[MatchResultItem.model_validate(item) for item in normalized_results],
         )

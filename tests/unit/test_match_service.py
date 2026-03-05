@@ -50,11 +50,16 @@ def _make_candidate(job_id: str, cosine_score: float) -> dict[str, object]:
         "source": "greenhouse",
         "title": f"Job {job_id}",
         "apply_url": f"https://example.com/{job_id}",
-        "location_text": "Toronto, ON",
-        "city": "Toronto",
-        "region": "Ontario",
-        "country_code": "CA",
-        "workplace_type": "hybrid",
+        "locations": [
+            {
+                "source_raw": "Toronto, ON",
+                "city": "Toronto",
+                "region": "Ontario",
+                "country_code": "CA",
+                "workplace_type": "hybrid",
+                "is_primary": True,
+            }
+        ],
         "department": "Analytics",
         "team": "BI",
         "employment_type": "full-time",

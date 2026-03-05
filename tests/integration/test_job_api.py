@@ -49,6 +49,8 @@ class TestCreateJob:
         assert data["source"] == "greenhouse:job-test-source"
         assert data["source_id"] == source["id"]
         assert data["title"] == "Software Engineer"
+        assert "location_text" not in data
+        assert "locations" in data
 
     def test_create_job_with_explicit_source_id(self, client: TestClient):
         """Creating a job with explicit source_id keeps it as-is."""
@@ -68,6 +70,8 @@ class TestCreateJob:
         assert response.status_code == 201
         data = response.json()
         assert data["source_id"] == source["id"]
+        assert "location_text" not in data
+        assert "locations" in data
 
     def test_create_job_unresolvable_source_fails(self, client: TestClient):
         """Creating a job with an unknown source string returns 422."""
@@ -141,6 +145,8 @@ class TestReadJob:
         data = response.json()
         assert data["source_id"] == source_id
         assert "lever:" in data["source"]
+        assert "location_text" not in data
+        assert "locations" in data
 
     def test_list_jobs_exposes_source_id(self, client: TestClient):
         """GET /api/v1/jobs list response includes source_id on each item."""
@@ -154,3 +160,5 @@ class TestReadJob:
         matching = [j for j in data if j["id"] == job_data["id"]]
         assert len(matching) == 1
         assert matching[0]["source_id"] == source_id
+        assert "location_text" not in matching[0]
+        assert "locations" in matching[0]

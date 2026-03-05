@@ -23,6 +23,11 @@ class SmartRecruitersMapper(BaseMapper):
 
     def map(self, raw_job: dict[str, Any]) -> JobCreate:
         description_html = self._build_description_html(raw_job)
+        location_text = self._clean(self._get_location_text(raw_job))
+        city = self._clean(self._get_location_field(raw_job, "city"))
+        region = self._clean(self._get_location_field(raw_job, "region"))
+        country_code = self.normalize_country_field(self._get_location_field(raw_job, "country"))
+        workplace_type = self._get_workplace_type(raw_job)
 
         return JobCreate(
             source=self.source_name,
@@ -32,24 +37,16 @@ class SmartRecruitersMapper(BaseMapper):
             or self._clean(raw_job.get("postingUrl")),
             normalized_apply_url=None,
             status="open",
-            location_text=self._clean(self._get_location_text(raw_job)),
-            location_city=self._clean(self._get_location_field(raw_job, "city")),
-            location_region=self._clean(self._get_location_field(raw_job, "region")),
-            location_country_code=self.normalize_country_field(
-                self._get_location_field(raw_job, "country")
-            ),
-            location_workplace_type=self._get_workplace_type(raw_job),
             location_hints=[
                 {
-                    "city": self._clean(self._get_location_field(raw_job, "city")),
-                    "region": self._clean(self._get_location_field(raw_job, "region")),
-                    "country_code": self.normalize_country_field(
-                        self._get_location_field(raw_job, "country")
-                    ),
-                    "workplace_type": self._get_workplace_type(raw_job),
+                    "source_raw": location_text,
+                    "city": city,
+                    "region": region,
+                    "country_code": country_code,
+                    "workplace_type": workplace_type,
                 }
             ]
-            if self._get_location_text(raw_job)
+            if (location_text or city or region or country_code)
             else [],
             department=self._clean(self._get_label(raw_job, "department")),
             team=self._clean(self._get_label(raw_job, "function")),

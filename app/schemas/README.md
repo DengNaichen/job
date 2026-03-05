@@ -24,12 +24,16 @@ Input when creating a job:
     "apply_url": "https://example.com/apply",
     "normalized_apply_url": "https://example.com/apply",  # optional
     "status": "open",  # optional, default: open
-    "location_text": "San Francisco",  # optional deprecated ingest hint (not persisted on `job`)
-    "location_city": "San Francisco",  # optional
-    "location_region": "CA",  # optional
-    "location_country_code": "US",  # optional canonical single-country ISO 3166-1 alpha-2 code
-    "location_workplace_type": "onsite",  # optional, default: unknown
-    "location_remote_scope": null,  # optional
+    "location_hints": [  # optional normalized ingest hints
+        {
+            "source_raw": "San Francisco, CA",
+            "city": "San Francisco",
+            "region": "CA",
+            "country_code": "US",
+            "workplace_type": "onsite",
+            "remote_scope": null
+        }
+    ],
     "department": "Engineering",  # optional
     "team": "Backend",  # optional
     "employment_type": "full-time",  # optional
@@ -55,6 +59,7 @@ Job data returned to client:
     "title": "Senior Engineer",
     "apply_url": "https://example.com/apply",
     "status": "open",
+    "locations": [],  # normalized response location links
     "last_seen_at": "2024-01-01T00:00:00Z",
     "created_at": "2024-01-01T00:00:00Z",
     "updated_at": "2024-01-01T00:00:00Z",
@@ -70,7 +75,6 @@ Input when updating a job (all fields optional):
 {
     "title": "Staff Engineer",  # optional
     "status": "closed",  # optional
-    "location_text": "Remote",  # optional deprecated compatibility field (ignored on persistence)
     ...
 }
 ```

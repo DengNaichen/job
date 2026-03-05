@@ -21,7 +21,7 @@ class BaseMapper(ABC):
             - apply_url: Application URL
 
         Optional fields:
-            - location_text: Work location
+            - location_hints: Normalized location hints for canonical sync
             - department: Department
             - employment_type: Employment type (full-time, part-time, contract, etc.)
             - description_html: HTML formatted job description

@@ -103,11 +103,16 @@ def _make_response(*, llm_enabled: bool) -> MatchResponse:
                     "apply_url": "https://example.com/job-2"
                     if llm_enabled
                     else "https://example.com/job-1",
-                    "location_text": "Toronto, ON",
-                    "city": "Toronto",
-                    "region": "Ontario",
-                    "country_code": "CA",
-                    "workplace_type": "hybrid",
+                    "locations": [
+                        {
+                            "source_raw": "Toronto, ON",
+                            "city": "Toronto",
+                            "region": "Ontario",
+                            "country_code": "CA",
+                            "workplace_type": "hybrid",
+                            "is_primary": True,
+                        }
+                    ],
                     "department": "Analytics",
                     "team": "BI",
                     "employment_type": "full-time",
@@ -146,11 +151,16 @@ def _make_response(*, llm_enabled: bool) -> MatchResponse:
                     "apply_url": "https://example.com/job-1"
                     if llm_enabled
                     else "https://example.com/job-2",
-                    "location_text": "Toronto, ON",
-                    "city": "Toronto",
-                    "region": "Ontario",
-                    "country_code": "CA",
-                    "workplace_type": "hybrid",
+                    "locations": [
+                        {
+                            "source_raw": "Toronto, ON",
+                            "city": "Toronto",
+                            "region": "Ontario",
+                            "country_code": "CA",
+                            "workplace_type": "hybrid",
+                            "is_primary": True,
+                        }
+                    ],
                     "department": "Analytics",
                     "team": "BI",
                     "employment_type": "full-time",

@@ -241,20 +241,47 @@ def _build_job_profile(context_row: dict[str, Any]) -> dict[str, Any]:
         item_max_chars=_MAX_LIST_ITEM_CHARS,
         sanitize=True,
     )
+    raw_locations = context_row.get("locations")
+    normalized_locations: list[dict[str, Any]] = []
+    if isinstance(raw_locations, list):
+        for raw_location in raw_locations[:3]:
+            if not isinstance(raw_location, dict):
+                continue
+            normalized_locations.append(
+                {
+                    "source_raw": _sanitize_free_text(
+                        raw_location.get("source_raw"), max_chars=_MAX_TITLE_CHARS
+                    ),
+                    "city": _sanitize_free_text(
+                        raw_location.get("city"), max_chars=_MAX_TITLE_CHARS
+                    ),
+                    "region": _sanitize_free_text(
+                        raw_location.get("region"), max_chars=_MAX_TITLE_CHARS
+                    ),
+                    "country_code": _sanitize_free_text(
+                        raw_location.get("country_code"), max_chars=_MAX_TITLE_CHARS
+                    ),
+                    "display_name": _sanitize_free_text(
+                        raw_location.get("display_name"), max_chars=_MAX_TITLE_CHARS
+                    ),
+                    "workplace_type": _sanitize_free_text(
+                        raw_location.get("workplace_type"), max_chars=_MAX_TITLE_CHARS
+                    ),
+                    "remote_scope": _sanitize_free_text(
+                        raw_location.get("remote_scope"), max_chars=_MAX_TITLE_CHARS
+                    ),
+                    "is_primary": bool(raw_location.get("is_primary")),
+                }
+            )
+    primary_location = next(
+        (location for location in normalized_locations if location.get("is_primary")),
+        normalized_locations[0] if normalized_locations else {},
+    )
 
     return {
         "title": _sanitize_free_text(context_row.get("title"), max_chars=_MAX_TITLE_CHARS),
-        "location_text": _sanitize_free_text(
-            context_row.get("location_text"), max_chars=_MAX_TITLE_CHARS
-        ),
-        "city": _sanitize_free_text(context_row.get("city"), max_chars=_MAX_TITLE_CHARS),
-        "region": _sanitize_free_text(context_row.get("region"), max_chars=_MAX_TITLE_CHARS),
-        "country_code": _sanitize_free_text(
-            context_row.get("country_code"), max_chars=_MAX_TITLE_CHARS
-        ),
-        "workplace_type": _sanitize_free_text(
-            context_row.get("workplace_type"), max_chars=_MAX_TITLE_CHARS
-        ),
+        "locations": normalized_locations,
+        "primary_location": primary_location,
         "employment_type": _sanitize_free_text(
             context_row.get("employment_type"), max_chars=_MAX_TITLE_CHARS
         ),

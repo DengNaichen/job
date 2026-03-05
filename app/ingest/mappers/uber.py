@@ -12,6 +12,13 @@ class UberMapper(BaseMapper):
         return "uber"
 
     def map(self, raw_job: dict[str, Any]) -> JobCreate:
+        location_text = self._location_text(raw_job)
+        city = self._get_location_part(raw_job, "city")
+        region = self._get_location_part(raw_job, "region")
+        country_code = self.normalize_country_field(
+            self._get_location_part(raw_job, "countryName")
+            or self._get_location_part(raw_job, "country")
+        )
         return JobCreate(
             source=self.source_name,
             external_job_id=str(raw_job.get("id", "")),
@@ -19,13 +26,16 @@ class UberMapper(BaseMapper):
             apply_url=self._build_apply_url(raw_job),
             normalized_apply_url=None,
             status="open",
-            location_text=self._location_text(raw_job),
-            location_city=self._get_location_part(raw_job, "city"),
-            location_region=self._get_location_part(raw_job, "region"),
-            location_country_code=self.normalize_country_field(
-                self._get_location_part(raw_job, "countryName")
-                or self._get_location_part(raw_job, "country")
-            ),
+            location_hints=[
+                {
+                    "source_raw": location_text,
+                    "city": city,
+                    "region": region,
+                    "country_code": country_code,
+                }
+            ]
+            if (location_text or city or region or country_code)
+            else [],
             department=self._clean(raw_job.get("department")),
             team=self._clean(raw_job.get("team")),
             employment_type=self._clean(raw_job.get("timeType")),

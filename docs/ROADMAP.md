@@ -8,6 +8,10 @@ Current live counts, source coverage, storage footprint, and enrichment cost not
 
 `ROADMAP.md` should stay focused on work sequencing rather than mutable operational numbers.
 
+## Breaking Changes
+
+- [ ] Location API hard cutover (spec `006-location-filtering`): remove legacy compatibility fields from public jobs/matching contracts (`location_text`, and matching flattened fields `city/region/country_code/workplace_type`), keep normalized `locations` payloads only.
+
 ## Phase 0: Core Models & Migrations
 
 - [x] Project structure (FastAPI + SQLModel + Alembic)

@@ -41,3 +41,14 @@ class JobLocationRead(BaseModel):
     location: LocationRead | None = None
 
     model_config = {"from_attributes": True}
+
+
+class MatchLocationRead(BaseModel):
+    source_raw: str | None = None
+    workplace_type: str | None = None
+    remote_scope: str | None = None
+    is_primary: bool = False
+    city: str | None = None
+    region: str | None = None
+    country_code: str | None = None
+    display_name: str | None = None

@@ -29,8 +29,9 @@ class TestGreenhouseMapper:
         assert result.external_job_id == "123456"
         assert result.title == "Senior Software Engineer"
         assert result.apply_url == "https://boards.greenhouse.io/example/jobs/123456"
-        assert result.model_dump()["location_text"] == "San Francisco, CA"
-        assert result.model_dump()["location_country_code"] == "US"
+        hint = result.model_dump()["location_hints"][0]
+        assert hint["source_raw"] == "San Francisco, CA"
+        assert hint["country_code"] == "US"
         assert result.status == "open"
 
     def test_map_with_department(self, mapper):
@@ -144,8 +145,7 @@ class TestGreenhouseMapper:
         assert result.external_job_id == "1"
         assert result.title == "Engineer"
         assert result.apply_url == "https://example.com/job/1"
-        assert result.model_dump()["location_text"] is None
-        assert result.model_dump()["location_country_code"] is None
+        assert result.model_dump()["location_hints"] == []
         assert result.department is None
 
     def test_map_with_whitespace(self, mapper):
@@ -172,8 +172,9 @@ class TestGreenhouseMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.model_dump()["location_country_code"] == "GB"
-        assert result.model_dump()["location_city"] == "London"
+        hint = result.model_dump()["location_hints"][0]
+        assert hint["country_code"] == "GB"
+        assert hint["city"] == "London"
 
     def test_map_ambiguous_text_returns_null_country(self, mapper):
         """Ambiguous region text does not produce a country code."""
@@ -186,7 +187,8 @@ class TestGreenhouseMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.model_dump()["location_country_code"] is None
+        hint = result.model_dump()["location_hints"][0]
+        assert hint["country_code"] is None
 
     def test_map_remote_single_country_scope(self, mapper):
         """Remote with a single-country scope infers canonical code."""
@@ -199,7 +201,8 @@ class TestGreenhouseMapper:
 
         result = mapper.map(raw_job)
 
-        assert result.model_dump()["location_country_code"] == "DE"
+        hint = result.model_dump()["location_hints"][0]
+        assert hint["country_code"] == "DE"
         from app.models.job import WorkplaceType
 
-        assert result.model_dump()["location_workplace_type"] == WorkplaceType.remote
+        assert hint["workplace_type"] == WorkplaceType.remote

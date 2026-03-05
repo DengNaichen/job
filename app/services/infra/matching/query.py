@@ -100,11 +100,7 @@ async def fetch_candidates(
             (s.platform::text || ':' || s.identifier) AS source,
             j.title,
             j.apply_url,
-            jl_primary.source_raw AS location_text,
-            loc.city AS city,
-            loc.region AS region,
-            loc.country_code AS country_code,
-            jl_primary.workplace_type AS workplace_type,
+            loc_payload.locations AS locations,
             j.department,
             j.team,
             j.employment_type,
@@ -123,10 +119,27 @@ async def fetch_candidates(
         FROM job j
         JOIN sources s ON s.id = j.source_id
         JOIN job_embedding je ON j.id = je.job_id
-        LEFT JOIN job_locations jl_primary
-            ON jl_primary.job_id = j.id AND jl_primary.is_primary = TRUE
-        LEFT JOIN locations loc
-            ON loc.id = jl_primary.location_id
+        LEFT JOIN LATERAL (
+            SELECT COALESCE(
+                jsonb_agg(
+                    jsonb_build_object(
+                        'source_raw', jl.source_raw,
+                        'workplace_type', jl.workplace_type,
+                        'remote_scope', jl.remote_scope,
+                        'is_primary', jl.is_primary,
+                        'city', l.city,
+                        'region', l.region,
+                        'country_code', l.country_code,
+                        'display_name', l.display_name
+                    )
+                    ORDER BY jl.is_primary DESC, jl.created_at ASC
+                ),
+                '[]'::jsonb
+            ) AS locations
+            FROM job_locations jl
+            LEFT JOIN locations l ON l.id = jl.location_id
+            WHERE jl.job_id = j.id
+        ) AS loc_payload ON TRUE
         WHERE {" AND ".join(where_clauses)}
         ORDER BY je.embedding <=> $1::vector
         LIMIT {limit_placeholder}

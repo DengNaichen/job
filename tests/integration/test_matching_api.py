@@ -86,11 +86,16 @@ def _build_response() -> MatchResponse:
                     "source": "greenhouse",
                     "title": "Analytics Engineer",
                     "apply_url": "https://example.com/job-1",
-                    "location_text": "Toronto, ON",
-                    "city": "Toronto",
-                    "region": "Ontario",
-                    "country_code": "CA",
-                    "workplace_type": "hybrid",
+                    "locations": [
+                        {
+                            "source_raw": "Toronto, ON",
+                            "city": "Toronto",
+                            "region": "Ontario",
+                            "country_code": "CA",
+                            "workplace_type": "hybrid",
+                            "is_primary": True,
+                        }
+                    ],
                     "department": "Data",
                     "team": "Platform",
                     "employment_type": "full-time",
@@ -167,6 +172,7 @@ class TestMatchingAPI:
         assert payload["meta"]["results_returned"] == 1
         assert payload["results"][0]["job_id"] == "job-1"
         assert payload["results"][0]["final_score"] == 0.916
+        assert payload["results"][0]["locations"][0]["country_code"] == "CA"
 
     def test_get_match_recommendations_returns_service_unavailable_on_query_failure(
         self,

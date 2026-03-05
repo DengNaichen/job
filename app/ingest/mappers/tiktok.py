@@ -12,6 +12,9 @@ class TikTokMapper(BaseMapper):
         return "tiktok"
 
     def map(self, raw_job: dict[str, Any]) -> JobCreate:
+        location_text = self._location_text(raw_job)
+        city = self._nested_label(raw_job.get("city_info"))
+        country_code = self.normalize_country_field(self._get_tiktok_country(raw_job))
         return JobCreate(
             source=self.source_name,
             external_job_id=str(raw_job.get("id", "")),
@@ -19,9 +22,15 @@ class TikTokMapper(BaseMapper):
             apply_url=self._build_apply_url(raw_job),
             normalized_apply_url=None,
             status="open",
-            location_text=self._location_text(raw_job),
-            location_city=self._nested_label(raw_job.get("city_info")),
-            location_country_code=self.normalize_country_field(self._get_tiktok_country(raw_job)),
+            location_hints=[
+                {
+                    "source_raw": location_text,
+                    "city": city,
+                    "country_code": country_code,
+                }
+            ]
+            if (location_text or city or country_code)
+            else [],
             department=self._nested_label(raw_job.get("job_category")),
             team=self._nested_label(raw_job.get("department_info"))
             or self._nested_label(raw_job.get("job_subject")),

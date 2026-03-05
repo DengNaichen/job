@@ -106,11 +106,16 @@ async def test_fetch_candidates_keeps_match_constraints_and_fields() -> None:
                 "source": "greenhouse",
                 "title": "Analyst",
                 "apply_url": "https://example.com/job-1",
-                "location_text": "Toronto, ON",
-                "city": "Toronto",
-                "region": "Ontario",
-                "country_code": "CA",
-                "workplace_type": "hybrid",
+                "locations": [
+                    {
+                        "source_raw": "Toronto, ON",
+                        "city": "Toronto",
+                        "region": "Ontario",
+                        "country_code": "CA",
+                        "workplace_type": "hybrid",
+                        "is_primary": True,
+                    }
+                ],
                 "department": "Analytics",
                 "team": "BI",
                 "employment_type": "full-time",
@@ -144,9 +149,9 @@ async def test_fetch_candidates_keeps_match_constraints_and_fields() -> None:
 
     assert fake_conn.query is not None
     assert "je.embedding IS NOT NULL" in fake_conn.query
-    assert "loc.country_code AS country_code" in fake_conn.query
-    assert "LEFT JOIN job_locations jl_primary" in fake_conn.query
-    assert "LEFT JOIN locations loc" in fake_conn.query
+    assert "loc_payload.locations AS locations" in fake_conn.query
+    assert "LEFT JOIN LATERAL" in fake_conn.query
+    assert "jsonb_build_object(" in fake_conn.query
     assert "COALESCE(j.structured_jd_version, 0) >= 3" in fake_conn.query
     assert "j.sponsorship_not_available <> 'yes'" in fake_conn.query
     assert "JOIN job_embedding je ON j.id = je.job_id" in fake_conn.query
@@ -161,4 +166,4 @@ async def test_fetch_candidates_keeps_match_constraints_and_fields() -> None:
         25,
     )
     assert rows[0]["job_id"] == "job-1"
-    assert rows[0]["country_code"] == "CA"
+    assert rows[0]["locations"][0]["country_code"] == "CA"
