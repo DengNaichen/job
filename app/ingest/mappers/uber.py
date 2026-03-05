@@ -38,7 +38,7 @@ class UberMapper(BaseMapper):
             else [],
             department=self._clean(raw_job.get("department")),
             team=self._clean(raw_job.get("team")),
-            employment_type=self._clean(raw_job.get("timeType")),
+            employment_type=self._normalize_employment_type(raw_job.get("timeType")),
             description_html=None,
             description_plain=self._clean(raw_job.get("description")),
             published_at=self._to_datetime_or_none(raw_job.get("creationDate")),

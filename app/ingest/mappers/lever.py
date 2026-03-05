@@ -15,6 +15,7 @@ class LeverMapper(BaseMapper):
     def map(self, raw_job: dict[str, Any]) -> JobCreate:
         location_text = self._clean(self._get_category(raw_job, "location"))
         commitment = self._clean(self._get_category(raw_job, "commitment"))
+        employment_type = self._normalize_employment_type(commitment)
         parsed_loc = parse_location_text(location_text)
         workplace_type = extract_workplace_type([location_text, commitment])
 
@@ -44,7 +45,7 @@ class LeverMapper(BaseMapper):
             else [],
             department=self._clean(self._get_category(raw_job, "department")),
             team=self._clean(self._get_category(raw_job, "team")),
-            employment_type=commitment,
+            employment_type=employment_type,
             description_html=self._clean(raw_job.get("description")),
             description_plain=self._clean(raw_job.get("descriptionPlain")),
             published_at=self._to_datetime_or_none(raw_job.get("createdAt")),

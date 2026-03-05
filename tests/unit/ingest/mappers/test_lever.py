@@ -39,7 +39,7 @@ class TestLeverMapper:
         assert hint["country_code"] == "US"
         assert result.department == "Engineering"
         assert result.team == "Platform"
-        assert result.employment_type == "Full-time"
+        assert result.employment_type == "full-time"
         assert result.status == "open"
 
     def test_map_description_and_dates(self, mapper):

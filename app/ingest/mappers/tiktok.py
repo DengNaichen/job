@@ -34,7 +34,7 @@ class TikTokMapper(BaseMapper):
             department=self._nested_label(raw_job.get("job_category")),
             team=self._nested_label(raw_job.get("department_info"))
             or self._nested_label(raw_job.get("job_subject")),
-            employment_type=self._nested_label(raw_job.get("recruit_type")),
+            employment_type=self._normalize_employment_type(self._nested_label(raw_job.get("recruit_type"))),
             description_html=None,
             description_plain=self._description_text(raw_job),
             published_at=None,

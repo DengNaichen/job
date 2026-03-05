@@ -40,6 +40,7 @@ As a downstream consumer (matching engine, API, UI), I receive jobs in a consist
 1. **Given** raw job data from any supported ATS, **When** the mapper runs, **Then** a `JobCreate` is produced with `external_job_id`, `title`, `apply_url`, and `source_id`.
 2. **Given** raw job data with location information, **When** the mapper runs, **Then** `location_hints` is populated with structured entries (city, region, country_code, workplace_type).
 3. **Given** raw job data with HTML descriptions, **When** the mapper runs, **Then** `description_html` and `description_plain` are both available.
+4. **Given** source employment labels with platform-specific variants, **When** the mapper runs, **Then** `employment_type` is normalized to canonical terms (`full-time`, `part-time`, `contract`, `intern`, `temporary`, `mixed`, `other`).
 
 ---
 
@@ -92,6 +93,7 @@ As a database operator, large content fields (raw payload, HTML descriptions) ar
 - **FR-004**: Blob storage offloading MUST be concurrent with bounded parallelism.
 - **FR-005**: Deduplication MUST occur by `external_job_id` before staging.
 - **FR-006**: All changes MUST be covered by automated tests.
+- **FR-007**: Mappers MUST normalize source employment-type labels into canonical values (`full-time`, `part-time`, `contract`, `intern`, `temporary`, `mixed`, `other`) and must not use workplace labels (for example, remote/hybrid text) as `employment_type`.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -122,3 +124,4 @@ As a database operator, large content fields (raw payload, HTML descriptions) ar
 - **SC-002**: All 8 mappers produce `location_hints` in their test outputs.
 - **SC-003**: Full snapshot sync correctly inserts, updates, and closes jobs in automated tests.
 - **SC-004**: Blob storage offloading is verified for both `description_html` and `raw_payload`.
+- **SC-005**: Mapper test coverage verifies `employment_type` normalization to the canonical term set across supported ATS sources.

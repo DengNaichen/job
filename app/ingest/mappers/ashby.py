@@ -14,9 +14,10 @@ class AshbyMapper(BaseMapper):
 
     def map(self, raw_job: dict[str, Any]) -> JobCreate:
         location_text = self._clean(raw_job.get("location"))
-        employment_type = self._clean(raw_job.get("employmentType"))
+        raw_employment_type = self._clean(raw_job.get("employmentType"))
+        employment_type = self._normalize_employment_type(raw_employment_type)
         parsed_loc = parse_location_text(location_text)
-        workplace_type = extract_workplace_type([location_text, employment_type])
+        workplace_type = extract_workplace_type([location_text, raw_employment_type])
 
         return JobCreate(
             source=self.source_name,

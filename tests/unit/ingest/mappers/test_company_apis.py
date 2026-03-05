@@ -86,7 +86,7 @@ class TestUberMapper:
         assert hint["country_code"] == "US"
         assert result.department == "Engineering"
         assert result.team == "Delivery"
-        assert result.employment_type == "Full-Time"
+        assert result.employment_type == "full-time"
         assert result.description_plain == "Build delivery systems."
         assert result.published_at == datetime(2026, 2, 28, 10, 30, 0, tzinfo=timezone.utc)
         assert result.source_updated_at == datetime(2026, 2, 28, 11, 30, 0, tzinfo=timezone.utc)
@@ -125,7 +125,7 @@ class TestTikTokMapper:
         assert hint["country_code"] == "MY"
         assert result.department == "Operations"
         assert result.team == "Trust & Safety"
-        assert result.employment_type == "Regular"
+        assert result.employment_type == "full-time"
         assert "Assess policy risk." in result.description_plain
         assert "7+ years experience." in result.description_plain
         assert "Salary information:" in result.description_plain
