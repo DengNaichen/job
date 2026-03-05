@@ -13,11 +13,6 @@ from app.services.domain.geonames_resolver import get_geonames_resolver
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from app.models.job import Job
-
 
 @dataclass
 class StructuredLocation:
@@ -219,25 +214,3 @@ async def sync_job_location(
     return location
 
 
-def sync_primary_to_job(
-    *,
-    job: "Job",
-    location: Location,
-    workplace_type: WorkplaceType = WorkplaceType.unknown,
-    remote_scope: str | None = None,
-) -> None:
-    """
-    Sync primary canonical location fields back to the Job model for legacy compatibility.
-    After structured location columns are removed from `job`, this becomes a safe no-op.
-    """
-    model_fields = getattr(job.__class__, "model_fields", {})
-    if "location_city" in model_fields:
-        job.location_city = location.city  # type: ignore[attr-defined]
-    if "location_region" in model_fields:
-        job.location_region = location.region  # type: ignore[attr-defined]
-    if "location_country_code" in model_fields:
-        job.location_country_code = location.country_code  # type: ignore[attr-defined]
-    if "location_workplace_type" in model_fields:
-        job.location_workplace_type = workplace_type  # type: ignore[attr-defined]
-    if "location_remote_scope" in model_fields:
-        job.location_remote_scope = remote_scope  # type: ignore[attr-defined]

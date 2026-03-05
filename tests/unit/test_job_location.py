@@ -7,7 +7,6 @@ from app.services.domain.job_location import (
     extract_workplace_type,
     parse_location_text,
     sync_job_location,
-    sync_primary_to_job,
 )
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -285,39 +284,3 @@ async def test_sync_job_location_idempotency(session: AsyncSession):
     assert len(links) == 1
     assert links[0].workplace_type == "onsite"
 
-
-@pytest.mark.asyncio
-async def test_sync_primary_to_job_compatibility(session: AsyncSession):
-    job = Job(
-        source="lever",
-        external_job_id="test-456",
-        title="Data Scientist",
-        apply_url="https://example.com",
-    )
-
-    structured = StructuredLocation(
-        city="Seattle",
-        region="WA",
-        country_code="US",
-        workplace_type=WorkplaceType.hybrid,
-    )
-
-    # Sync to DB first to get Location object
-    location = await sync_job_location(
-        session=session,
-        job_id="dummy",  # Not linked to real job yet in this test part
-        structured=structured,
-        is_primary=True,
-    )
-
-    sync_primary_to_job(
-        job=job,
-        location=location,
-        workplace_type=structured.workplace_type,
-    )
-
-    # Structured location fields are no longer stored on `job`.
-    # Function should be safe to call after column removal.
-    assert not hasattr(job, "location_city")
-    assert not hasattr(job, "location_region")
-    assert not hasattr(job, "location_country_code")

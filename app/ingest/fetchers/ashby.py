@@ -33,9 +33,11 @@ class AshbyFetcher(BaseFetcher):
         params = {"includeCompensation": str(include_compensation_flag).lower()}
 
         async with httpx.AsyncClient() as client:
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            data = response.json()
+            data = await self.request_json_with_retry(
+                client,
+                url=url,
+                params=params,
+            )
 
         jobs = data.get("jobs", [])
         return jobs if isinstance(jobs, list) else []

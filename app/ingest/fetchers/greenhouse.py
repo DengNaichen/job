@@ -29,8 +29,10 @@ class GreenhouseFetcher(BaseFetcher):
         params = {"content": str(include_content).lower()}
 
         async with httpx.AsyncClient() as client:
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            data = response.json()
+            data = await self.request_json_with_retry(
+                client,
+                url=url,
+                params=params,
+            )
 
         return data.get("jobs", [])

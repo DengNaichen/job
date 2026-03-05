@@ -433,7 +433,7 @@ async def test_full_snapshot_sync_persists_canonical_locations(session: AsyncSes
 
 
 @pytest.mark.asyncio
-async def test_full_snapshot_sync_parses_source_raw_location_hints_when_structured_fields_missing(
+async def test_full_snapshot_sync_ignores_source_raw_when_structured_fields_missing(
     session: AsyncSession,
 ) -> None:
     service = _service(session)
@@ -456,13 +456,10 @@ async def test_full_snapshot_sync_parses_source_raw_location_hints_when_structur
     assert result.ok is True
 
     loc_rows = (await session.exec(select(Location))).all()
-    assert len(loc_rows) == 1
-    assert loc_rows[0].canonical_key == "ca-on-toronto"
+    assert loc_rows == []
 
     link_rows = (await session.exec(select(JobLocation))).all()
-    assert len(link_rows) == 1
-    assert link_rows[0].is_primary is True
-    assert link_rows[0].workplace_type == "hybrid"
+    assert link_rows == []
 
 
 @pytest.mark.asyncio

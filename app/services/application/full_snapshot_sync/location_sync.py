@@ -8,9 +8,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.models import Job, WorkplaceType
 from app.services.domain.job_location import (
     StructuredLocation,
-    parse_location_text,
     sync_job_location,
-    sync_primary_to_job,
 )
 
 
@@ -67,15 +65,6 @@ def _build_structured_locations(payload: dict[str, Any]) -> list[StructuredLocat
                 remote_scope=_clean_optional_str(hint.get("remote_scope")),
             )
 
-            if source_raw:
-                parsed = parse_location_text(source_raw)
-                structured.city = structured.city or parsed.city
-                structured.region = structured.region or parsed.region
-                structured.country_code = structured.country_code or parsed.country_code
-                if structured.workplace_type == WorkplaceType.unknown:
-                    structured.workplace_type = parsed.workplace_type
-                structured.remote_scope = structured.remote_scope or parsed.remote_scope
-
             if not structured.country_code and structured.city:
                 city_match = _full_snapshot_geonames_resolver().resolve_city(
                     city=structured.city,
@@ -114,19 +103,10 @@ async def sync_staged_job_locations(
         for i, location_payload in enumerate(structured_locations):
             is_primary = i == 0
             structured = location_payload.structured
-
-            location = await sync_job_location(
+            await sync_job_location(
                 session=session,
                 job_id=str(job.id),
                 structured=structured,
                 is_primary=is_primary,
                 source_raw=location_payload.source_raw,
             )
-
-            if is_primary:
-                sync_primary_to_job(
-                    job=job,
-                    location=location,
-                    workplace_type=structured.workplace_type,
-                    remote_scope=structured.remote_scope,
-                )

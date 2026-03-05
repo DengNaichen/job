@@ -27,8 +27,12 @@ class LeverFetcher(BaseFetcher):
         params = {"mode": "json"}
 
         async with httpx.AsyncClient(timeout=httpx.Timeout(self.REQUEST_TIMEOUT_SECONDS)) as client:
-            response = await client.get(url, params=params)
-            response.raise_for_status()
+            response = await self.request_with_retry(
+                client,
+                method="GET",
+                url=url,
+                params=params,
+            )
             data = response.json()
 
         return data if isinstance(data, list) else []
