@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
+import re
 from typing import Any
 
 from app.schemas.job import JobCreate
@@ -41,6 +42,29 @@ class BaseMapper(ABC):
     # Timestamp threshold: values above this are treated as milliseconds
     TIMESTAMP_MS_THRESHOLD = 100_000_000_000
 
+    EMPLOYMENT_TYPE_EXACT_MAP: dict[str, str] = {
+        "regular": "full-time",
+        "fulltime": "full-time",
+        "full time": "full-time",
+        "parttime": "part-time",
+        "part time": "part-time",
+        "contract": "contract",
+        "contractor": "contract",
+        "per diem": "per-diem",
+    }
+
+    EMPLOYMENT_TYPE_CONTAINS_RULES: tuple[tuple[str, str], ...] = (
+        ("intern", "intern"),
+        ("apprentice", "apprenticeship"),
+        ("volunteer", "volunteer"),
+        ("third party", "contract"),
+        ("contract", "contract"),
+        ("fixed term", "temporary"),
+        ("temporary", "temporary"),
+        ("full time", "full-time"),
+        ("part time", "part-time"),
+    )
+
     @staticmethod
     def _clean(value: Any) -> str | None:
         """
@@ -52,6 +76,40 @@ class BaseMapper(ABC):
             return None
         stripped = value.strip()
         return stripped if stripped else None
+
+    @classmethod
+    def _normalize_employment_type(cls, value: Any) -> str | None:
+        """Normalize source employment labels into a small canonical term set."""
+        cleaned = cls._clean(value)
+        if not cleaned:
+            return None
+
+        normalized = cls._normalize_employment_label(cleaned)
+
+        mapped = cls.EMPLOYMENT_TYPE_EXACT_MAP.get(normalized)
+        if mapped:
+            return mapped
+
+        if "full" in normalized and "part" in normalized:
+            return "mixed"
+
+        # Capture phrases like "temp role" in addition to "temporary"/"fixed term".
+        if re.search(r"\btemp\b", normalized):
+            return "temporary"
+
+        for needle, target in cls.EMPLOYMENT_TYPE_CONTAINS_RULES:
+            if needle in normalized:
+                return target
+
+        return "other"
+
+    @staticmethod
+    def _normalize_employment_label(value: str) -> str:
+        """Canonicalize punctuation/casing for employment-type matching."""
+        normalized = re.sub(r"[_/-]+", " ", value.lower())
+        normalized = re.sub(r"[^a-z0-9\s&+-]", " ", normalized)
+        normalized = re.sub(r"\s+", " ", normalized).strip()
+        return normalized
 
     @classmethod
     def _to_datetime_or_none(cls, value: Any) -> datetime | None:

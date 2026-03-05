@@ -38,7 +38,7 @@ class TestAshbyMapper:
         )
         assert result.department == "Engineering"
         assert result.team == "Americas Engineering"
-        assert result.employment_type == "FullTime"
+        assert result.employment_type == "full-time"
         assert result.status == "open"
 
     def test_map_descriptions_and_dates(self, mapper):

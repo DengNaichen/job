@@ -88,6 +88,8 @@ Although the current iteration may ship MVP after US1, this task plan covers US1
 - [x] T024 [P] [US2] Implement canonical field mapping and structured location hints for Lever in `app/ingest/mappers/lever.py`
 - [x] T025 [P] [US2] Implement canonical field mapping and structured location hints for Ashby in `app/ingest/mappers/ashby.py`
 - [x] T026 [P] [US2] Implement canonical field mapping and structured location hints for SmartRecruiters/Eightfold/company APIs in `app/ingest/mappers/smartrecruiters.py`
+- [x] T049 [US2] Add canonical employment-type normalization tests across mapper variants in `tests/unit/ingest/mappers/test_employment_type_normalization.py`
+- [x] T050 [US2] Normalize source employment labels to canonical terms in `app/ingest/mappers/base.py` and ATS mapper implementations
 - [x] T027 [US2] Enforce source stamping (`source_id` + compatibility `source`) during mapping pipeline in `app/services/application/full_snapshot_sync/mapping.py`
 - [x] T028 [US2] Record US2 mapper validation evidence in `reports/001-ats-ingest/us2-mapper-summary.txt`
 

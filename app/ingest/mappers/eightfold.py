@@ -15,9 +15,12 @@ class EightfoldMapper(BaseMapper):
 
     def map(self, raw_job: dict[str, Any]) -> JobCreate:
         location_text = self._pick_location(raw_job)
-        employment_type = self._clean(raw_job.get("workLocationOption"))
+        work_location_option = self._clean(raw_job.get("workLocationOption"))
+        employment_type = self._normalize_employment_type(
+            raw_job.get("employmentType") or raw_job.get("workerType") or raw_job.get("typeOfEmployment")
+        )
         parsed_loc = parse_location_text(location_text)
-        workplace_type = extract_workplace_type([location_text, employment_type])
+        workplace_type = extract_workplace_type([location_text, work_location_option])
 
         return JobCreate(
             source=self.source_name,

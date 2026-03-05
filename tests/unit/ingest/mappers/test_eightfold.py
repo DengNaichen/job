@@ -45,7 +45,7 @@ class TestEightfoldMapper:
         assert hint["workplace_type"] == WorkplaceType.remote
         assert result.department == "Engineering"
         assert result.team is None
-        assert result.employment_type == "Up to 50% work from home"
+        assert result.employment_type is None
         assert result.description_html is None
         assert result.description_plain == "Build distributed systems."
         assert result.published_at == datetime.fromtimestamp(1709164800, timezone.utc)
