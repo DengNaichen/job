@@ -51,7 +51,6 @@ _MAX_TITLE_CHARS = 120
 _MAX_COMPANY_CHARS = 120
 _MAX_REQUIRED_SKILLS = 8
 _MAX_PREFERRED_SKILLS = 8
-_MAX_RESPONSIBILITIES = 4
 _MAX_LIST_ITEM_CHARS = 160
 
 LLM_MATCH_SYSTEM_PROMPT = """You are a conservative job-fit reviewer.
@@ -235,12 +234,6 @@ def _build_job_profile(context_row: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(seniority, str) or not seniority.strip():
         seniority = infer_seniority_level(str(context_row.get("title") or "").strip(), jd_years)
 
-    responsibilities = _coerce_string_list(
-        structured_jd.get("key_responsibilities"),
-        limit=_MAX_RESPONSIBILITIES,
-        item_max_chars=_MAX_LIST_ITEM_CHARS,
-        sanitize=True,
-    )
     raw_locations = context_row.get("locations")
     normalized_locations: list[dict[str, Any]] = []
     if isinstance(raw_locations, list):
@@ -306,7 +299,6 @@ def _build_job_profile(context_row: dict[str, Any]) -> dict[str, Any]:
             ),
             "experience_years": jd_years,
             "seniority_level": seniority or None,
-            "key_responsibilities": responsibilities,
         },
     }
 

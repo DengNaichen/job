@@ -1,21 +1,21 @@
-"""Unit tests for JD parser low-cost compact parsing."""
+"""Unit tests for structured JD extraction entrypoint."""
 
 import pytest
 
-from app.services.application.jd_parsing import parse_jd, parse_jd_batch
+from app.services.application.jd_parsing import extract_structured_jd
 
 
 @pytest.mark.asyncio
-async def test_parse_jd_defaults_missing_new_fields(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_extract_structured_jd_defaults_missing_new_fields(monkeypatch: pytest.MonkeyPatch) -> None:
     async def fake_complete_json(**kwargs):  # noqa: ANN003
         return {
             "d": "software_engineering",
             "s": ["Python", "SQL"],
         }
 
-    monkeypatch.setattr("app.services.application.jd_parsing.single.complete_json", fake_complete_json)
+    monkeypatch.setattr("app.services.application.jd_parsing.llm_extraction.complete_json", fake_complete_json)
 
-    parsed = await parse_jd("Backend engineer with Python", title="Backend Engineer")
+    parsed = await extract_structured_jd("Backend engineer with Python", title="Backend Engineer")
 
     assert parsed.required_skills == ["Python", "SQL"]
     assert parsed.experience_years is None
@@ -25,16 +25,16 @@ async def test_parse_jd_defaults_missing_new_fields(monkeypatch: pytest.MonkeyPa
 
 
 @pytest.mark.asyncio
-async def test_parse_jd_normalizes_new_fields(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_extract_structured_jd_normalizes_new_fields(monkeypatch: pytest.MonkeyPatch) -> None:
     async def fake_complete_json(**kwargs):  # noqa: ANN003
         return {
             "d": "unknown",
             "s": ["malware analysis", "Python"],
         }
 
-    monkeypatch.setattr("app.services.application.jd_parsing.single.complete_json", fake_complete_json)
+    monkeypatch.setattr("app.services.application.jd_parsing.llm_extraction.complete_json", fake_complete_json)
 
-    parsed = await parse_jd(
+    parsed = await extract_structured_jd(
         """
         Threat hunting role.
         Bachelor's in Computer Science or related degree.
@@ -51,7 +51,7 @@ async def test_parse_jd_normalizes_new_fields(monkeypatch: pytest.MonkeyPatch) -
 
 
 @pytest.mark.asyncio
-async def test_parse_jd_batch_merges_compact_llm_output_with_rules(
+async def test_extract_structured_jd_list_merges_compact_llm_output_with_rules(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     async def fake_complete_json(**kwargs):  # noqa: ANN003
@@ -62,9 +62,9 @@ async def test_parse_jd_batch_merges_compact_llm_output_with_rules(
             ]
         }
 
-    monkeypatch.setattr("app.services.application.jd_parsing.batch.complete_json", fake_complete_json)
+    monkeypatch.setattr("app.services.application.jd_parsing.llm_extraction.complete_json", fake_complete_json)
 
-    parsed = await parse_jd_batch(
+    parsed = await extract_structured_jd(
         [
             {
                 "job_id": "job-1",
@@ -91,14 +91,14 @@ async def test_parse_jd_batch_merges_compact_llm_output_with_rules(
 
 
 @pytest.mark.asyncio
-async def test_parse_jd_rules_use_untruncated_description(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_extract_structured_jd_uses_untruncated_description(monkeypatch: pytest.MonkeyPatch) -> None:
     async def fake_complete_json(**kwargs):  # noqa: ANN003
         return {
             "d": "software_engineering",
             "s": ["python"],
         }
 
-    monkeypatch.setattr("app.services.application.jd_parsing.single.complete_json", fake_complete_json)
+    monkeypatch.setattr("app.services.application.jd_parsing.llm_extraction.complete_json", fake_complete_json)
 
     long_description = (
         ("Experience with distributed systems. " * 220)
@@ -106,13 +106,13 @@ async def test_parse_jd_rules_use_untruncated_description(monkeypatch: pytest.Mo
         + "Bachelor's degree in Computer Science required."
     )
 
-    parsed = await parse_jd(long_description, title="Backend Engineer")
+    parsed = await extract_structured_jd(long_description, title="Backend Engineer")
 
     assert parsed.min_degree_level == "bachelor"
 
 
 @pytest.mark.asyncio
-async def test_parse_jd_batch_rules_use_untruncated_description(
+async def test_extract_structured_jd_list_uses_untruncated_description(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     async def fake_complete_json(**kwargs):  # noqa: ANN003
@@ -122,7 +122,7 @@ async def test_parse_jd_batch_rules_use_untruncated_description(
             ]
         }
 
-    monkeypatch.setattr("app.services.application.jd_parsing.batch.complete_json", fake_complete_json)
+    monkeypatch.setattr("app.services.application.jd_parsing.llm_extraction.complete_json", fake_complete_json)
 
     long_description = (
         ("Design scalable backend services. " * 220)
@@ -130,7 +130,7 @@ async def test_parse_jd_batch_rules_use_untruncated_description(
         + "Master's degree in Computer Science preferred."
     )
 
-    parsed = await parse_jd_batch(
+    parsed = await extract_structured_jd(
         [
             {
                 "job_id": "job-1",
@@ -141,3 +141,24 @@ async def test_parse_jd_batch_rules_use_untruncated_description(
     )
 
     assert parsed.jobs[0].min_degree_level == "master"
+
+
+@pytest.mark.asyncio
+async def test_extract_structured_jd_accepts_unified_batch_contract(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def fake_complete_json(**kwargs):  # noqa: ANN003
+        return {
+            "jobs": [
+                {
+                    "i": "j1",
+                    "d": "software_engineering",
+                    "s": ["Python"],
+                }
+            ]
+        }
+
+    monkeypatch.setattr("app.services.application.jd_parsing.llm_extraction.complete_json", fake_complete_json)
+
+    parsed = await extract_structured_jd("Backend engineer with Python", title="Backend Engineer")
+
+    assert parsed.required_skills == ["Python"]
+    assert parsed.job_domain_normalized == "software_engineering"

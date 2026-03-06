@@ -316,8 +316,6 @@ def build_structured_jd_storage_payload(
         "preferred_skills": parsed.preferred_skills,
         "experience_requirements": parsed.experience_requirements,
         "education_requirements": parsed.education_requirements,
-        "key_responsibilities": parsed.key_responsibilities,
-        "keywords": parsed.keywords,
         "experience_years": parsed.experience_years,
         "seniority_level": parsed.seniority_level,
         "job_domain_raw": parsed.job_domain_raw,
@@ -361,8 +359,6 @@ class StructuredJD(BaseModel):
     preferred_skills: list[str] = Field(default_factory=list)
     experience_requirements: list[str] = Field(default_factory=list)
     education_requirements: list[str] = Field(default_factory=list)
-    key_responsibilities: list[str] = Field(default_factory=list)
-    keywords: list[str] = Field(default_factory=list)
     experience_years: int | None = Field(default=None)
     seniority_level: str | None = Field(default=None)
     sponsorship_not_available: SponsorshipAvailability = Field(default="unknown")
@@ -371,6 +367,7 @@ class StructuredJD(BaseModel):
     min_degree_level: DegreeLevel = Field(default="unknown")
 
     @model_validator(mode="before")
+    # TODO: clean this later
     @classmethod
     def normalize_legacy_field_names(cls, value: object) -> object:
         """Accept legacy industry_* keys during the transition to job_domain_*."""
@@ -381,6 +378,10 @@ class StructuredJD(BaseModel):
             data["job_domain_raw"] = data.pop("industry_raw")
         if "job_domain_normalized" not in data and "industry_normalized" in data:
             data["job_domain_normalized"] = data.pop("industry_normalized")
+
+        # Legacy keys retained in historical payloads; ignored in current schema.
+        data.pop("key_responsibilities", None)
+        data.pop("keywords", None)
         return data
 
     @field_validator(
@@ -388,8 +389,6 @@ class StructuredJD(BaseModel):
         "preferred_skills",
         "experience_requirements",
         "education_requirements",
-        "key_responsibilities",
-        "keywords",
         mode="before",
     )
     @classmethod
