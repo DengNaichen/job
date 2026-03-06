@@ -171,7 +171,6 @@ async def test_persist_structured_jd_batch() -> None:
         BatchStructuredJDItem(
             job_id="job-1",
             required_skills=["Python"],
-            keywords=["backend"],
             experience_years=3,
             sponsorship_not_available="yes",
             job_domain_raw="Treasury Operations",
@@ -181,7 +180,6 @@ async def test_persist_structured_jd_batch() -> None:
         BatchStructuredJDItem(
             job_id="job-2",
             required_skills=["Go"],
-            keywords=["distributed systems"],
             experience_years=5,
             sponsorship_not_available="unknown",
             job_domain_raw="Platform Engineering",

@@ -86,6 +86,12 @@ As an application engineer, I need extracted results persisted in a shape compat
 - Introducing a new dedicated structured JD persistence table.
 - Building a full parse-run audit subsystem.
 - Redesigning matching/retrieval beyond current structured JD compatibility contracts.
+- Implementing ontology-level normalization for skill/domain semantics (synonym dictionaries, alias canonicalization, lemmatization/stemming, and cross-source taxonomy alignment).
+
+### Planned Follow-Up (Post-002)
+
+- Define and ship a dedicated normalization pipeline for `required_skills`, `preferred_skills`, and `job_domain_*` semantic aliases.
+- Add evaluation fixtures/metrics for normalization quality (precision/recall on canonical labels) before enabling in production extraction.
 
 ### Key Entities *(include if feature involves data)*
 

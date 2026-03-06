@@ -8,7 +8,7 @@ from app.schemas.structured_jd import BatchStructuredJD, BatchStructuredJDItem, 
 from app.services.infra.llm import complete_json, get_llm_config
 from app.services.infra.llm.types import LLMConfig
 
-from .helpers import merge_llm_and_rule_fields
+from app.services.domain.llm_parsing import merge_llm_and_rule_fields_batch
 from .llm_jd_input import build_batch_llm_jd_input
 from .prompts import (
     BATCH_EXTRACT_PROMPT,
@@ -73,20 +73,20 @@ async def parse_jd_batch(
             continue
         raw_items_by_alias[raw_id] = raw_item
 
+    merged_by_alias = merge_llm_and_rule_fields_batch(
+        llm_payloads_by_alias=raw_items_by_alias,
+        normalized_inputs_by_alias=batch_input.normalized_inputs,
+        input_aliases=batch_input.input_aliases,
+    )
+
     merged_items: list[BatchStructuredJDItem] = []
     output_job_ids: list[str] = []
     for alias in batch_input.input_aliases:
-        raw_item = raw_items_by_alias.get(alias)
-        if raw_item is None:
+        merged = merged_by_alias.get(alias)
+        if merged is None:
             continue
 
-        normalized = batch_input.normalized_inputs[alias]
         job_id = batch_input.alias_to_job_id[alias]
-        merged = merge_llm_and_rule_fields(
-            llm_payload=raw_item,
-            description=str(normalized["description"]),
-            title=normalized["title"],
-        )
         merged_items.append(
             BatchStructuredJDItem(
                 job_id=job_id,

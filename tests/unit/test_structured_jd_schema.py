@@ -88,3 +88,15 @@ def test_structured_jd_accepts_legacy_industry_fields() -> None:
 
     assert jd.job_domain_raw == "Artificial Intelligence"
     assert jd.job_domain_normalized == "software_engineering"
+
+
+def test_structured_jd_ignores_legacy_responsibilities_and_keywords() -> None:
+    jd = StructuredJD.model_validate(
+        {
+            "required_skills": ["Python"],
+            "key_responsibilities": ["Build APIs"],
+            "keywords": ["backend"],
+        }
+    )
+
+    assert jd.required_skills == ["Python"]

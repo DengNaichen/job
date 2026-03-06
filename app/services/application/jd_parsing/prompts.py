@@ -26,7 +26,7 @@ Rules:
 2. Use at most 6 skills in s.
 3. Keep skill phrases short, concrete, and deduplicated.
 4. Do not output soft skills unless they are core screening criteria.
-5. Do not repeat years, degree, sponsorship, responsibilities, or keywords.
+5. Do not repeat years, degree, sponsorship, or any fields outside d/s.
 
 Job title:
 {job_title}
@@ -58,7 +58,7 @@ Rules:
 2. Use at most 6 skills in s for each job.
 3. Keep skill phrases short, concrete, and deduplicated.
 4. Do not output soft skills unless they are core screening criteria.
-5. Do not output years, degree, sponsorship, responsibilities, or keywords.
+5. Do not output years, degree, sponsorship, or any fields outside i/d/s.
 
 Jobs to process:
 {jobs_text}"""
