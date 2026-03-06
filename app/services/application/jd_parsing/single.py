@@ -6,7 +6,8 @@ from typing import Any
 from app.schemas.structured_jd import CompactStructuredJD, StructuredJD
 from app.services.infra.llm import complete_json
 
-from .helpers import merge_llm_and_rule_fields, prepare_job_description
+from .helpers import merge_llm_and_rule_fields
+from .llm_jd_input import prepare_job_description
 from .prompts import EXTRACT_KEYWORDS_PROMPT
 
 CompleteJSONFn = Callable[..., Awaitable[dict[str, Any]]]

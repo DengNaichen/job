@@ -8,7 +8,8 @@ from app.schemas.structured_jd import BatchStructuredJD, BatchStructuredJDItem, 
 from app.services.infra.llm import complete_json, get_llm_config
 from app.services.infra.llm.types import LLMConfig
 
-from .helpers import merge_llm_and_rule_fields, prepare_job_description
+from .helpers import merge_llm_and_rule_fields
+from .llm_jd_input import prepare_job_description
 from .prompts import (
     BATCH_EXTRACT_PROMPT,
     DEFAULT_BATCH_MAX_TOKENS,
