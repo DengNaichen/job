@@ -9,7 +9,7 @@ from app.services.infra.llm import complete_json, get_llm_config
 from app.services.infra.llm.types import LLMConfig
 
 from .helpers import merge_llm_and_rule_fields
-from .llm_jd_input import prepare_job_description
+from .llm_jd_input import build_batch_llm_jd_input
 from .prompts import (
     BATCH_EXTRACT_PROMPT,
     DEFAULT_BATCH_MAX_TOKENS,
@@ -41,21 +41,10 @@ async def parse_jd_batch(
     if duplicate_input_job_ids:
         raise ValueError("Duplicate job_id in input jobs: " + ", ".join(duplicate_input_job_ids))
 
-    jobs_parts: list[str] = []
-    normalized_inputs: dict[str, dict[str, str | None]] = {}
-    for job in jobs:
-        job_id = job["job_id"]
-        title = str(job.get("title") or "").strip()
-        description = prepare_job_description(job["description"], is_html=is_html)
-        title_line = f"TITLE: {title}\n" if title else ""
-        jobs_parts.append(f"--- JOB ID: {job_id} ---\n{title_line}{description}\n")
-        normalized_inputs[job_id] = {
-            "title": title or None,
-            "description": description,
-        }
+    batch_input = build_batch_llm_jd_input(jobs, is_html=is_html)
+    input_alias_set = set(batch_input.input_aliases)
 
-    jobs_text = "\n".join(jobs_parts)
-    prompt = BATCH_EXTRACT_PROMPT.format(count=len(jobs), jobs_text=jobs_text)
+    prompt = BATCH_EXTRACT_PROMPT.format(count=batch_input.job_count, jobs_text=batch_input.jobs_text)
 
     config = get_llm_config_impl()
     batch_max_tokens = (
@@ -71,7 +60,7 @@ async def parse_jd_batch(
     )
 
     raw_jobs = result.get("jobs", []) if isinstance(result, dict) else []
-    raw_items_by_id: dict[str, dict[str, Any]] = {}
+    raw_items_by_alias: dict[str, dict[str, Any]] = {}
     duplicate_output_job_ids: list[str] = []
     for raw_item in raw_jobs:
         if not isinstance(raw_item, dict):
@@ -79,19 +68,20 @@ async def parse_jd_batch(
         raw_id = raw_item.get("i") or raw_item.get("job_id")
         if not isinstance(raw_id, str):
             continue
-        if raw_id in raw_items_by_id:
+        if raw_id in raw_items_by_alias:
             duplicate_output_job_ids.append(raw_id)
             continue
-        raw_items_by_id[raw_id] = raw_item
+        raw_items_by_alias[raw_id] = raw_item
 
     merged_items: list[BatchStructuredJDItem] = []
     output_job_ids: list[str] = []
-    for job_id in input_job_ids:
-        raw_item = raw_items_by_id.get(job_id)
+    for alias in batch_input.input_aliases:
+        raw_item = raw_items_by_alias.get(alias)
         if raw_item is None:
             continue
 
-        normalized = normalized_inputs[job_id]
+        normalized = batch_input.normalized_inputs[alias]
+        job_id = batch_input.alias_to_job_id[alias]
         merged = merge_llm_and_rule_fields(
             llm_payload=raw_item,
             description=str(normalized["description"]),
@@ -105,7 +95,6 @@ async def parse_jd_batch(
         )
         output_job_ids.append(job_id)
 
-    input_job_id_set = set(input_job_ids)
     output_job_id_set = set(output_job_ids)
 
     duplicate_output_job_ids = sorted(
@@ -118,7 +107,7 @@ async def parse_jd_batch(
     )
     missing_job_ids = [job_id for job_id in input_job_ids if job_id not in output_job_id_set]
     unexpected_job_ids = sorted(
-        job_id for job_id in raw_items_by_id if job_id not in input_job_id_set
+        raw_id for raw_id in raw_items_by_alias if raw_id not in input_alias_set
     )
 
     if (

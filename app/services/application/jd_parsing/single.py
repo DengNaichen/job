@@ -8,7 +8,7 @@ from app.services.infra.llm import complete_json
 
 from .helpers import merge_llm_and_rule_fields
 from .llm_jd_input import prepare_job_description
-from .prompts import EXTRACT_KEYWORDS_PROMPT
+from .prompts import EXTRACT_KEYWORDS_PROMPT, MAX_JD_PARSE_CHARS
 
 CompleteJSONFn = Callable[..., Awaitable[dict[str, Any]]]
 
@@ -22,10 +22,15 @@ async def parse_jd(
 ) -> StructuredJD:
     """Parse a JD and return normalized structured fields."""
     complete_json_impl = complete_json_fn or complete_json
-    normalized_description = prepare_job_description(job_description, is_html=is_html)
+    normalized_description = prepare_job_description(
+        job_description,
+        is_html=is_html,
+        max_chars=None,
+    )
+    llm_description = normalized_description[:MAX_JD_PARSE_CHARS]
     prompt = EXTRACT_KEYWORDS_PROMPT.format(
         job_title=title or "Unknown",
-        job_description=normalized_description,
+        job_description=llm_description,
     )
 
     result = await complete_json_impl(
