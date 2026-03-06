@@ -1,6 +1,6 @@
 """Behavior guardrails that must remain stable through contract cutover."""
 
-from app.services.domain.job_location import parse_location_text
+from app.services.domain.location import parse_location_text
 from app.services.infra.matching.query import build_sql_prefilter
 
 

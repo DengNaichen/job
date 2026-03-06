@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from enum import Enum
 from functools import lru_cache
 import logging
 from pathlib import Path
 import re
+from typing import List, Optional
 import unicodedata
 
 import pycountry
@@ -12,6 +14,127 @@ import pycountry
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
+
+
+class ConfidenceScore(str, Enum):
+    HIGH = "high"
+    LOW = "low"
+    NONE = "none"
+
+
+class SourceMethod(str, Enum):
+    EXPLICIT_FIELD = "explicit_field"
+    GEONAMES_MATCH = "geonames_match"
+    PYCOUNTRY_MATCH = "pycountry_match"
+    UNKNOWN = "unknown"
+
+
+@dataclass
+class CountryNormalizationResult:
+    country_code: Optional[str] = None
+    confidence: ConfidenceScore = ConfidenceScore.NONE
+    source: SourceMethod = SourceMethod.UNKNOWN
+    is_ambiguous: bool = False
+    multi_country_detected: bool = False
+    matched_country_codes: List[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class GeoNamesCityCandidate:
+    geonames_id: int
+    name: str
+    country_code: str
+    admin1_code: str | None
+    population: int
+
+
+AMBIGUOUS_REGIONS = {
+    "remote",
+    "global",
+    "europe",
+    "eu",
+    "asia",
+    "apac",
+    "emea",
+    "latam",
+    "america",
+    "americas",
+    "north america",
+    "south america",
+    "africa",
+    "anywhere",
+}
+
+AMBIGUOUS_ALPHA2 = {
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+    "PR",
+    "AB",
+    "BC",
+    "MB",
+    "NB",
+    "NL",
+    "NS",
+    "NT",
+    "NU",
+    "ON",
+    "PE",
+    "QC",
+    "SK",
+    "YT",
+}
+
+ISO_EXCEPTIONAL_ALPHA2 = {
+    "UK": "GB",
+}
 
 
 def _normalize_lookup(text: str | None) -> str:
@@ -26,15 +149,6 @@ def _normalize_lookup(text: str | None) -> str:
 
 def _normalize_compact(text: str | None) -> str:
     return _normalize_lookup(text).replace(" ", "")
-
-
-@dataclass(frozen=True)
-class GeoNamesCityCandidate:
-    geonames_id: int
-    name: str
-    country_code: str
-    admin1_code: str | None
-    population: int
 
 
 class GeoNamesResolver:
@@ -90,8 +204,8 @@ class GeoNamesResolver:
             return None
 
         if country_code:
-            cc = country_code.strip().upper()
-            candidates = [c for c in candidates if c.country_code == cc]
+            normalized_country = country_code.strip().upper()
+            candidates = [c for c in candidates if c.country_code == normalized_country]
             if not candidates:
                 return None
 
@@ -112,12 +226,9 @@ class GeoNamesResolver:
 
         unique_countries = {c.country_code for c in candidates}
         if len(unique_countries) == 1:
-            # If caller provided region/country hints, selecting largest population
-            # inside this already constrained set is deterministic and practical.
             if region or country_code:
                 return max(candidates, key=lambda c: c.population)
 
-            # For plain "City" text, only accept when one city is clearly dominant.
             ranked = sorted(candidates, key=lambda c: c.population, reverse=True)
             top = ranked[0]
             second = ranked[1]
@@ -175,11 +286,11 @@ class GeoNamesResolver:
                 self._add_country_term(fips, iso2)
                 self._add_country_term(country_name, iso2)
 
-                pyc = pycountry.countries.get(alpha_2=iso2)
-                if pyc is not None:
-                    self._add_country_term(getattr(pyc, "name", None), iso2)
-                    self._add_country_term(getattr(pyc, "official_name", None), iso2)
-                    self._add_country_term(getattr(pyc, "common_name", None), iso2)
+                country = pycountry.countries.get(alpha_2=iso2)
+                if country is not None:
+                    self._add_country_term(getattr(country, "name", None), iso2)
+                    self._add_country_term(getattr(country, "official_name", None), iso2)
+                    self._add_country_term(getattr(country, "common_name", None), iso2)
 
     def _load_admin1(self, file_path: Path) -> None:
         with file_path.open("r", encoding="utf-8") as handle:
@@ -271,6 +382,146 @@ class GeoNamesResolver:
                 out.append(candidate)
 
         return out
+
+
+def normalize_country(
+    text: str | None, is_explicit_field: bool = False
+) -> CountryNormalizationResult:
+    """
+    Normalize a raw country string or location string into an ISO-3166-1 alpha-2 code.
+
+    Args:
+        text: The raw string to normalize.
+        is_explicit_field: True if the text came from a dedicated country field.
+    """
+    if not text:
+        return CountryNormalizationResult()
+
+    original_text = text.strip()
+    text_lower = original_text.lower()
+
+    if text_lower in AMBIGUOUS_REGIONS:
+        return CountryNormalizationResult(is_ambiguous=True)
+
+    alpha_lookup = text_lower.upper()
+    compact_alpha = re.sub(r"[^A-Z]", "", alpha_lookup)
+
+    if compact_alpha in ISO_EXCEPTIONAL_ALPHA2:
+        normalized = ISO_EXCEPTIONAL_ALPHA2[compact_alpha]
+        return CountryNormalizationResult(
+            country_code=normalized,
+            confidence=ConfidenceScore.HIGH if is_explicit_field else ConfidenceScore.LOW,
+            source=SourceMethod.EXPLICIT_FIELD if is_explicit_field else SourceMethod.PYCOUNTRY_MATCH,
+            matched_country_codes=[normalized],
+        )
+
+    if len(alpha_lookup) == 2 and alpha_lookup.isalpha() and not is_explicit_field:
+        if alpha_lookup in AMBIGUOUS_ALPHA2:
+            return CountryNormalizationResult(is_ambiguous=True)
+
+    geonames_codes = sorted(get_geonames_resolver().lookup_country_codes(original_text))
+    if len(geonames_codes) == 1:
+        return CountryNormalizationResult(
+            country_code=geonames_codes[0],
+            confidence=ConfidenceScore.HIGH if is_explicit_field else ConfidenceScore.LOW,
+            source=SourceMethod.EXPLICIT_FIELD if is_explicit_field else SourceMethod.GEONAMES_MATCH,
+            matched_country_codes=geonames_codes,
+        )
+    if len(geonames_codes) > 1:
+        return CountryNormalizationResult(
+            is_ambiguous=True,
+            multi_country_detected=True,
+            matched_country_codes=geonames_codes,
+        )
+
+    try:
+        country = None
+        if len(alpha_lookup) == 2 and alpha_lookup.isalpha():
+            country = pycountry.countries.get(alpha_2=alpha_lookup)
+        elif len(alpha_lookup) == 3 and alpha_lookup.isalpha():
+            country = pycountry.countries.get(alpha_3=alpha_lookup)
+
+        if country:
+            return CountryNormalizationResult(
+                country_code=country.alpha_2,
+                confidence=ConfidenceScore.HIGH if is_explicit_field else ConfidenceScore.LOW,
+                source=SourceMethod.EXPLICIT_FIELD if is_explicit_field else SourceMethod.PYCOUNTRY_MATCH,
+                matched_country_codes=[country.alpha_2],
+            )
+    except Exception:
+        pass
+
+    if is_explicit_field:
+        try:
+            fuzzy_codes = sorted({c.alpha_2 for c in pycountry.countries.search_fuzzy(original_text)})
+            if len(fuzzy_codes) == 1:
+                return CountryNormalizationResult(
+                    country_code=fuzzy_codes[0],
+                    confidence=ConfidenceScore.HIGH,
+                    source=SourceMethod.EXPLICIT_FIELD,
+                    matched_country_codes=fuzzy_codes,
+                )
+        except Exception:
+            pass
+
+    matched_countries = []
+    for country in pycountry.countries:
+        try:
+            if text_lower == country.name.lower() or (
+                hasattr(country, "official_name") and text_lower == country.official_name.lower()
+            ):
+                matched_countries.append(country.alpha_2)
+        except AttributeError:
+            continue
+
+    if len(matched_countries) == 1:
+        return CountryNormalizationResult(
+            country_code=matched_countries[0],
+            confidence=ConfidenceScore.HIGH if is_explicit_field else ConfidenceScore.LOW,
+            source=SourceMethod.EXPLICIT_FIELD if is_explicit_field else SourceMethod.PYCOUNTRY_MATCH,
+            matched_country_codes=matched_countries,
+        )
+    if len(matched_countries) > 1:
+        return CountryNormalizationResult(
+            is_ambiguous=True,
+            multi_country_detected=True,
+            matched_country_codes=matched_countries,
+        )
+
+    if is_explicit_field and ("," in text_lower or " and " in text_lower or "/" in text_lower):
+        parts = re.split(r",|\band\b|/", text_lower)
+        found_codes = set()
+        for part in parts:
+            result = normalize_country(part, is_explicit_field=False)
+            if result.country_code:
+                found_codes.add(result.country_code)
+
+        if found_codes:
+            if len(found_codes) == 1:
+                resolved_code = next(iter(found_codes))
+                return CountryNormalizationResult(
+                    country_code=resolved_code,
+                    confidence=ConfidenceScore.HIGH,
+                    source=SourceMethod.EXPLICIT_FIELD,
+                    matched_country_codes=[resolved_code],
+                )
+            return CountryNormalizationResult(
+                multi_country_detected=True,
+                is_ambiguous=True,
+                matched_country_codes=sorted(found_codes),
+            )
+
+    return CountryNormalizationResult()
+
+
+def is_canonical_country_code(value: str | None) -> bool:
+    """Return True if *value* is a valid ISO 3166-1 alpha-2 country code."""
+    if not value or not isinstance(value, str):
+        return False
+    upper = value.strip().upper()
+    if len(upper) != 2 or not upper.isalpha():
+        return False
+    return pycountry.countries.get(alpha_2=upper) is not None
 
 
 @lru_cache(maxsize=1)

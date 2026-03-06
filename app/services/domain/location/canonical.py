@@ -18,24 +18,18 @@ def build_canonical_key(city: str | None, region: str | None, country_code: str 
     if not parts:
         return "unknown"
 
-    # Normalize each part
     normalized_parts = []
-    for p in parts:
-        # Replace hyphens with spaces to treat them as word separators
-        p = p.replace("-", " ")
-        # Unicode normalize and remove accents
-        n = unicodedata.normalize("NFKD", p).encode("ASCII", "ignore").decode("ASCII")
-        # Remove non-alphanumeric except spaces
-        n = re.sub(r"[^a-z0-9\s]", "", n.lower())
-        # Replace spaces with hyphens
-        n = re.sub(r"\s+", "-", n.strip())
-        if n:
-            normalized_parts.append(n)
+    for part in parts:
+        part = part.replace("-", " ")
+        normalized = unicodedata.normalize("NFKD", part).encode("ASCII", "ignore").decode("ASCII")
+        normalized = re.sub(r"[^a-z0-9\s]", "", normalized.lower())
+        normalized = re.sub(r"\s+", "-", normalized.strip())
+        if normalized:
+            normalized_parts.append(normalized)
 
     if not normalized_parts:
         return "unknown"
 
-    # Ensure uniqueness if some parts are identical or blank
     return "-".join(normalized_parts)
 
 

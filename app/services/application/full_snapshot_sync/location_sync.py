@@ -5,10 +5,13 @@ from typing import Any
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models import Job, WorkplaceType
-from app.services.domain.job_location import (
+from app.models import Job, Location, WorkplaceType
+from app.repositories.job_location import JobLocationRepository
+from app.repositories.location import LocationRepository
+from app.services.domain.location import (
     StructuredLocation,
-    sync_job_location,
+    build_canonical_key,
+    normalize_display_name,
 )
 
 
@@ -40,6 +43,48 @@ def _coerce_workplace_type(value: object) -> WorkplaceType:
 
 def _is_structured_location_usable(location: StructuredLocation) -> bool:
     return bool(location.city or location.region or location.country_code)
+
+
+async def sync_job_location(
+    *,
+    session: AsyncSession,
+    job_id: str,
+    structured: StructuredLocation,
+    is_primary: bool = False,
+    source_raw: str | None = None,
+) -> Location:
+    """Persist one structured location and link it to a job."""
+    loc_repo = LocationRepository(session)
+    job_loc_repo = JobLocationRepository(session)
+
+    canonical_key = build_canonical_key(
+        city=structured.city,
+        region=structured.region,
+        country_code=structured.country_code,
+    )
+
+    location_data = Location(
+        canonical_key=canonical_key,
+        display_name=normalize_display_name(
+            city=structured.city,
+            region=structured.region,
+            country_code=structured.country_code,
+        ),
+        city=structured.city,
+        region=structured.region,
+        country_code=structured.country_code,
+    )
+
+    location = await loc_repo.upsert(location_data)
+    await job_loc_repo.link(
+        job_id=job_id,
+        location_id=location.id,
+        is_primary=is_primary,
+        source_raw=source_raw,
+        workplace_type=structured.workplace_type.value,
+        remote_scope=structured.remote_scope,
+    )
+    return location
 
 
 @dataclass

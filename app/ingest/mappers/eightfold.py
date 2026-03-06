@@ -3,7 +3,7 @@ from urllib.parse import urljoin
 
 from app.ingest.mappers.base import BaseMapper
 from app.schemas.job import JobCreate
-from app.services.domain.job_location import extract_workplace_type, parse_location_text
+from app.services.domain.location import extract_workplace_type, parse_location_text
 
 
 class EightfoldMapper(BaseMapper):

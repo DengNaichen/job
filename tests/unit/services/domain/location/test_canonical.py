@@ -1,4 +1,4 @@
-from app.services.domain.canonical_location import build_canonical_key, normalize_display_name
+from app.services.domain.location.canonical import build_canonical_key, normalize_display_name
 
 
 def test_build_canonical_key_basic():
