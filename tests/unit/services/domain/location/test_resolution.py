@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.services.domain.geonames_resolver import GeoNamesResolver
+from app.services.domain.location.resolution import GeoNamesResolver
 
 
 def _write(path, text: str) -> None:

@@ -10,7 +10,7 @@ Current live counts, source coverage, storage footprint, and enrichment cost not
 
 ## Breaking Changes
 
-- [ ] Location API hard cutover (spec `006-location-filtering`): remove legacy compatibility fields from public jobs/matching contracts (`location_text`, and matching flattened fields `city/region/country_code/workplace_type`), keep normalized `locations` payloads only.
+- [x] Location API hard cutover (spec `006-location-filtering`): public jobs/matching contracts now use normalized `locations` payloads only; legacy compatibility fields (`location_text`, `city`, `region`, `country_code`, `workplace_type`) are removed.
 
 ## Phase 0: Core Models & Migrations
 
@@ -82,8 +82,8 @@ Current live counts, source coverage, storage footprint, and enrichment cost not
 - [ ] Evaluation / benchmark harness (P2)
 - [ ] Retrieval redesign: move away from `JD-only` embedding as the main retrieval primitive (P2)
 - [x] Location modeling v1 on `job`: add structured fields for filtering/ranking (historical phase; later migrated to normalized `locations + job_locations`) (P2)
-- [x] Country canonicalization v2 on `job`: make `location_country_code` reliable for filtering, including remote single-country rules (P2)
-- [x] Country-aware filtering: apply `location_country_code` + `location_workplace_type` in retrieval/filter pipelines (P2)
+- [x] Country canonicalization v2 on `job`: make `location_country_code` reliable for filtering, including remote single-country rules (historical phase; later superseded by normalized `locations + job_locations`) (P2)
+- [x] Country-aware filtering: apply `location_country_code` + `location_workplace_type` in retrieval/filter pipelines (historical on-row phase; current filtering paths use normalized location links) (P2)
 - [ ] Hybrid retrieval: title / skills / domain / location / structured filters + optional vector recall (P2)
 - [x] Embedding storage redesign: move vectors out of the hot `job` row and support model/version isolation (P2)
 - [ ] Production-ready matching service (P3)

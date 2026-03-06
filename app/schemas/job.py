@@ -8,7 +8,7 @@ from app.schemas.location import JobLocationRead
 
 
 class JobBase(BaseModel):
-    # Deprecated compatibility key. Persisted owner is `source_id`.
+    # Deprecated compatibility input/output key. Persisted owner is `source_id`.
     source: str | None = Field(default=None, deprecated=True)
     external_job_id: str
     title: str
@@ -24,9 +24,7 @@ class JobBase(BaseModel):
 class JobCreate(JobBase):
     model_config = ConfigDict(extra="forbid")
 
-    source_id: str | None = (
-        None  # Resolved by service from source string during compatibility window
-    )
+    source_id: str | None = None  # If omitted, service can resolve from compatibility `source`.
     content_fingerprint: str | None = None
     dedupe_group_id: str | None = None
     description_html: str | None = None
@@ -49,7 +47,7 @@ class JobCreate(JobBase):
 
 class JobRead(JobBase):
     id: str
-    source_id: str | None  # Exposed during migration window; will be non-null after enforcement
+    source_id: str | None  # Authoritative owner key; kept optional for backward-compatible responses.
     content_fingerprint: str | None
     dedupe_group_id: str | None
     description_html: str | None

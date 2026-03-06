@@ -22,7 +22,8 @@ def map_raw_jobs(
         if not external_job_id:
             raise FullSnapshotSyncError("Mapped job is missing external_job_id")
         payload["external_job_id"] = external_job_id
-        # Dual-write: authoritative source_id + compatibility source string
+        # Attach authoritative source_id and carry compatibility source key
+        # in the in-memory payload; compatibility key is dropped before persistence.
         payload["source_id"] = source_id
         payload["source"] = source_key
         mapped_payloads.append(payload)

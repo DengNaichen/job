@@ -4,7 +4,7 @@ import re
 from typing import Any
 
 from app.schemas.job import JobCreate
-from app.services.domain.country_normalization import normalize_country
+from app.services.domain.location import normalize_country
 
 
 class BaseMapper(ABC):

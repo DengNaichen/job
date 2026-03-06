@@ -7,7 +7,7 @@ Job Service is a FastAPI-based job aggregation service. It ingests jobs from pub
 - Ingests jobs from supported sources into a unified `Job` model
 - Reconciles same-source snapshots so missing jobs can be closed automatically after a successful full sync
 - Tracks source sync execution in `SyncRun`
-- Optionally offloads large fields like `description_html` and `raw_payload` to Supabase Storage
+- Stores large fields (`description_html`, `raw_payload`) in Supabase Storage via pointer/hash columns on `job`
 - Exposes REST APIs for `sources`, `jobs`, and `matching`
 - Includes a lightweight scheduled runner for local `cron` or future Cloud Run / Cloud Scheduler style execution
 
@@ -89,11 +89,11 @@ The ingest path is intentionally layered:
 3. `Mapper`
    Converts raw payloads into the internal `JobCreate` schema
 4. `FullSnapshotSyncService`
-   Dedupes by `external_job_id`, upserts open jobs, and closes missing jobs after a successful full snapshot. Ownership is keyed by `source_id` (FK to `sources.id`). The implementation is modularized under `app/services/application/full_snapshot_sync/` and uses bounded blob-sync concurrency.
+   Dedupes by `external_job_id`, upserts open jobs, syncs normalized canonical locations (`locations` + `job_locations`), and closes missing jobs after a successful full snapshot. Ownership is keyed by `source_id` (FK to `sources.id`). The implementation is modularized under `app/services/application/full_snapshot_sync/` and uses bounded blob-sync concurrency.
 5. `SyncRun`
    Records each source-level execution status and stats, linked to `sources` via `source_id`
 6. `run_scheduled_ingests.py`
-   Thin orchestration layer for scheduled source syncs with retry and overlap protection. Overlap guard is keyed by `source_id` and backed by a DB-level unique running-run guard.
+   Thin orchestration layer for scheduled source syncs with retry and overlap protection. Overlap guard is keyed by `source_id` and backed by a DB-level unique running-run guard. After successful non-dry-run snapshots, it triggers source-scoped embedding refresh into `job_embedding`.
 
 > **Note on source ownership key**: Runtime ownership is now keyed only by `source_id`
 > (FK to `sources.id`) on both `job` and `syncrun`. Legacy string columns were removed
@@ -116,10 +116,10 @@ cp .env.example .env
 Minimum local setup:
 
 - `DATABASE_URL`
+- Blob storage configuration (`STORAGE_PROVIDER=supabase` + required Supabase vars) if you run ingest or job write flows
 
 Optional features:
 
-- `STORAGE_PROVIDER=supabase` and related storage vars for blob offload
 - embedding / LLM settings for structured JD parsing and matching
 
 ### 3. Start local Supabase (and optionally Metabase)
@@ -186,12 +186,19 @@ If you run Metabase outside Docker, set host to `127.0.0.1` and port to `55322`.
 
 Authoritative ownership and storage strategy:
 
-1. `Source`: Auth owner for sync runs and jobs (platform + identifier)
-2. `Job`: Hot job row (title, apply_url, status, location metadata)
-3. `JobEmbedding`: Dedicated vector storage with model/version isolation
-4. `SyncRun`: Execution metrics/status logs
+1. `Source`: Authoritative owner for `Job` and `SyncRun` via `source_id` (platform + identifier config)
+2. `Job`: Hot job row (identity, status, metadata, structured JD, blob pointer/hash columns)
+3. `Location`: Canonical reusable location entity (`canonical_key`, `display_name`, country/region/city, optional GeoNames metadata)
+4. `JobLocation`: Many-to-many link between jobs and canonical locations, with primary flag and workplace metadata
+5. `JobEmbedding`: Dedicated vector storage with active-target model/version isolation
+6. `SyncRun`: Source-level execution stats and status logs
 
-Legacy `job.embedding`, `job.embedding_model`, and `job.embedding_updated_at` columns are **deprecated** and preserved only as rollout compatibility. Both matching recall and new writes target `JobEmbedding`.
+Physical cleanup already completed:
+
+- Legacy source compatibility columns (`job.source`, `syncrun.source`) are dropped.
+- Legacy denormalized location column (`job.location_text`) is dropped.
+- Legacy inline blob columns (`job.description_html`, `job.raw_payload`) are dropped in favor of pointer-based storage.
+- Legacy inline embedding columns on `job` are dropped; matching recall and writes use `job_embedding`.
 
 ## Core API Surface
 
@@ -295,7 +302,7 @@ is triggered automatically by `SyncService` after successful full snapshots. A t
 
 ## Blob Storage
 
-Large fields can be stored outside PostgreSQL in Supabase Storage:
+Large fields are stored outside PostgreSQL in Supabase Storage:
 
 - `description_html`
 - `raw_payload`
@@ -313,6 +320,11 @@ Required environment variables when enabling storage:
 - `SUPABASE_STORAGE_BASE_URL`
 - `SUPABASE_STORAGE_BUCKET`
 - `SUPABASE_STORAGE_SERVICE_KEY`
+
+Note:
+
+- Ingest and job write paths expect blob storage to be configured.
+- Read-only API usage without ingest can run with `STORAGE_PROVIDER=none`.
 
 Backfill existing rows:
 

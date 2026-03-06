@@ -1,7 +1,5 @@
 from app.contracts.sync import SourceSyncResult, SourceSyncStats
-from app.services.domain.geonames_resolver import (
-    get_geonames_resolver as _get_domain_geonames_resolver,
-)
+from app.services.domain.location import get_geonames_resolver as _get_domain_geonames_resolver
 
 from .errors import FullSnapshotSyncError
 from .service import FullSnapshotSyncService

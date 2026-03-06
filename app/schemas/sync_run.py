@@ -12,12 +12,12 @@ class SyncRunBase(BaseModel):
 
 
 class SyncRunCreate(SyncRunBase):
-    source_id: str | None = None  # Resolved from source entity during compatibility window
+    source_id: str | None = None
 
 
 class SyncRunRead(SyncRunBase):
     id: str
-    source_id: str | None  # Exposed during migration window; will be non-null after enforcement
+    source_id: str | None  # Authoritative owner key; kept optional for backward-compatible responses.
     started_at: datetime
     finished_at: datetime | None
     fetched_count: int
