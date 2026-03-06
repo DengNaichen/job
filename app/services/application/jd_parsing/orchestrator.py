@@ -13,7 +13,7 @@ from app.services.application.jd_parsing.structured_jd import StructuredJDServic
 from app.services.infra.blob_storage import BlobNotFoundError, BlobStorageNotConfiguredError
 from app.services.infra.text import html_to_text
 
-from .batch import parse_jd_batch
+from .llm_extraction import extract_structured_jd
 
 
 class JDParseServiceError(Exception):
@@ -68,7 +68,7 @@ class JDBatchParseService:
                 }
             )
 
-        parsed = await parse_jd_batch(jobs_data, is_html=False)
+        parsed = await extract_structured_jd(jobs_data, is_html=False)
 
         if persist:
             try:

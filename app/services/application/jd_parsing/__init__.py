@@ -1,7 +1,6 @@
 """JD parsing package."""
 
-from .batch import parse_jd_batch
+from .llm_extraction import extract_structured_jd
 from .orchestrator import JDBatchParseService, JDParseServiceError
-from .single import parse_jd
 
-__all__ = ["JDBatchParseService", "JDParseServiceError", "parse_jd", "parse_jd_batch"]
+__all__ = ["JDBatchParseService", "JDParseServiceError", "extract_structured_jd"]
