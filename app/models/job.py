@@ -34,7 +34,9 @@ class Job(SQLModel, table=True):
     )
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
-    # Authoritative owner FK — nullable during migration window; enforced NOT NULL in second revision.
+    # Authoritative owner FK.
+    # Model metadata keeps this nullable for local metadata.create_all paths used in tests;
+    # production schema enforces NOT NULL via Alembic migrations.
     source_id: str | None = Field(
         default=None,
         sa_column=Column(

@@ -114,9 +114,9 @@ def update_existing_job(
     normalized_payload["source_updated_at"] = to_naive_utc(
         normalized_payload.get("source_updated_at")
     )
-    # payload always carries both source_id and legacy source (dual-write).
-    # Overwriting source_id on existing rows is intentional: it self-heals any row
-    # that was written before the Phase 2 backfill ran (source_id was NULL or wrong).
+    # Payload may carry compatibility source key for API compatibility, but persistence
+    # uses source_id only. Overwriting source_id on existing rows is intentional: it
+    # self-heals any row with an incorrect owner reference.
     normalized_payload.pop("description_html", None)
     normalized_payload.pop("raw_payload", None)
     drop_legacy_job_payload_fields(normalized_payload, include_source=True)
