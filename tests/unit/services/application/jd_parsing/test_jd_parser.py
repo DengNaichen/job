@@ -57,8 +57,8 @@ async def test_parse_jd_batch_merges_compact_llm_output_with_rules(
     async def fake_complete_json(**kwargs):  # noqa: ANN003
         return {
             "jobs": [
-                {"i": "job-1", "d": "finance_treasury", "s": ["banking", "swift"]},
-                {"i": "job-2", "d": "software_engineering", "s": ["python", "sql"]},
+                {"i": "j1", "d": "finance_treasury", "s": ["banking", "swift"]},
+                {"i": "j2", "d": "software_engineering", "s": ["python", "sql"]},
             ]
         }
 
@@ -80,10 +80,12 @@ async def test_parse_jd_batch_merges_compact_llm_output_with_rules(
     )
 
     assert len(parsed.jobs) == 2
+    assert parsed.jobs[0].job_id == "job-1"
     assert parsed.jobs[0].job_domain_normalized == "finance_treasury"
     assert parsed.jobs[0].sponsorship_not_available == "yes"
     assert parsed.jobs[0].min_degree_level == "master"
     assert parsed.jobs[0].experience_years == 8
+    assert parsed.jobs[1].job_id == "job-2"
     assert parsed.jobs[1].job_domain_normalized == "software_engineering"
     assert parsed.jobs[1].experience_years == 3
 
@@ -116,7 +118,7 @@ async def test_parse_jd_batch_rules_use_untruncated_description(
     async def fake_complete_json(**kwargs):  # noqa: ANN003
         return {
             "jobs": [
-                {"i": "job-1", "d": "software_engineering", "s": ["python"]},
+                {"i": "j1", "d": "software_engineering", "s": ["python"]},
             ]
         }
 
