@@ -13,9 +13,9 @@ from app.services.application.job_service import (
     SourceIdNotFoundError,
     SourceResolutionError,
 )
-from app.services.application.jd_parsing.structured_jd import (
+from app.services.application.jd_parsing.jd_service import (
     JobStructuredJDMappingError,
-    StructuredJDService,
+    JDService,
 )
 
 
@@ -164,7 +164,7 @@ async def test_update_job_updates_timestamp() -> None:
 async def test_persist_structured_jd_batch() -> None:
     """persist_structured_jd_batch should map parsed items and save once."""
     repository = AsyncMock()
-    service = StructuredJDService(repository=repository)
+    service = JDService(repository=repository)
     jobs = [_build_job("job-1"), _build_job("job-2")]
 
     parsed_items = [
@@ -213,7 +213,7 @@ async def test_persist_structured_jd_batch() -> None:
 async def test_persist_structured_jd_batch_missing_mapping() -> None:
     """persist_structured_jd_batch should fail when an input job is missing."""
     repository = AsyncMock()
-    service = StructuredJDService(repository=repository)
+    service = JDService(repository=repository)
     jobs = [_build_job("job-1")]
     parsed_items = [
         BatchStructuredJDItem(
@@ -234,7 +234,7 @@ async def test_list_pending_jobs_for_parse_passes_filters() -> None:
     repository = AsyncMock()
     jobs = [_build_job("job-1")]
     repository.list_pending_structured_jd.return_value = jobs
-    service = StructuredJDService(repository=repository)
+    service = JDService(repository=repository)
 
     result = await service.list_pending_jobs_for_parse(
         limit=10,

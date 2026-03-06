@@ -2,7 +2,7 @@
 
 **Feature Branch**: `002-jd-structured-extraction`
 **Created**: 2026-03-05
-**Status**: Planned
+**Status**: Implemented
 **Input**: Extract structured fields from job descriptions using a hybrid flow: deterministic rule extraction + compact LLM extraction.
 
 ## Summary
