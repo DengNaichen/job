@@ -121,6 +121,9 @@ Minimum local setup:
 Optional features:
 
 - embedding / LLM settings for structured JD parsing and matching
+- structured JD parsing throughput knobs:
+  - `JD_PARSE_BATCH_SIZE` (default `80`)
+  - `JD_PARSE_CONCURRENCY` (default `5`)
 
 ### 3. Start local Supabase (and optionally Metabase)
 
@@ -389,3 +392,7 @@ The roadmap has been moved to [docs/ROADMAP.md](/Users/nd/Developer/job/docs/ROA
 Current sizing, source coverage, and cost notes live in [docs/SIZING.md](/Users/nd/Developer/job/docs/SIZING.md).
 
 Architecture diagrams live in [docs/architecture/README.md](/Users/nd/Developer/job/docs/architecture/README.md).
+
+Content fingerprint design notes live in [docs/architecture/content-fingerprint.md](/Users/nd/Developer/job/docs/architecture/content-fingerprint.md).
+
+Skills alignment component draft lives in [docs/architecture/skills-alignment-component.md](/Users/nd/Developer/job/docs/architecture/skills-alignment-component.md).

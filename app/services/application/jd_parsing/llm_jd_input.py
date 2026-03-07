@@ -48,7 +48,7 @@ def build_batch_llm_jd_input(
     jobs: list[dict[str, str]],
     *,
     is_html: bool,
-    max_jobs: int = 40,
+    max_jobs: int = 80,
 ) -> BatchLLMJDInput:
     """Build the concatenated batch prompt text and normalized job inputs.
 

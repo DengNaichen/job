@@ -16,7 +16,7 @@ def test_parse_llm_payload_handles_compact_schema() -> None:
         }
     )
 
-    assert parsed["required_skills"] == ["Python", "SQL"]
+    assert parsed["required_skills"] == ["Python (computer programming)", "SQL"]
     assert parsed["preferred_skills"] == []
     assert parsed["job_domain_raw"] is None
     assert parsed["job_domain_normalized"] == "software_engineering"
@@ -34,7 +34,7 @@ def test_parse_llm_payload_handles_full_schema() -> None:
         }
     )
 
-    assert parsed["required_skills"] == ["Python"]
+    assert parsed["required_skills"] == ["Python (computer programming)"]
     assert parsed["preferred_skills"] == ["Go"]
     assert parsed["job_domain_raw"] == "Backend Engineering"
     assert parsed["job_domain_normalized"] == "software_engineering"
@@ -45,7 +45,7 @@ def test_parse_llm_payload_handles_full_schema() -> None:
 def test_parse_llm_payload_defaults_unknown_domain_when_missing() -> None:
     parsed = parse_llm_payload({"s": ["Python"]})
 
-    assert parsed["required_skills"] == ["Python"]
+    assert parsed["required_skills"] == ["Python (computer programming)"]
     assert parsed["job_domain_normalized"] == "unknown"
 
 
@@ -62,9 +62,9 @@ def test_parse_llm_payload_batch_normalizes_each_alias() -> None:
         }
     )
 
-    assert parsed["j1"]["required_skills"] == ["Python"]
+    assert parsed["j1"]["required_skills"] == ["Python (computer programming)"]
     assert parsed["j1"]["job_domain_normalized"] == "software_engineering"
-    assert parsed["j2"]["required_skills"] == ["Treasury"]
+    assert parsed["j2"]["required_skills"] == ["treasury"]
     assert parsed["j2"]["preferred_skills"] == ["Risk"]
     assert parsed["j2"]["job_domain_raw"] == "Finance"
 
@@ -83,7 +83,7 @@ def test_merge_llm_and_rule_fields_merges_single_payload_with_rule_fields() -> N
         title="Senior Backend Engineer",
     )
 
-    assert merged.required_skills == ["Python", "SQL"]
+    assert merged.required_skills == ["Python (computer programming)", "SQL"]
     assert merged.job_domain_normalized == "software_engineering"
     assert merged.experience_years == 3
     assert merged.min_degree_level == "bachelor"
@@ -124,4 +124,4 @@ def test_merge_llm_and_rule_fields_batch_merges_by_alias_and_skips_missing_input
 
     assert merged["j2"].job_domain_normalized == "software_engineering"
     assert merged["j2"].experience_years == 3
-    assert merged["j2"].required_skills == ["python", "sql"]
+    assert merged["j2"].required_skills == ["Python (computer programming)", "SQL"]

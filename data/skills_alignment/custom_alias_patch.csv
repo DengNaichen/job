@@ -1,0 +1,365 @@
+alias,canonical_uri,canonical_label,language,source
+js,http://data.europa.eu/esco/skill/3cd569a2-4f88-4c1e-9995-8dce8c5e51a7,JavaScript,en,custom_patch
+node js,http://data.europa.eu/esco/skill/3cd569a2-4f88-4c1e-9995-8dce8c5e51a7,JavaScript,en,custom_patch
+excel,http://data.europa.eu/esco/skill/1973c966-f236-40c9-b2d4-5d71a89019be,use spreadsheets software,en,custom_patch
+microsoft excel,http://data.europa.eu/esco/skill/1973c966-f236-40c9-b2d4-5d71a89019be,use spreadsheets software,en,custom_patch
+e commerce,http://data.europa.eu/esco/skill/b1272de4-1f5f-408b-8b26-061f2550fc72,e-commerce systems,en,custom_patch
+ecommerce,http://data.europa.eu/esco/skill/b1272de4-1f5f-408b-8b26-061f2550fc72,e-commerce systems,en,custom_patch
+e commerce operations,http://data.europa.eu/esco/skill/b1272de4-1f5f-408b-8b26-061f2550fc72,e-commerce systems,en,custom_patch
+social commerce,http://data.europa.eu/esco/skill/b1272de4-1f5f-408b-8b26-061f2550fc72,e-commerce systems,en,custom_patch
+c c++,http://data.europa.eu/esco/skill/b633eb55-8f1f-4ae6-ab4c-2022ffe2cb7f,C++,en,custom_patch
+llm,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+llms,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+large language models,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+genai,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+generative ai,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+ai,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+recommendation systems,http://data.europa.eu/esco/skill/505e4ef3-7ce4-437d-b7b4-5c608f71c258,build recommender systems,en,custom_patch
+recommendation algorithms,http://data.europa.eu/esco/skill/505e4ef3-7ce4-437d-b7b4-5c608f71c258,build recommender systems,en,custom_patch
+digital marketing,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+digital advertising,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+online advertising,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+ad tech,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+adtech,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+product marketing,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+performance marketing,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+content marketing,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+product management,http://data.europa.eu/esco/skill/29fb886c-6be0-4e93-9ea1-232881f2092a,plan product management,en,custom_patch
+go,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+golang,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+c,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+kotlin,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+html,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+api,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+api design,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+software development,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+backend development,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+distributed systems,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+large scale systems,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+microservices,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+backend services,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+backend systems,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+kubernetes,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+kafka,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+redis,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+flink,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+hive,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+linux,http://data.europa.eu/esco/skill/f9a6f35b-01a7-40c9-8b61-b6ee46f97272,operating systems,en,custom_patch
+unix linux,http://data.europa.eu/esco/skill/f9a6f35b-01a7-40c9-8b61-b6ee46f97272,operating systems,en,custom_patch
+pytorch,http://data.europa.eu/esco/skill/ecc4552a-92c5-4222-b18d-faf5ac841080,deep learning,en,custom_patch
+deep learning frameworks,http://data.europa.eu/esco/skill/ecc4552a-92c5-4222-b18d-faf5ac841080,deep learning,en,custom_patch
+reinforcement learning,http://data.europa.eu/esco/skill/3a2d5b45-56e4-4f5a-a55a-4a4a65afdc43,machine learning,en,custom_patch
+model training,http://data.europa.eu/esco/skill/3a2d5b45-56e4-4f5a-a55a-4a4a65afdc43,machine learning,en,custom_patch
+account management,http://data.europa.eu/esco/skill/dc9a236c-c640-43c3-812f-269403591edb,customer relationship management,en,custom_patch
+relationship management,http://data.europa.eu/esco/skill/dc9a236c-c640-43c3-812f-269403591edb,customer relationship management,en,custom_patch
+client relationship management,http://data.europa.eu/esco/skill/dc9a236c-c640-43c3-812f-269403591edb,customer relationship management,en,custom_patch
+crm tools,http://data.europa.eu/esco/skill/9889b795-d755-41b2-8afd-2e3c87a65a38,use customer relationship management software,en,custom_patch
+salesforce,http://data.europa.eu/esco/skill/9889b795-d755-41b2-8afd-2e3c87a65a38,use customer relationship management software,en,custom_patch
+business development,http://data.europa.eu/esco/skill/ee7f90cc-922e-4da7-a7ae-83c2688fed10,align efforts towards business development,en,custom_patch
+business growth,http://data.europa.eu/esco/skill/ee7f90cc-922e-4da7-a7ae-83c2688fed10,align efforts towards business development,en,custom_patch
+sales,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+b2b sales,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+media sales,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+ad sales,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+advertising sales,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+digital advertising sales,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+enterprise sales,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+full cycle sales,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+sales cycle management,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+sales targets,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+sales enablement,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+sales pipeline management,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+consultative selling,http://data.europa.eu/esco/skill/e7219848-a27a-4bf4-8775-d367707be7c9,sales strategies,en,custom_patch
+lead generation,http://data.europa.eu/esco/skill/16132f2b-cf61-4c53-ae8d-9023a8bab90b,telemarketing,en,custom_patch
+outbound prospecting,http://data.europa.eu/esco/skill/16132f2b-cf61-4c53-ae8d-9023a8bab90b,telemarketing,en,custom_patch
+prospecting,http://data.europa.eu/esco/skill/16132f2b-cf61-4c53-ae8d-9023a8bab90b,telemarketing,en,custom_patch
+campaign management,http://data.europa.eu/esco/skill/9c6e951f-aa88-4890-983d-e7a6ee49f5bb,plan marketing campaigns,en,custom_patch
+campaign execution,http://data.europa.eu/esco/skill/9c6e951f-aa88-4890-983d-e7a6ee49f5bb,plan marketing campaigns,en,custom_patch
+campaign planning,http://data.europa.eu/esco/skill/9c6e951f-aa88-4890-983d-e7a6ee49f5bb,plan marketing campaigns,en,custom_patch
+campaign strategy,http://data.europa.eu/esco/skill/9c6e951f-aa88-4890-983d-e7a6ee49f5bb,plan marketing campaigns,en,custom_patch
+marketing campaigns,http://data.europa.eu/esco/skill/9c6e951f-aa88-4890-983d-e7a6ee49f5bb,plan marketing campaigns,en,custom_patch
+performance advertising,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+brand advertising,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+brand marketing,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+affiliate marketing,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+influencer marketing,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+marketing,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+advertising,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+social media marketing,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+social media,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+social media platforms,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+go to market strategy,http://data.europa.eu/esco/skill/08fd2839-670c-4f16-8024-97437f2035ab,plan marketing strategy,en,custom_patch
+gtm strategy,http://data.europa.eu/esco/skill/08fd2839-670c-4f16-8024-97437f2035ab,plan marketing strategy,en,custom_patch
+marketing strategy,http://data.europa.eu/esco/skill/08fd2839-670c-4f16-8024-97437f2035ab,plan marketing strategy,en,custom_patch
+business strategy,http://data.europa.eu/esco/skill/949ced5f-7536-4614-ac60-563ffc91a2f2,strategic planning,en,custom_patch
+commercial strategy,http://data.europa.eu/esco/skill/949ced5f-7536-4614-ac60-563ffc91a2f2,strategic planning,en,custom_patch
+growth strategies,http://data.europa.eu/esco/skill/949ced5f-7536-4614-ac60-563ffc91a2f2,strategic planning,en,custom_patch
+strategy development,http://data.europa.eu/esco/skill/949ced5f-7536-4614-ac60-563ffc91a2f2,strategic planning,en,custom_patch
+strategy,http://data.europa.eu/esco/skill/949ced5f-7536-4614-ac60-563ffc91a2f2,strategic planning,en,custom_patch
+content strategy,http://data.europa.eu/esco/skill/949ced5f-7536-4614-ac60-563ffc91a2f2,strategic planning,en,custom_patch
+product strategy,http://data.europa.eu/esco/skill/949ced5f-7536-4614-ac60-563ffc91a2f2,strategic planning,en,custom_patch
+stakeholder management,http://data.europa.eu/esco/skill/1af2db15-2af9-44dd-9639-bf1fc69d4c34,manage relationships with stakeholders,en,custom_patch
+cross functional collaboration,http://data.europa.eu/esco/skill/15d76317-c71a-4fa2-aadc-2ecc34e627b7,communication,en,custom_patch
+relationship building,http://data.europa.eu/esco/skill/15d76317-c71a-4fa2-aadc-2ecc34e627b7,communication,en,custom_patch
+collaboration,http://data.europa.eu/esco/skill/15d76317-c71a-4fa2-aadc-2ecc34e627b7,communication,en,custom_patch
+negotiation,http://data.europa.eu/esco/skill/59a8086b-59b3-4e88-9341-21d7fb693b89,moderate in negotiations,en,custom_patch
+contract negotiation,http://data.europa.eu/esco/skill/59a8086b-59b3-4e88-9341-21d7fb693b89,moderate in negotiations,en,custom_patch
+data structures,http://data.europa.eu/esco/skill/54924a2c-daca-40d3-9716-4b38ceb04f38,algorithms,en,custom_patch
+data structure,http://data.europa.eu/esco/skill/54924a2c-daca-40d3-9716-4b38ceb04f38,algorithms,en,custom_patch
+search algorithms,http://data.europa.eu/esco/skill/54924a2c-daca-40d3-9716-4b38ceb04f38,algorithms,en,custom_patch
+tableau,http://data.europa.eu/esco/skill/65e58886-bd1e-4c5b-8ca5-8d9b353c8aa1,data visualisation software,en,custom_patch
+power bi,http://data.europa.eu/esco/skill/65e58886-bd1e-4c5b-8ca5-8d9b353c8aa1,data visualisation software,en,custom_patch
+bi tools,http://data.europa.eu/esco/skill/65e58886-bd1e-4c5b-8ca5-8d9b353c8aa1,data visualisation software,en,custom_patch
+data visualization,http://data.europa.eu/esco/skill/65e58886-bd1e-4c5b-8ca5-8d9b353c8aa1,data visualisation software,en,custom_patch
+qa,http://data.europa.eu/esco/skill/1177c6f5-09c5-4c35-873c-afd22d170ad3,quality assurance procedures,en,custom_patch
+quality assurance,http://data.europa.eu/esco/skill/1177c6f5-09c5-4c35-873c-afd22d170ad3,quality assurance procedures,en,custom_patch
+process improvement,http://data.europa.eu/esco/skill/958b8802-ec3e-4813-97f7-6c8f48610dbd,identify process improvements,en,custom_patch
+process optimization,http://data.europa.eu/esco/skill/958b8802-ec3e-4813-97f7-6c8f48610dbd,identify process improvements,en,custom_patch
+workflow optimization,http://data.europa.eu/esco/skill/958b8802-ec3e-4813-97f7-6c8f48610dbd,identify process improvements,en,custom_patch
+performance optimization,http://data.europa.eu/esco/skill/958b8802-ec3e-4813-97f7-6c8f48610dbd,identify process improvements,en,custom_patch
+optimization,http://data.europa.eu/esco/skill/958b8802-ec3e-4813-97f7-6c8f48610dbd,identify process improvements,en,custom_patch
+pipeline management,http://data.europa.eu/esco/skill/48db96bf-3314-45c6-bad8-fdb6e20e5639,data engineering,en,custom_patch
+data pipelines,http://data.europa.eu/esco/skill/48db96bf-3314-45c6-bad8-fdb6e20e5639,data engineering,en,custom_patch
+analytics,http://data.europa.eu/esco/skill/97bd1c21-66b2-4b7e-ad0f-e3cda590e378,data analytics,en,custom_patch
+analytical skills,http://data.europa.eu/esco/skill/97bd1c21-66b2-4b7e-ad0f-e3cda590e378,data analytics,en,custom_patch
+performance analysis,http://data.europa.eu/esco/skill/97bd1c21-66b2-4b7e-ad0f-e3cda590e378,data analytics,en,custom_patch
+experimentation,http://data.europa.eu/esco/skill/97bd1c21-66b2-4b7e-ad0f-e3cda590e378,data analytics,en,custom_patch
+a b testing,http://data.europa.eu/esco/skill/97bd1c21-66b2-4b7e-ad0f-e3cda590e378,data analytics,en,custom_patch
+causal inference,http://data.europa.eu/esco/skill/68ef0e4d-5542-4e64-84f4-752cce5a3c22,statistical modeling techniques,en,custom_patch
+experimental design,http://data.europa.eu/esco/skill/68ef0e4d-5542-4e64-84f4-752cce5a3c22,statistical modeling techniques,en,custom_patch
+experiment design,http://data.europa.eu/esco/skill/68ef0e4d-5542-4e64-84f4-752cce5a3c22,statistical modeling techniques,en,custom_patch
+financial modeling,http://data.europa.eu/esco/skill/68ef0e4d-5542-4e64-84f4-752cce5a3c22,statistical modeling techniques,en,custom_patch
+data modeling,http://data.europa.eu/esco/skill/68ef0e4d-5542-4e64-84f4-752cce5a3c22,statistical modeling techniques,en,custom_patch
+data interpretation,http://data.europa.eu/esco/skill/7ee4c2ea-b349-4bd2-81a3-ec31475d4833,statistics,en,custom_patch
+data driven decision making,http://data.europa.eu/esco/skill/633a3637-2c6b-40ae-ac38-289eb2a62aa6,business analysis,en,custom_patch
+business acumen,http://data.europa.eu/esco/skill/633a3637-2c6b-40ae-ac38-289eb2a62aa6,business analysis,en,custom_patch
+cv,http://data.europa.eu/esco/skill/7b0d5000-00da-4864-b776-6de49a87a669,computer vision,en,custom_patch
+reporting,http://data.europa.eu/esco/skill/9bcfccac-8920-4024-9aef-a06f8c035063,follow reporting procedures,en,custom_patch
+documentation,http://data.europa.eu/esco/skill/9bcfccac-8920-4024-9aef-a06f8c035063,follow reporting procedures,en,custom_patch
+operations,http://data.europa.eu/esco/skill/2d140a3a-45a6-4248-80dd-b3760ebc9cc6,operations management,en,custom_patch
+product operations,http://data.europa.eu/esco/skill/29fb886c-6be0-4e93-9ea1-232881f2092a,plan product management,en,custom_patch
+product roadmap,http://data.europa.eu/esco/skill/29fb886c-6be0-4e93-9ea1-232881f2092a,plan product management,en,custom_patch
+product development,http://data.europa.eu/esco/skill/29fb886c-6be0-4e93-9ea1-232881f2092a,plan product management,en,custom_patch
+project coordination,http://data.europa.eu/esco/skill/06d09f70-6ca8-4078-be72-4c2c2a11ee61,program management,en,custom_patch
+compliance,http://data.europa.eu/esco/skill/1dae8445-12e5-423a-bb26-824010e299b9,ensure compliance with legal requirements,en,custom_patch
+regulatory compliance,http://data.europa.eu/esco/skill/1dae8445-12e5-423a-bb26-824010e299b9,ensure compliance with legal requirements,en,custom_patch
+policy development,http://data.europa.eu/esco/skill/c5449667-9b40-4114-8d74-f51177669984,policy analysis,en,custom_patch
+policy enforcement,http://data.europa.eu/esco/skill/c5449667-9b40-4114-8d74-f51177669984,policy analysis,en,custom_patch
+public policy,http://data.europa.eu/esco/skill/c5449667-9b40-4114-8d74-f51177669984,policy analysis,en,custom_patch
+risk control,http://data.europa.eu/esco/skill/6eff134b-e34f-4d6e-a6e8-5e47cf2228d0,risk management,en,custom_patch
+risk mitigation,http://data.europa.eu/esco/skill/6eff134b-e34f-4d6e-a6e8-5e47cf2228d0,risk management,en,custom_patch
+threat modeling,http://data.europa.eu/esco/skill/6f1edc19-191f-4ba5-a048-ee69aff05bab,security engineering,en,custom_patch
+sre,http://data.europa.eu/esco/skill/f0de4973-0a70-4644-8fd4-3a97080476f4,DevOps,en,custom_patch
+ci cd,http://data.europa.eu/esco/skill/f0de4973-0a70-4644-8fd4-3a97080476f4,DevOps,en,custom_patch
+data warehousing,http://data.europa.eu/esco/skill/3ec2e4d6-7000-4905-bf1a-c5b1679416de,data warehouse,en,custom_patch
+databases,http://data.europa.eu/esco/skill/ab1e97ed-2319-4293-a8b7-072d2648822f,database management systems,en,custom_patch
+jira,http://data.europa.eu/esco/skill/580660a6-5d3a-421d-a54f-d85b706c2b2f,use online tools to collaborate,en,custom_patch
+powerpoint,http://data.europa.eu/esco/skill/234aeb8d-56c3-4531-9193-1c5e6a8d16cb,use presentation software,en,custom_patch
+ux design,http://data.europa.eu/esco/skill/de0be6e8-644c-4cc9-9c8d-925dd98dda56,software interaction design,en,custom_patch
+ui design,http://data.europa.eu/esco/skill/de0be6e8-644c-4cc9-9c8d-925dd98dda56,software interaction design,en,custom_patch
+design systems,http://data.europa.eu/esco/skill/de0be6e8-644c-4cc9-9c8d-925dd98dda56,software interaction design,en,custom_patch
+prototyping,http://data.europa.eu/esco/skill/07dd856d-6141-48a7-a228-918f88494812,create prototype of user experience solutions,en,custom_patch
+ios development,http://data.europa.eu/esco/skill/ce26e71f-2d47-474e-89b6-7920931ac4fc,iOS,en,custom_patch
+vue,http://data.europa.eu/esco/skill/3cd569a2-4f88-4c1e-9995-8dce8c5e51a7,JavaScript,en,custom_patch
+react,http://data.europa.eu/esco/skill/3cd569a2-4f88-4c1e-9995-8dce8c5e51a7,JavaScript,en,custom_patch
+rag,http://data.europa.eu/esco/skill/4bf59dde-8a03-483f-976a-45764f1e6d6f,search engines,en,custom_patch
+information retrieval,http://data.europa.eu/esco/skill/4bf59dde-8a03-483f-976a-45764f1e6d6f,search engines,en,custom_patch
+recommender system,http://data.europa.eu/esco/skill/505e4ef3-7ce4-437d-b7b4-5c608f71c258,build recommender systems,en,custom_patch
+prompt engineering,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+large models,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+multi modal technology,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+google suite,http://data.europa.eu/esco/skill/cf310cff-0d28-4dbc-9dbb-cc500a3196c2,office software,en,custom_patch
+customer experience,http://data.europa.eu/esco/skill/15a33d76-4640-438d-ae64-fdc0c1d3eebc,customer service,en,custom_patch
+client services,http://data.europa.eu/esco/skill/15a33d76-4640-438d-ae64-fdc0c1d3eebc,customer service,en,custom_patch
+client solutions,http://data.europa.eu/esco/skill/15a33d76-4640-438d-ae64-fdc0c1d3eebc,customer service,en,custom_patch
+mandarin,http://data.europa.eu/esco/skill/1fe42b38-cd42-4fc7-ae77-14e4c9e96295,Chinese,en,custom_patch
+frontend development,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+full stack development,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+backend engineering,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+apis,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+backend systems design,http://data.europa.eu/esco/skill/fae27053-8924-4bfd-b565-c9fe502044c9,system design,en,custom_patch
+ml models,http://data.europa.eu/esco/skill/3a2d5b45-56e4-4f5a-a55a-4a4a65afdc43,machine learning,en,custom_patch
+machine learning concepts,http://data.europa.eu/esco/skill/3a2d5b45-56e4-4f5a-a55a-4a4a65afdc43,machine learning,en,custom_patch
+machine learning systems,http://data.europa.eu/esco/skill/3a2d5b45-56e4-4f5a-a55a-4a4a65afdc43,machine learning,en,custom_patch
+feature engineering,http://data.europa.eu/esco/skill/edebd83d-35f6-4ed5-a940-6c203d178c01,data science,en,custom_patch
+multimodal models,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+conversational ai,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+ai agents,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+multi modal llm,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+multimodal,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+large language models (llms),http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+diffusion models,http://data.europa.eu/esco/skill/ecc4552a-92c5-4222-b18d-faf5ac841080,deep learning,en,custom_patch
+reactjs,http://data.europa.eu/esco/skill/9b9de2a4-d8af-4a7b-933a-a8334ae60067,JavaScript Framework,en,custom_patch
+vuejs,http://data.europa.eu/esco/skill/9b9de2a4-d8af-4a7b-933a-a8334ae60067,JavaScript Framework,en,custom_patch
+android development,http://data.europa.eu/esco/skill/d8829a1d-dbde-435b-b921-29d6462f35c9,Android (mobile operating systems),en,custom_patch
+automation testing,http://data.europa.eu/esco/skill/7557f0f4-b8bc-4ac0-b91e-222ab1ba744f,tools for ICT test automation,en,custom_patch
+machine learning infrastructure,http://data.europa.eu/esco/skill/48db96bf-3314-45c6-bad8-fdb6e20e5639,data engineering,en,custom_patch
+ranking systems,http://data.europa.eu/esco/skill/505e4ef3-7ce4-437d-b7b4-5c608f71c258,build recommender systems,en,custom_patch
+recommender systems,http://data.europa.eu/esco/skill/505e4ef3-7ce4-437d-b7b4-5c608f71c258,build recommender systems,en,custom_patch
+docker,http://data.europa.eu/esco/skill/f0de4973-0a70-4644-8fd4-3a97080476f4,DevOps,en,custom_patch
+privacy,http://data.europa.eu/esco/skill/a4346013-a967-4a58-a533-6b32ad1364c5,data protection,en,custom_patch
+data structures and algorithms,http://data.europa.eu/esco/skill/54924a2c-daca-40d3-9716-4b38ceb04f38,algorithms,en,custom_patch
+database management,http://data.europa.eu/esco/skill/ab1e97ed-2319-4293-a8b7-072d2648822f,database management systems,en,custom_patch
+distributed system,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+elasticsearch,http://data.europa.eu/esco/skill/4bf59dde-8a03-483f-976a-45764f1e6d6f,search engines,en,custom_patch
+search systems,http://data.europa.eu/esco/skill/4bf59dde-8a03-483f-976a-45764f1e6d6f,search engines,en,custom_patch
+web application security,http://data.europa.eu/esco/skill/6f1edc19-191f-4ba5-a048-ee69aff05bab,security engineering,en,custom_patch
+workflow automation,http://data.europa.eu/esco/skill/f4a6e9f7-5cff-46c0-894c-59c20bb78694,automation technology,en,custom_patch
+figma,http://data.europa.eu/esco/skill/07dd856d-6141-48a7-a228-918f88494812,create prototype of user experience solutions,en,custom_patch
+microsoft office,http://data.europa.eu/esco/skill/f683ae1d-cb7c-4aa1-b9fe-205e1bd23535,use microsoft office,en,custom_patch
+ms office,http://data.europa.eu/esco/skill/f683ae1d-cb7c-4aa1-b9fe-205e1bd23535,use microsoft office,en,custom_patch
+office 365,http://data.europa.eu/esco/skill/f683ae1d-cb7c-4aa1-b9fe-205e1bd23535,use microsoft office,en,custom_patch
+aws,http://data.europa.eu/esco/skill/bd14968e-e409-45af-b362-3495ed7b10e0,cloud technologies,en,custom_patch
+amazon web services,http://data.europa.eu/esco/skill/bd14968e-e409-45af-b362-3495ed7b10e0,cloud technologies,en,custom_patch
+aws cloud,http://data.europa.eu/esco/skill/bd14968e-e409-45af-b362-3495ed7b10e0,cloud technologies,en,custom_patch
+etl,http://data.europa.eu/esco/skill/9d0d89be-bffa-4393-b6f6-8d05bea49051,"data extraction, transformation and loading tools",en,custom_patch
+forecasting,http://data.europa.eu/esco/skill/146eccdc-c52a-4d61-9406-3af617caa7d6,forecast sales over periods of time,en,custom_patch
+automation,http://data.europa.eu/esco/skill/f4a6e9f7-5cff-46c0-894c-59c20bb78694,automation technology,en,custom_patch
+case management,http://data.europa.eu/esco/skill/2ffc7a73-7e1d-434a-b498-2b0c056ced1d,apply case management,en,custom_patch
+territory management,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+word,http://data.europa.eu/esco/skill/81633a44-f1db-4a01-a940-804c6905e330,use word processing software,en,custom_patch
+market intelligence,http://data.europa.eu/esco/skill/8770350e-746f-4adb-9556-18ca68104be6,market research,en,custom_patch
+vendor management,http://data.europa.eu/esco/skill/29cd7e7b-215c-483a-b67a-6bdad0647de9,develop procurement strategy,en,custom_patch
+cgmp,http://data.europa.eu/esco/skill/ecee574b-4332-4cb4-b81c-d7ac71a0e2e2,apply good clinical practices,en,custom_patch
+supply chain,http://data.europa.eu/esco/skill/020b3c27-bae1-4b85-9d6f-eccee0f5ed99,manage supplies,en,custom_patch
+content creation,http://data.europa.eu/esco/skill/f5369f2f-e52b-43d8-8d31-79a6c11188d8,digital content creation,en,custom_patch
+user research,http://data.europa.eu/esco/skill/a4c2aa71-086f-4a46-b481-2619673c9dfe,execute ICT user research activities,en,custom_patch
+merchant acquisition,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+talent acquisition,http://data.europa.eu/esco/skill/496932f1-0b6b-4f73-9432-d95c7ddcd43b,recruit employees,en,custom_patch
+sops,http://data.europa.eu/esco/skill/1177c6f5-09c5-4c35-873c-afd22d170ad3,quality assurance procedures,en,custom_patch
+product design,http://data.europa.eu/esco/skill/fd4386c5-96f0-4c6e-970c-c08729ae0cc6,develop product design,en,custom_patch
+good clinical practices,http://data.europa.eu/esco/skill/ecee574b-4332-4cb4-b81c-d7ac71a0e2e2,apply good clinical practices,en,custom_patch
+looker,http://data.europa.eu/esco/skill/65e58886-bd1e-4c5b-8ca5-8d9b353c8aa1,data visualisation software,en,custom_patch
+billing,http://data.europa.eu/esco/skill/1be2bb07-dbb2-4a67-b133-30b4ff30b094,monitor billing procedures,en,custom_patch
+ehr,http://data.europa.eu/esco/skill/53141450-2fa9-4890-a64e-7ffd4e1144be,use electronic health records management system,en,custom_patch
+consultative sales,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+procurement,http://data.europa.eu/esco/skill/29cd7e7b-215c-483a-b67a-6bdad0647de9,develop procurement strategy,en,custom_patch
+incident response,http://data.europa.eu/esco/skill/440d5784-52a5-4729-8b04-29f978bd896d,respond to incidents in cloud,en,custom_patch
+data governance,http://data.europa.eu/esco/skill/9a0d0abc-010d-440b-8242-7e31510471ba,information governance compliance,en,custom_patch
+quality control,http://data.europa.eu/esco/skill/1177c6f5-09c5-4c35-873c-afd22d170ad3,quality assurance procedures,en,custom_patch
+azure,http://data.europa.eu/esco/skill/bd14968e-e409-45af-b362-3495ed7b10e0,cloud technologies,en,custom_patch
+rust,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+site reliability engineering,http://data.europa.eu/esco/skill/f0de4973-0a70-4644-8fd4-3a97080476f4,DevOps,en,custom_patch
+system architecture,http://data.europa.eu/esco/skill/fae27053-8924-4bfd-b565-c9fe502044c9,system design,en,custom_patch
+microservices architecture,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+scalable systems,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+high availability,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+observability,http://data.europa.eu/esco/skill/f0de4973-0a70-4644-8fd4-3a97080476f4,DevOps,en,custom_patch
+api integration,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+agile methodologies,http://data.europa.eu/esco/skill/0a9acb6b-1139-4be9-b431-3a80a959f2f4,Agile project management,en,custom_patch
+microsoft office suite,http://data.europa.eu/esco/skill/f683ae1d-cb7c-4aa1-b9fe-205e1bd23535,use microsoft office,en,custom_patch
+google workspace,http://data.europa.eu/esco/skill/cf310cff-0d28-4dbc-9dbb-cc500a3196c2,office software,en,custom_patch
+brand strategy,http://data.europa.eu/esco/skill/ab5c3fac-238f-4006-a122-1114082a2f46,supervise brand management,en,custom_patch
+gcp,http://data.europa.eu/esco/skill/bd14968e-e409-45af-b362-3495ed7b10e0,cloud technologies,en,custom_patch
+kpis,http://data.europa.eu/esco/skill/8dcbcabe-09f7-4d11-940d-125af57bbc40,track key performance indicators,en,custom_patch
+attribution models,http://data.europa.eu/esco/skill/11c56452-fcec-4b00-9695-cca4728e5048,marketing analytics,en,custom_patch
+clickhouse,http://data.europa.eu/esco/skill/ab1e97ed-2319-4293-a8b7-072d2648822f,database management systems,en,custom_patch
+microsoft powerpoint,http://data.europa.eu/esco/skill/234aeb8d-56c3-4531-9193-1c5e6a8d16cb,use presentation software,en,custom_patch
+microsoft word,http://data.europa.eu/esco/skill/81633a44-f1db-4a01-a940-804c6905e330,use word processing software,en,custom_patch
+microsoft outlook,http://data.europa.eu/esco/skill/f683ae1d-cb7c-4aa1-b9fe-205e1bd23535,use microsoft office,en,custom_patch
+vlookup,http://data.europa.eu/esco/skill/1973c966-f236-40c9-b2d4-5d71a89019be,use spreadsheets software,en,custom_patch
+linkedin,http://data.europa.eu/esco/skill/9889b795-d755-41b2-8afd-2e3c87a65a38,use customer relationship management software,en,custom_patch
+linkedin recruiter,http://data.europa.eu/esco/skill/9889b795-d755-41b2-8afd-2e3c87a65a38,use customer relationship management software,en,custom_patch
+linkedin sales navigator,http://data.europa.eu/esco/skill/9889b795-d755-41b2-8afd-2e3c87a65a38,use customer relationship management software,en,custom_patch
+zoominfo,http://data.europa.eu/esco/skill/9889b795-d755-41b2-8afd-2e3c87a65a38,use customer relationship management software,en,custom_patch
+sales prospecting,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+account based selling,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+field sales,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+objection handling,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+upselling,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+cross selling,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+solution selling,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+pre call planning,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+post call evaluation,http://data.europa.eu/esco/skill/450de541-797a-4da0-9fe4-a81471c8047d,sales activities,en,custom_patch
+programmatic advertising,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+tiktok,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+tiktok ads,http://data.europa.eu/esco/skill/43dfbe7f-9e10-4871-b171-e5076737b4cf,digital marketing techniques,en,custom_patch
+data studio,http://data.europa.eu/esco/skill/edebd83d-35f6-4ed5-a940-6c203d178c01,data science,en,custom_patch
+google data studio,http://data.europa.eu/esco/skill/edebd83d-35f6-4ed5-a940-6c203d178c01,data science,en,custom_patch
+multimodal learning,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+multi modal learning,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+retrieval augmented generation,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+rlhf,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+transfer learning,http://data.europa.eu/esco/skill/3a2d5b45-56e4-4f5a-a55a-4a4a65afdc43,machine learning,en,custom_patch
+anomaly detection,http://data.europa.eu/esco/skill/3a2d5b45-56e4-4f5a-a55a-4a4a65afdc43,machine learning,en,custom_patch
+regression,http://data.europa.eu/esco/skill/3a2d5b45-56e4-4f5a-a55a-4a4a65afdc43,machine learning,en,custom_patch
+hypothesis testing,http://data.europa.eu/esco/skill/3a2d5b45-56e4-4f5a-a55a-4a4a65afdc43,machine learning,en,custom_patch
+predictive modeling,http://data.europa.eu/esco/skill/3a2d5b45-56e4-4f5a-a55a-4a4a65afdc43,machine learning,en,custom_patch
+classification,http://data.europa.eu/esco/skill/3a2d5b45-56e4-4f5a-a55a-4a4a65afdc43,machine learning,en,custom_patch
+gbdt,http://data.europa.eu/esco/skill/3a2d5b45-56e4-4f5a-a55a-4a4a65afdc43,machine learning,en,custom_patch
+xgboost,http://data.europa.eu/esco/skill/3a2d5b45-56e4-4f5a-a55a-4a4a65afdc43,machine learning,en,custom_patch
+uplift modeling,http://data.europa.eu/esco/skill/edebd83d-35f6-4ed5-a940-6c203d178c01,data science,en,custom_patch
+attribution modeling,http://data.europa.eu/esco/skill/edebd83d-35f6-4ed5-a940-6c203d178c01,data science,en,custom_patch
+multi touch attribution,http://data.europa.eu/esco/skill/edebd83d-35f6-4ed5-a940-6c203d178c01,data science,en,custom_patch
+mxnet,http://data.europa.eu/esco/skill/ecc4552a-92c5-4222-b18d-faf5ac841080,deep learning,en,custom_patch
+apache spark,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+spark sql,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+databricks,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+presto,http://data.europa.eu/esco/skill/ab1e97ed-2319-4293-a8b7-072d2648822f,database management systems,en,custom_patch
+distributed storage systems,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+mapreduce,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+rocksdb,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+cassandra,http://data.europa.eu/esco/skill/897b393f-e7e0-4248-a40d-d77119694e83,distributed computing,en,custom_patch
+rest apis,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+graphql,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+json,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+xml,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+html5,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+css3,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+rpc,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+caching,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+servicenow,http://data.europa.eu/esco/skill/f4a6e9f7-5cff-46c0-894c-59c20bb78694,automation technology,en,custom_patch
+alteryx,http://data.europa.eu/esco/skill/edebd83d-35f6-4ed5-a940-6c203d178c01,data science,en,custom_patch
+shopify,http://data.europa.eu/esco/skill/b1272de4-1f5f-408b-8b26-061f2550fc72,e-commerce systems,en,custom_patch
+iso 27001,http://data.europa.eu/esco/skill/6f1edc19-191f-4ba5-a048-ee69aff05bab,security engineering,en,custom_patch
+soc 2,http://data.europa.eu/esco/skill/6f1edc19-191f-4ba5-a048-ee69aff05bab,security engineering,en,custom_patch
+mobile application security,http://data.europa.eu/esco/skill/6f1edc19-191f-4ba5-a048-ee69aff05bab,security engineering,en,custom_patch
+api testing,http://data.europa.eu/esco/skill/6f1edc19-191f-4ba5-a048-ee69aff05bab,security engineering,en,custom_patch
+penetration testing,http://data.europa.eu/esco/skill/6f1edc19-191f-4ba5-a048-ee69aff05bab,security engineering,en,custom_patch
+network security,http://data.europa.eu/esco/skill/6f1edc19-191f-4ba5-a048-ee69aff05bab,security engineering,en,custom_patch
+identity and access management,http://data.europa.eu/esco/skill/6f1edc19-191f-4ba5-a048-ee69aff05bab,security engineering,en,custom_patch
+tcp ip,http://data.europa.eu/esco/skill/b9aad733-959a-4178-984f-53e4bd05b420,maintain internet protocol configuration,en,custom_patch
+rest,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+rest api,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+soap,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+soap api,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+open api,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+openapi,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+sdk,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+software development kit,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,en,custom_patch
+express,http://data.europa.eu/esco/skill/9b9de2a4-d8af-4a7b-933a-a8334ae60067,JavaScript Framework,en,custom_patch
+node express,http://data.europa.eu/esco/skill/9b9de2a4-d8af-4a7b-933a-a8334ae60067,JavaScript Framework,en,custom_patch
+hbase,http://data.europa.eu/esco/skill/ab1e97ed-2319-4293-a8b7-072d2648822f,database management systems,en,custom_patch
+mongodb,http://data.europa.eu/esco/skill/ab1e97ed-2319-4293-a8b7-072d2648822f,database management systems,en,custom_patch
+click house,http://data.europa.eu/esco/skill/ab1e97ed-2319-4293-a8b7-072d2648822f,database management systems,en,custom_patch
+pinot,http://data.europa.eu/esco/skill/ab1e97ed-2319-4293-a8b7-072d2648822f,database management systems,en,custom_patch
+druid,http://data.europa.eu/esco/skill/ab1e97ed-2319-4293-a8b7-072d2648822f,database management systems,en,custom_patch
+pyspark,http://data.europa.eu/esco/skill/48db96bf-3314-45c6-bad8-fdb6e20e5639,data engineering,en,custom_patch
+spark streaming,http://data.europa.eu/esco/skill/48db96bf-3314-45c6-bad8-fdb6e20e5639,data engineering,en,custom_patch
+mlops,http://data.europa.eu/esco/skill/f0de4973-0a70-4644-8fd4-3a97080476f4,DevOps,en,custom_patch
+model ops,http://data.europa.eu/esco/skill/f0de4973-0a70-4644-8fd4-3a97080476f4,DevOps,en,custom_patch
+github actions,http://data.europa.eu/esco/skill/f0de4973-0a70-4644-8fd4-3a97080476f4,DevOps,en,custom_patch
+data observability,http://data.europa.eu/esco/skill/f0de4973-0a70-4644-8fd4-3a97080476f4,DevOps,en,custom_patch
+cypress,http://data.europa.eu/esco/skill/7557f0f4-b8bc-4ac0-b91e-222ab1ba744f,tools for ICT test automation,en,custom_patch
+performance testing,http://data.europa.eu/esco/skill/7557f0f4-b8bc-4ac0-b91e-222ab1ba744f,tools for ICT test automation,en,custom_patch
+scikit learn,http://data.europa.eu/esco/skill/3a2d5b45-56e4-4f5a-a55a-4a4a65afdc43,machine learning,en,custom_patch
+scikit-learn,http://data.europa.eu/esco/skill/3a2d5b45-56e4-4f5a-a55a-4a4a65afdc43,machine learning,en,custom_patch
+clustering,http://data.europa.eu/esco/skill/3a2d5b45-56e4-4f5a-a55a-4a4a65afdc43,machine learning,en,custom_patch
+model deployment,http://data.europa.eu/esco/skill/3a2d5b45-56e4-4f5a-a55a-4a4a65afdc43,machine learning,en,custom_patch
+graph neural networks,http://data.europa.eu/esco/skill/ecc4552a-92c5-4222-b18d-faf5ac841080,deep learning,en,custom_patch
+graph neural network,http://data.europa.eu/esco/skill/ecc4552a-92c5-4222-b18d-faf5ac841080,deep learning,en,custom_patch
+langchain,http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,en,custom_patch
+looker studio,http://data.europa.eu/esco/skill/65e58886-bd1e-4c5b-8ca5-8d9b353c8aa1,data visualisation software,en,custom_patch
+dashboarding,http://data.europa.eu/esco/skill/65e58886-bd1e-4c5b-8ca5-8d9b353c8aa1,data visualisation software,en,custom_patch
+powerbi,http://data.europa.eu/esco/skill/65e58886-bd1e-4c5b-8ca5-8d9b353c8aa1,data visualisation software,en,custom_patch
+elk,http://data.europa.eu/esco/skill/4bf59dde-8a03-483f-976a-45764f1e6d6f,search engines,en,custom_patch
+elastic stack,http://data.europa.eu/esco/skill/4bf59dde-8a03-483f-976a-45764f1e6d6f,search engines,en,custom_patch
+unix,http://data.europa.eu/esco/skill/f9a6f35b-01a7-40c9-8b61-b6ee46f97272,operating systems,en,custom_patch
+sso,http://data.europa.eu/esco/skill/6f1edc19-191f-4ba5-a048-ee69aff05bab,security engineering,en,custom_patch
+cryptography,http://data.europa.eu/esco/skill/6f1edc19-191f-4ba5-a048-ee69aff05bab,security engineering,en,custom_patch
+nist csf,http://data.europa.eu/esco/skill/6f1edc19-191f-4ba5-a048-ee69aff05bab,security engineering,en,custom_patch
+erd,http://data.europa.eu/esco/skill/fae27053-8924-4bfd-b565-c9fe502044c9,system design,en,custom_patch
+data flow diagrams,http://data.europa.eu/esco/skill/fae27053-8924-4bfd-b565-c9fe502044c9,system design,en,custom_patch
+object detection,http://data.europa.eu/esco/skill/7b0d5000-00da-4864-b776-6de49a87a669,computer vision,en,custom_patch
+segmentation,http://data.europa.eu/esco/skill/7b0d5000-00da-4864-b776-6de49a87a669,computer vision,en,custom_patch
+time series analysis,http://data.europa.eu/esco/skill/7ee4c2ea-b349-4bd2-81a3-ec31475d4833,statistics,en,custom_patch

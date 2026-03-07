@@ -1,0 +1,4 @@
+uri,preferredLabel,altLabels,language
+http://data.europa.eu/esco/skill/123,JavaScript,js|java script|node js,en
+http://data.europa.eu/esco/skill/456,Python (programming),python|python programming|py,en
+http://data.europa.eu/esco/skill/789,SQL,structured query language|sql databases,en

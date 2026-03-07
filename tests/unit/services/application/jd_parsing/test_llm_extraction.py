@@ -17,7 +17,7 @@ async def test_extract_structured_jd_defaults_missing_new_fields(monkeypatch: py
 
     parsed = await extract_structured_jd("Backend engineer with Python", title="Backend Engineer")
 
-    assert parsed.required_skills == ["Python", "SQL"]
+    assert parsed.required_skills == ["Python (computer programming)", "SQL"]
     assert parsed.experience_years is None
     assert parsed.sponsorship_not_available == "unknown"
     assert parsed.job_domain_normalized == "software_engineering"
@@ -47,7 +47,7 @@ async def test_extract_structured_jd_normalizes_new_fields(monkeypatch: pytest.M
     assert parsed.job_domain_normalized == "unknown"
     assert parsed.min_degree_level == "bachelor"
     assert parsed.experience_years == 2
-    assert parsed.required_skills == ["malware analysis", "Python"]
+    assert parsed.required_skills == ["malware analysis", "Python (computer programming)"]
 
 
 @pytest.mark.asyncio
@@ -160,5 +160,5 @@ async def test_extract_structured_jd_accepts_unified_batch_contract(monkeypatch:
 
     parsed = await extract_structured_jd("Backend engineer with Python", title="Backend Engineer")
 
-    assert parsed.required_skills == ["Python"]
+    assert parsed.required_skills == ["Python (computer programming)"]
     assert parsed.job_domain_normalized == "software_engineering"

@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Collection
 from datetime import datetime, timezone
 
+from app.core.config import get_settings
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import Job
@@ -108,7 +110,44 @@ class JDService:
                 }
             )
 
-        parsed = await extract_structured_jd(jobs_data, is_html=False)
+        settings = get_settings()
+        batch_size = max(1, int(getattr(settings, "jd_parse_batch_size", 80)))
+        concurrency = max(1, int(getattr(settings, "jd_parse_concurrency", 1)))
+
+        if len(jobs_data) <= batch_size:
+            parsed = await extract_structured_jd(jobs_data, is_html=False)
+        else:
+            chunks = [
+                jobs_data[start : start + batch_size]
+                for start in range(0, len(jobs_data), batch_size)
+            ]
+
+            async def _parse_chunk(
+                chunk_index: int,
+                chunk_jobs: list[dict[str, str]],
+                *,
+                semaphore: asyncio.Semaphore | None,
+            ) -> tuple[int, BatchStructuredJD]:
+                if semaphore is None:
+                    parsed_chunk = await extract_structured_jd(chunk_jobs, is_html=False)
+                else:
+                    async with semaphore:
+                        parsed_chunk = await extract_structured_jd(chunk_jobs, is_html=False)
+                return chunk_index, parsed_chunk
+
+            semaphore = asyncio.Semaphore(concurrency) if concurrency > 1 else None
+            chunk_results = await asyncio.gather(
+                *(
+                    _parse_chunk(idx, chunk_jobs, semaphore=semaphore)
+                    for idx, chunk_jobs in enumerate(chunks)
+                )
+            )
+            chunk_results.sort(key=lambda item: item[0])
+
+            merged_items: list[BatchStructuredJDItem] = []
+            for _, chunk in chunk_results:
+                merged_items.extend(chunk.jobs)
+            parsed = BatchStructuredJD(jobs=merged_items)
 
         if persist:
             try:

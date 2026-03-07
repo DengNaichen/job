@@ -3,6 +3,12 @@
 These diagrams describe the current implemented architecture only.
 No planned/target-state model is included in this document.
 
+Related design notes:
+
+- [Content Fingerprint Design](./content-fingerprint.md)
+- [Skills Alignment Component (Draft)](./skills-alignment-component.md)
+- [Skills Alignment Production Plan](./skills-alignment-production-plan.md)
+
 ## 1. System Overview
 
 ```mermaid
