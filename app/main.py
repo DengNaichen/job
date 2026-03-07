@@ -7,7 +7,6 @@ from fastapi import FastAPI, Request
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
-from app.core.database import init_db
 from app.core.logging import configure_logging
 from app.core.monitoring import get_metrics_snapshot, http_metrics
 
@@ -18,8 +17,12 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    await init_db()
+    # Startup: initialise Firestore client (validates credentials early)
+    if settings.firestore_credentials_file:
+        from app.infrastructure.firestore_client import get_firestore_client
+
+        client = get_firestore_client()
+        logger.info("Firestore ready (project=%s)", client.project)
     yield
     # Shutdown
 
@@ -110,7 +113,11 @@ async def enforce_read_only(request: Request, call_next):
 
 @app.get("/health")
 async def health_check() -> dict[str, str]:
-    return {"status": "ok", "read_only_mode": str(settings.read_only_mode).lower()}
+    return {
+        "status": "ok",
+        "read_only_mode": str(settings.read_only_mode).lower(),
+        "backend": "firestore" if settings.firestore_credentials_file else "postgres",
+    }
 
 
 @app.get("/metrics")
