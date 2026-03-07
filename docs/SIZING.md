@@ -155,11 +155,6 @@ The current active embedding target uses a field-aware reconstructed text, not
 the raw full JD. The sizing estimate above is based on a random `30`-job sample
 run against the live cloud corpus on `2026-03-07`.
 
-Source artifacts:
-
-- `labs/jd_noise_cleaning_lab/real_samples_random_30/summary.json`
-- `labs/jd_noise_cleaning_lab/real_samples_random_30/manifest.json`
-
 Observed character volume:
 
 - Mean raw JD text: `3,808` chars
