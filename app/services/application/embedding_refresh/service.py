@@ -11,6 +11,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.config import get_settings
 from app.repositories.job import JobRepository
 from app.repositories.job_embedding import JobEmbeddingRepository, JobEmbeddingUpsertPayload
+from app.services.domain.job_embedding_text import build_job_embedding_text
 from app.services.infra.embedding import (
     EmbeddingConfig,
     embed_texts,
@@ -58,6 +59,7 @@ class EmbeddingRefreshService:
         settings_provider=get_settings,
         embedding_config_provider=get_embedding_config,
         target_resolver=resolve_active_job_embedding_target,
+        job_text_builder=build_job_embedding_text,
     ) -> None:
         self.session = session
         self.job_repository = job_repository or JobRepository(session)
@@ -66,6 +68,7 @@ class EmbeddingRefreshService:
         self.settings_provider = settings_provider
         self.embedding_config_provider = embedding_config_provider
         self.target_resolver = target_resolver
+        self.job_text_builder = job_text_builder
 
     @staticmethod
     def _now() -> datetime:
@@ -117,8 +120,16 @@ class EmbeddingRefreshService:
             last_id = candidates[-1].id
 
             try:
+                texts = [
+                    self.job_text_builder(
+                        title=candidate.title,
+                        description=candidate.description,
+                        structured_jd=candidate.structured_jd,
+                    )
+                    for candidate in candidates
+                ]
                 vectors = await self.embedding_fn(
-                    [candidate.description for candidate in candidates],
+                    texts,
                     config=config,
                     dimensions=target.embedding_dim,
                 )

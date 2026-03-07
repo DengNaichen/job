@@ -8,7 +8,7 @@ from .config import get_embedding_config, normalize_embedding_model_identity
 from .types import EmbeddingConfig, EmbeddingTargetDescriptor
 
 JOB_EMBEDDING_KIND = "job_description"
-JOB_EMBEDDING_TARGET_REVISION = 1
+JOB_EMBEDDING_TARGET_REVISION = 2
 
 
 def resolve_active_job_embedding_target(

@@ -20,6 +20,7 @@ class EmbeddableJobRow:
     id: str
     title: str
     description: str
+    structured_jd: object | None
     content_fingerprint: str | None
 
 
@@ -30,6 +31,7 @@ class SnapshotRefreshCandidateRow:
     id: str
     title: str
     description: str
+    structured_jd: object | None
     content_fingerprint: str | None
 
 
@@ -372,7 +374,7 @@ class JobRepository:
         """List embeddable jobs whose active target is missing or stale."""
         description_expr = self._embeddable_description_expr().label("description")
         statement = (
-            select(Job.id, Job.title, description_expr, Job.content_fingerprint)
+            select(Job.id, Job.title, description_expr, Job.structured_jd, Job.content_fingerprint)
             .select_from(Job)
             .outerjoin(
                 JobEmbedding,
@@ -408,6 +410,7 @@ class JobRepository:
                 id=row.id,
                 title=row.title,
                 description=row.description,
+                structured_jd=row.structured_jd,
                 content_fingerprint=row.content_fingerprint,
             )
             for row in rows
@@ -511,7 +514,7 @@ class JobRepository:
         """List source-scoped open jobs whose active target is missing or stale."""
         description_expr = self._embeddable_description_expr().label("description")
         statement = (
-            select(Job.id, Job.title, description_expr, Job.content_fingerprint)
+            select(Job.id, Job.title, description_expr, Job.structured_jd, Job.content_fingerprint)
             .select_from(Job)
             .outerjoin(
                 JobEmbedding,
@@ -551,6 +554,7 @@ class JobRepository:
                 id=row.id,
                 title=row.title,
                 description=row.description,
+                structured_jd=row.structured_jd,
                 content_fingerprint=row.content_fingerprint,
             )
             for row in rows

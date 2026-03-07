@@ -129,7 +129,7 @@ The current app config defaults enrichment to Gemini models:
 
 - LLM provider/model: `gemini` / `gemini-3.1-flash-lite-preview`
 - Embedding provider/model: `gemini` / `gemini-embedding-001`
-- Embedding dimension: `1024`
+- Embedding dimension: `768`
 
 ### Prompt and token assumptions
 
@@ -138,7 +138,7 @@ These are estimates, not invoice totals.
 They are derived from:
 
 - the current JD parsing prompt structure in `app/services/application/jd_parsing/prompts.py`
-- the current embedding pipeline
+- the current job embedding v2 text builder
 - a `~4 chars/token` heuristic
 
 Estimated token volume:
@@ -146,7 +146,35 @@ Estimated token volume:
 - Structured JD parse input: about `900` to `970` input tokens per job
   (full-corpus estimate over `7,912` jobs with `JD_PARSE_BATCH_SIZE=80`, avg `~907`, p95 `~966`)
 - Structured JD parse output: about `45` to `75` output tokens per job
-- Embedding input: about `1,175` input tokens per job
+- Embedding input: about `360` input tokens per job on average
+  (`~358` mean, `~368` median, `~550` p95)
+
+### Job Embedding V2 Text-Shaping Sample
+
+The current active embedding target uses a field-aware reconstructed text, not
+the raw full JD. The sizing estimate above is based on a random `30`-job sample
+run against the live cloud corpus on `2026-03-07`.
+
+Source artifacts:
+
+- `labs/jd_noise_cleaning_lab/real_samples_random_30/summary.json`
+- `labs/jd_noise_cleaning_lab/real_samples_random_30/manifest.json`
+
+Observed character volume:
+
+- Mean raw JD text: `3,808` chars
+- Mean reconstructed embedding text: `1,430` chars
+- Mean keep ratio: `42.9%`
+- Median keep ratio: `41.7%`
+- Mean drop ratio: `57.1%`
+- Median drop ratio: `58.7%`
+
+Interpretation:
+
+- A conservative production expectation is that the final embedding text will
+  often retain about `40%` to `60%` of the original JD length.
+- This is materially smaller than the older `JD-only` embedding input and
+  should reduce token volume and embedding cost accordingly.
 
 ### Price assumptions
 
@@ -164,14 +192,14 @@ Reference page:
 | Workload | Estimated cost per 10k jobs | Estimated cost for current 235,458-job corpus |
 | --- | ---: | ---: |
 | Structured JD parsing | `$2.93` to `$3.55` | `$68.87` to `$83.59` |
-| Embedding generation | `$1.76` | `$41.50` |
-| Combined | `$4.69` to `$5.31` | `$110.37` to `$125.08` |
+| Embedding generation | about `$0.54` avg (`$0.82` at p95) | about `$12.63` avg (`$19.43` at p95) |
+| Combined | about `$3.47` to `$4.37` | about `$81.50` to `$103.02` |
 
 Operationally:
 
 - the token bill is still cheap relative to the engineering cost of ingest reliability
 - once this corpus is fully loaded, the main cost driver becomes incremental change, not one-time enrichment
-- if the five company API sources above are also onboarded, the combined enrichment total would rise to about `$118.31` to `$134.08`
+- if the five company API sources above are also onboarded, the combined enrichment total would rise to about `$87.38` to `$110.42`
 
 ## Practical Read
 

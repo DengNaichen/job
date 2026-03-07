@@ -1,0 +1,170 @@
+{
+  "input": "labs/jd_noise_cleaning_lab/sample_job.json",
+  "title": "Senior Backend Engineer, Fraud Platform",
+  "original_chars": 1960,
+  "section_summary": [
+    {
+      "label": "company",
+      "heading": "About Acme Pay",
+      "decision": "drop",
+      "line_count": 1,
+      "content_preview": [
+        "Acme Pay builds the financial infrastructure used by millions of businesses around the world. We are a mission-driven company with a fast-paced and inclusive culture."
+      ],
+      "negative_preview": []
+    },
+    {
+      "label": "role_summary",
+      "heading": "The Role",
+      "decision": "keep",
+      "line_count": 1,
+      "content_preview": [
+        "You will join the Fraud Platform team to build backend systems that detect account abuse, payment fraud, and trust signals in real time."
+      ],
+      "negative_preview": []
+    },
+    {
+      "label": "responsibilities",
+      "heading": "What you'll do",
+      "decision": "keep",
+      "line_count": 5,
+      "content_preview": [
+        "Build Python and Go services that power fraud detection and case management workflows.",
+        "Design APIs and event-driven pipelines using PostgreSQL, Kafka, and Redis."
+      ],
+      "negative_preview": []
+    },
+    {
+      "label": "requirements",
+      "heading": "Qualifications",
+      "decision": "keep",
+      "line_count": 4,
+      "content_preview": [
+        "5+ years of backend software engineering experience in production systems.",
+        "Strong experience with Python, distributed systems, SQL, and cloud infrastructure."
+      ],
+      "negative_preview": []
+    },
+    {
+      "label": "preferred",
+      "heading": "Nice to have",
+      "decision": "keep",
+      "line_count": 2,
+      "content_preview": [
+        "Experience in fraud, risk, cybersecurity, or trust and safety domains.",
+        "Familiarity with feature platforms or machine learning inference systems."
+      ],
+      "negative_preview": []
+    },
+    {
+      "label": "benefits",
+      "heading": "Benefits",
+      "decision": "drop",
+      "line_count": 3,
+      "content_preview": [
+        "Competitive salary and equity.",
+        "Medical, dental, and vision coverage."
+      ],
+      "negative_preview": [
+        "Medical, dental, and vision coverage.",
+        "Remote-first culture with quarterly offsites."
+      ]
+    },
+    {
+      "label": "work_auth",
+      "heading": "Work Authorization",
+      "decision": "drop",
+      "line_count": 1,
+      "content_preview": [
+        "Acme Pay is unable to provide visa sponsorship for this role at this time."
+      ],
+      "negative_preview": [
+        "Acme Pay is unable to provide visa sponsorship for this role at this time."
+      ]
+    },
+    {
+      "label": "legal",
+      "heading": "EEO Statement",
+      "decision": "drop",
+      "line_count": 1,
+      "content_preview": [
+        "Acme Pay is an equal opportunity employer. All qualified applicants will receive consideration for employment without regard to race, color, religion, sex, sexual orientation, gender identity, national origin, disability, or veteran status."
+      ],
+      "negative_preview": [
+        "Acme Pay is an equal opportunity employer. All qualified applicants will receive consideration for employment without regard to race, color, religion, sex, sexual orientation, gender identity, national origin, disability, or veteran status."
+      ]
+    },
+    {
+      "label": "legal",
+      "heading": "Privacy Notice",
+      "decision": "drop",
+      "line_count": 1,
+      "content_preview": [
+        "By submitting your application, you acknowledge that you have read our candidate privacy notice."
+      ],
+      "negative_preview": [
+        "By submitting your application, you acknowledge that you have read our candidate privacy notice."
+      ]
+    },
+    {
+      "label": "apply",
+      "heading": "How to apply",
+      "decision": "drop",
+      "line_count": 1,
+      "content_preview": [
+        "Please submit your application through our careers site."
+      ],
+      "negative_preview": [
+        "Please submit your application through our careers site."
+      ]
+    }
+  ],
+  "selected_evidence": {
+    "role_summary": [
+      "You will join the Fraud Platform team to build backend systems that detect account abuse, payment fraud, and trust signals in real time."
+    ],
+    "responsibilities": [
+      "Design APIs and event-driven pipelines using PostgreSQL, Kafka, and Redis.",
+      "Build Python and Go services that power fraud detection and case management workflows.",
+      "Partner with data scientists and risk analysts to productionize rules, features, and real-time decisions.",
+      "Improve observability, reliability, and operational tooling for high-volume transaction systems.",
+      "Mentor engineers and drive technical design reviews across the platform."
+    ],
+    "requirements": [
+      "Experience building services with PostgreSQL, Kafka, and REST APIs.",
+      "Strong experience with Python, distributed systems, SQL, and cloud infrastructure.",
+      "5+ years of backend software engineering experience in production systems.",
+      "Ability to work cross-functionally with product, analytics, and operations stakeholders."
+    ],
+    "preferred": [
+      "Experience in fraud, risk, cybersecurity, or trust and safety domains.",
+      "Familiarity with feature platforms or machine learning inference systems."
+    ],
+    "body": []
+  },
+  "embedding_text_chars": 1353,
+  "embedding_text": "Title: Senior Backend Engineer, Fraud Platform\n\nDomain: cybersecurity\n\nSeniority: senior\n\nRequired skills: Python (computer programming), Go (computer programming), PostgreSQL, Kafka, Redis, SQL, distributed systems\n\nRole summary:\n- You will join the Fraud Platform team to build backend systems that detect account abuse, payment fraud, and trust signals in real time.\n\nCore responsibilities:\n- Design APIs and event-driven pipelines using PostgreSQL, Kafka, and Redis.\n- Build Python and Go services that power fraud detection and case management workflows.\n- Partner with data scientists and risk analysts to productionize rules, features, and real-time decisions.\n- Improve observability, reliability, and operational tooling for high-volume transaction systems.\n- Mentor engineers and drive technical design reviews across the platform.\n\nMust-have evidence:\n- Experience building services with PostgreSQL, Kafka, and REST APIs.\n- Strong experience with Python, distributed systems, SQL, and cloud infrastructure.\n- 5+ years of backend software engineering experience in production systems.\n- Ability to work cross-functionally with product, analytics, and operations stakeholders.\n\nOptional context:\n- Experience in fraud, risk, cybersecurity, or trust and safety domains.\n- Familiarity with feature platforms or machine learning inference systems.",
+  "structured_jd": {
+    "required_skills": [
+      "Python (computer programming)",
+      "Go (computer programming)",
+      "PostgreSQL",
+      "Kafka",
+      "Redis",
+      "SQL",
+      "distributed systems"
+    ],
+    "preferred_skills": [
+      "fraud analysis",
+      "machine learning"
+    ],
+    "experience_requirements": [],
+    "education_requirements": [],
+    "experience_years": 5,
+    "seniority_level": "senior",
+    "sponsorship_not_available": "yes",
+    "job_domain_raw": "Fraud Platform",
+    "job_domain_normalized": "cybersecurity",
+    "min_degree_level": "unknown"
+  }
+}
