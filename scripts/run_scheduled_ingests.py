@@ -6,21 +6,45 @@ from __future__ import annotations
 import argparse
 import asyncio
 
-from sqlmodel import SQLModel, select
-from sqlmodel.ext.asyncio.session import AsyncSession
-
 from app.core.config import get_settings
-from app.core.database import engine
 from app.models import PlatformType, Source, SyncRun, SyncRunStatus, build_source_key
 from app.services.application.sync import SUPPORTED_PLATFORMS, SyncService
 
 
-async def _load_candidate_sources(
+async def _load_candidate_sources_firestore(
     *,
     platform: PlatformType | None,
     identifier: str | None,
     limit: int | None,
 ) -> tuple[list[Source], list[Source]]:
+    from app.infrastructure.firestore_client import get_firestore_client
+    from app.repositories.firestore import FirestoreSourceRepository
+
+    db = get_firestore_client()
+    repo = FirestoreSourceRepository(db)
+    all_sources = await repo.list(enabled=True, platform=platform)
+
+    if identifier is not None:
+        all_sources = [s for s in all_sources if s.identifier == identifier]
+
+    supported_sources = [s for s in all_sources if s.platform in SUPPORTED_PLATFORMS]
+    unsupported_sources = [s for s in all_sources if s.platform not in SUPPORTED_PLATFORMS]
+    if limit is not None:
+        supported_sources = supported_sources[:limit]
+    return supported_sources, unsupported_sources
+
+
+async def _load_candidate_sources_sql(
+    *,
+    platform: PlatformType | None,
+    identifier: str | None,
+    limit: int | None,
+) -> tuple[list[Source], list[Source]]:
+    from sqlmodel import select
+    from sqlmodel.ext.asyncio.session import AsyncSession
+
+    from app.core.database import engine
+
     async with AsyncSession(engine) as session:
         statement = (
             select(Source)
@@ -46,9 +70,15 @@ async def _load_candidate_sources(
 
 async def run(args: argparse.Namespace) -> int:
     settings = get_settings()
+    use_firestore = bool(settings.firestore_credentials_file)
 
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
+    if not use_firestore:
+        from sqlmodel import SQLModel
+
+        from app.core.database import engine
+
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
 
     platform = PlatformType(args.platform) if args.platform is not None else None
     if platform is not None and platform not in SUPPORTED_PLATFORMS:
@@ -62,11 +92,19 @@ async def run(args: argparse.Namespace) -> int:
         effective_limit = max_sources
         print(f"safety_cap: limiting to {max_sources} sources (INGEST_MAX_SOURCES={max_sources})")
 
-    sources, unsupported_sources = await _load_candidate_sources(
-        platform=platform,
-        identifier=args.identifier,
-        limit=effective_limit,
-    )
+    if use_firestore:
+        sources, unsupported_sources = await _load_candidate_sources_firestore(
+            platform=platform,
+            identifier=args.identifier,
+            limit=effective_limit,
+        )
+    else:
+        sources, unsupported_sources = await _load_candidate_sources_sql(
+            platform=platform,
+            identifier=args.identifier,
+            limit=effective_limit,
+        )
+
     if unsupported_sources:
         print(
             "warning_unsupported_sources="
@@ -78,6 +116,7 @@ async def run(args: argparse.Namespace) -> int:
         if args.identifier is not None and not sources:
             return 1
 
+    print(f"backend={'firestore' if use_firestore else 'postgres'}")
     print(f"target_sources={len(sources)}")
     print(f"include_content={args.include_content}")
     print(f"dry_run={args.dry_run}")
@@ -95,7 +134,12 @@ async def run(args: argparse.Namespace) -> int:
             print("Aborted.")
             return 1
 
-    sync_service = SyncService(engine=engine)
+    engine_arg = None
+    if not use_firestore:
+        from app.core.database import engine
+
+        engine_arg = engine
+    sync_service = SyncService(engine=engine_arg)
     failures: list[tuple[Source, SyncRun]] = []
     totals = {
         "fetched": 0,
