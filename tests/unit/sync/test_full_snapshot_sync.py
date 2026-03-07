@@ -565,7 +565,7 @@ async def test_full_snapshot_sync_blob_failure_rolls_back_under_parallelism(
 def _refresh_target() -> EmbeddingTargetDescriptor:
     return EmbeddingTargetDescriptor(
         embedding_kind="job_description",
-        embedding_target_revision=1,
+        embedding_target_revision=2,
         embedding_model="gemini/gemini-embedding-001",
         embedding_dim=EMBEDDING_DIM,
     )
@@ -620,7 +620,7 @@ async def test_snapshot_embedding_refresh_excludes_jobs_closed_by_latest_snapsho
         await session.exec(
             select(JobEmbedding).where(
                 JobEmbedding.embedding_kind == "job_description",
-                JobEmbedding.embedding_target_revision == 1,
+                JobEmbedding.embedding_target_revision == 2,
                 JobEmbedding.embedding_model == "gemini/gemini-embedding-001",
                 JobEmbedding.embedding_dim == EMBEDDING_DIM,
             )
@@ -659,7 +659,7 @@ async def test_snapshot_embedding_refresh_rerun_is_idempotent_for_active_target_
         await session.exec(
             select(JobEmbedding).where(
                 JobEmbedding.embedding_kind == "job_description",
-                JobEmbedding.embedding_target_revision == 1,
+                JobEmbedding.embedding_target_revision == 2,
                 JobEmbedding.embedding_model == "gemini/gemini-embedding-001",
                 JobEmbedding.embedding_dim == EMBEDDING_DIM,
             )

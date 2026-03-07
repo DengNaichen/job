@@ -22,7 +22,7 @@ from app.services.infra.matching.llm_rerank import (
 def _active_target() -> EmbeddingTargetDescriptor:
     return EmbeddingTargetDescriptor(
         embedding_kind="job_description",
-        embedding_target_revision=1,
+        embedding_target_revision=2,
         embedding_model="test-model",
         embedding_dim=3,
     )

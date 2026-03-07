@@ -9,6 +9,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import Job, JobEmbedding, JobStatus, PlatformType, Source
 from app.services.application.embedding_refresh import EmbeddingRefreshService
+from app.services.domain.job_embedding_text import build_job_embedding_text
 from app.services.infra.embedding import EmbeddingConfig, EmbeddingTargetDescriptor
 
 EMBEDDING_DIM = 768
@@ -30,6 +31,7 @@ def _make_job(
     status: JobStatus = JobStatus.open,
     description: str = "Build resilient pipelines",
     fingerprint: str | None = None,
+    structured_jd: dict[str, object] | None = None,
 ) -> Job:
     now = datetime.now(timezone.utc)
     return Job(
@@ -39,6 +41,7 @@ def _make_job(
         title=f"Job {job_id}",
         apply_url=f"https://example.com/{job_id}",
         description_plain=description,
+        structured_jd=structured_jd,
         content_fingerprint=fingerprint,
         status=status,
         last_seen_at=now,
@@ -50,7 +53,7 @@ def _make_job(
 def _target() -> EmbeddingTargetDescriptor:
     return EmbeddingTargetDescriptor(
         embedding_kind="job_description",
-        embedding_target_revision=1,
+        embedding_target_revision=2,
         embedding_model="gemini/gemini-embedding-001",
         embedding_dim=EMBEDDING_DIM,
     )
@@ -99,6 +102,11 @@ async def test_embedding_refresh_service_refreshes_only_open_source_jobs(
         source_id=source_id,
         status=JobStatus.open,
         fingerprint="fp-open",
+        structured_jd={
+            "required_skills": ["Python"],
+            "job_domain_normalized": "software_engineering",
+            "seniority_level": "mid",
+        },
     )
     second_open_job = _make_job(
         job_id="job-open-2",
@@ -151,7 +159,7 @@ async def test_embedding_refresh_service_refreshes_only_open_source_jobs(
         await session.exec(
             select(JobEmbedding).where(
                 JobEmbedding.embedding_kind == "job_description",
-                JobEmbedding.embedding_target_revision == 1,
+                JobEmbedding.embedding_target_revision == 2,
                 JobEmbedding.embedding_model == "gemini/gemini-embedding-001",
                 JobEmbedding.embedding_dim == EMBEDDING_DIM,
             )
@@ -164,7 +172,22 @@ async def test_embedding_refresh_service_refreshes_only_open_source_jobs(
     assert result.attempted_jobs == 2
     assert result.refreshed_jobs == 2
     assert result.failed_jobs == 0
-    assert calls == [["Build resilient pipelines", "Build resilient pipelines"]]
+    assert calls == [[
+        build_job_embedding_text(
+            title="Job job-open",
+            description="Build resilient pipelines",
+            structured_jd={
+                "required_skills": ["Python"],
+                "job_domain_normalized": "software_engineering",
+                "seniority_level": "mid",
+            },
+        ),
+        build_job_embedding_text(
+            title="Job job-open-2",
+            description="Build resilient pipelines",
+            structured_jd=None,
+        ),
+    ]]
     assert embedded_job_ids == {"job-open", "job-open-2"}
     assert "job-closed" not in embedded_job_ids
     assert "job-other-source" not in embedded_job_ids

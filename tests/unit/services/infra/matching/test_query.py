@@ -142,7 +142,7 @@ async def test_fetch_candidates_keeps_match_constraints_and_fields() -> None:
         ),
         prefilter_params=["US"],
         embedding_kind="job_description",
-        embedding_target_revision=1,
+        embedding_target_revision=2,
         embedding_model="gemini/gemini-embedding-001",
         embedding_dim=1024,
     )
@@ -159,7 +159,7 @@ async def test_fetch_candidates_keeps_match_constraints_and_fields() -> None:
     assert fake_conn.params == (
         "[0.1,0.2]",
         "job_description",
-        1,
+        2,
         "gemini/gemini-embedding-001",
         1024,
         "US",

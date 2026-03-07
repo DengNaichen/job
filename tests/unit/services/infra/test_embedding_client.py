@@ -44,7 +44,7 @@ def test_resolve_active_job_embedding_target() -> None:
     target = resolve_active_job_embedding_target(config=cfg, embedding_dim=1024)
 
     assert target.embedding_kind == "job_description"
-    assert target.embedding_target_revision == 1
+    assert target.embedding_target_revision == 2
     assert target.embedding_model == "gemini/gemini-embedding-001"
     assert target.embedding_dim == 1024
 
