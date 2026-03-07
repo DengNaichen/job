@@ -45,6 +45,10 @@ class Settings(BaseSettings):
     llm_api_key: str | None = None  # defaults to gemini_api_key if not set
     llm_api_base: str | None = None
 
+    # Safety guards
+    read_only_mode: bool = True  # Blocks all DB writes via API; set to false explicitly to allow
+    ingest_max_sources: int = 5  # Hard cap on sources per ingest run to prevent accidental bulk loads
+
     # GeoNames
     geonames_data_dir: str = "data/geonames"
     geonames_username: str | None = None

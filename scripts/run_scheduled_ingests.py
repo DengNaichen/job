@@ -9,6 +9,7 @@ import asyncio
 from sqlmodel import SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.core.config import get_settings
 from app.core.database import engine
 from app.models import PlatformType, Source, SyncRun, SyncRunStatus, build_source_key
 from app.services.application.sync import SUPPORTED_PLATFORMS, SyncService
@@ -44,6 +45,8 @@ async def _load_candidate_sources(
 
 
 async def run(args: argparse.Namespace) -> int:
+    settings = get_settings()
+
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 
@@ -52,10 +55,17 @@ async def run(args: argparse.Namespace) -> int:
         print(f"unsupported_platform={platform.value}")
         return 1
 
+    # Enforce ingest_max_sources cap (overridable via --limit but capped by config)
+    effective_limit = args.limit
+    max_sources = settings.ingest_max_sources
+    if effective_limit is None or effective_limit > max_sources:
+        effective_limit = max_sources
+        print(f"safety_cap: limiting to {max_sources} sources (INGEST_MAX_SOURCES={max_sources})")
+
     sources, unsupported_sources = await _load_candidate_sources(
         platform=platform,
         identifier=args.identifier,
-        limit=args.limit,
+        limit=effective_limit,
     )
     if unsupported_sources:
         print(
@@ -72,6 +82,18 @@ async def run(args: argparse.Namespace) -> int:
     print(f"include_content={args.include_content}")
     print(f"dry_run={args.dry_run}")
     print(f"retry_attempts={args.retry_attempts}")
+
+    if not args.dry_run and sources and not args.yes:
+        source_names = ", ".join(
+            build_source_key(s.platform, s.identifier) for s in sources
+        )
+        answer = input(
+            f"\n⚠ About to WRITE to the database for {len(sources)} source(s): {source_names}\n"
+            f"  This will insert/update/close jobs. Continue? [y/N] "
+        )
+        if answer.strip().lower() != "y":
+            print("Aborted.")
+            return 1
 
     sync_service = SyncService(engine=engine)
     failures: list[tuple[Source, SyncRun]] = []
@@ -158,6 +180,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true", help="Run syncs but rollback job writes.")
     parser.add_argument(
         "--retry-attempts", type=int, default=3, help="Retry attempts per source sync."
+    )
+    parser.add_argument(
+        "--yes", "-y", action="store_true", help="Skip confirmation prompt."
     )
     return parser.parse_args()
 

@@ -91,9 +91,26 @@ async def observe_requests(request: Request, call_next):
     return response
 
 
+@app.middleware("http")
+async def enforce_read_only(request: Request, call_next):
+    if settings.read_only_mode and request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+        # Allow health/metrics endpoints
+        if not request.url.path.startswith("/api/"):
+            return await call_next(request)
+        from fastapi.responses import JSONResponse
+
+        return JSONResponse(
+            status_code=403,
+            content={
+                "detail": "READ_ONLY_MODE is enabled. Set READ_ONLY_MODE=false in .env to allow writes."
+            },
+        )
+    return await call_next(request)
+
+
 @app.get("/health")
 async def health_check() -> dict[str, str]:
-    return {"status": "ok"}
+    return {"status": "ok", "read_only_mode": str(settings.read_only_mode).lower()}
 
 
 @app.get("/metrics")
