@@ -94,7 +94,7 @@ Live API totals checked on `2026-02-28`:
 | `eightfold:nvidia` | 2,217 | NVIDIA on Eightfold |
 
 - Combined incremental job volume from those five supported sources: `16,939`
-- Additional enrichment cost for those five at current assumptions: about `$1.29`
+- Additional enrichment cost for those five at current assumptions: about `$7.94` to `$9.00`
 
 `amazon` remains intentionally deferred because its current API behavior is still risky for the full-snapshot reconcile model.
 
@@ -125,10 +125,10 @@ The `job` table is already large enough to show the current design tradeoff clea
 
 ### Current model configuration
 
-The current `.env` points enrichment to SiliconFlow-hosted Qwen models via an OpenAI-compatible API:
+The current app config defaults enrichment to Gemini models:
 
-- Structured JD parsing model: `Qwen/Qwen2.5-7B-Instruct`
-- Embedding model: `Qwen/Qwen3-Embedding-0.6B`
+- LLM provider/model: `gemini` / `gemini-3.1-flash-lite-preview`
+- Embedding provider/model: `gemini` / `gemini-embedding-001`
 - Embedding dimension: `1024`
 
 ### Prompt and token assumptions
@@ -137,41 +137,41 @@ These are estimates, not invoice totals.
 
 They are derived from:
 
-- the current JD parsing prompt structure in `scripts/batch_parse_jd.py` and `app/services/jd_parser.py`
+- the current JD parsing prompt structure in `app/services/application/jd_parsing/prompts.py`
 - the current embedding pipeline
 - a `~4 chars/token` heuristic
 
 Estimated token volume:
 
-- Structured JD parse input: about `1,198` input tokens per job
-- Structured JD parse output: about `80` output tokens per job
+- Structured JD parse input: about `900` to `970` input tokens per job
+  (full-corpus estimate over `7,912` jobs with `JD_PARSE_BATCH_SIZE=80`, avg `~907`, p95 `~966`)
+- Structured JD parse output: about `45` to `75` output tokens per job
 - Embedding input: about `1,175` input tokens per job
 
 ### Price assumptions
 
-Using the SiliconFlow model pages checked on `2026-02-28`:
+Using the Gemini API pricing page checked on `2026-03-07`:
 
-- `Qwen/Qwen2.5-7B-Instruct`: `$0.05 / 1M` input tokens and `$0.05 / 1M` output tokens
-- `Qwen/Qwen3-Embedding-0.6B`: `$0.01 / 1M` input tokens
+- `gemini-3.1-flash-lite-preview`: `$0.25 / 1M` input tokens and `$1.50 / 1M` output tokens
+- `gemini-embedding-001`: `$0.15 / 1M` input tokens
 
-Reference pages:
+Reference page:
 
-- <https://siliconflow.com/models/Qwen2.5-7B-Instruct>
-- <https://siliconflow.com/models/Qwen3-Embedding-0.6B>
+- <https://ai.google.dev/gemini-api/docs/pricing>
 
 ### Estimated cost
 
 | Workload | Estimated cost per 10k jobs | Estimated cost for current 235,458-job corpus |
 | --- | ---: | ---: |
-| Structured JD parsing | `$0.64` | `$15.07` |
-| Embedding generation | `$0.12` | `$2.82` |
-| Combined | `$0.76` | `$17.89` |
+| Structured JD parsing | `$2.93` to `$3.55` | `$68.87` to `$83.59` |
+| Embedding generation | `$1.76` | `$41.50` |
+| Combined | `$4.69` to `$5.31` | `$110.37` to `$125.08` |
 
 Operationally:
 
 - the token bill is still cheap relative to the engineering cost of ingest reliability
 - once this corpus is fully loaded, the main cost driver becomes incremental change, not one-time enrichment
-- if the five company API sources above are also onboarded, the combined enrichment total would rise to about `$19.18`
+- if the five company API sources above are also onboarded, the combined enrichment total would rise to about `$118.31` to `$134.08`
 
 ## Practical Read
 

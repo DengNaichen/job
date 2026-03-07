@@ -26,6 +26,10 @@ logs/
 .DS_Store
 data/geonames/*.zip
 
+# Skills alignment lab generated outputs
+skills_alignment_lab/out/*
+!skills_alignment_lab/out/.gitkeep
+
 # Python
 __pycache__/
 *.py[cod]

@@ -41,9 +41,14 @@ class Settings(BaseSettings):
 
     # LLM (for JD parsing)
     llm_provider: str = "gemini"  # openai, anthropic, gemini, deepseek, ollama, openrouter
-    llm_model: str = "gemini-2.5-flash-lite"
+    llm_model: str = "gemini-3.1-flash-lite-preview"
     llm_api_key: str | None = None  # defaults to gemini_api_key if not set
     llm_api_base: str | None = None
+    jd_parse_batch_size: int = 80
+    jd_parse_concurrency: int = 5
+    skills_alignment_enabled: bool = True
+    skills_alias_table_path: str = "data/skills_alignment/alias_from_esco.csv"
+    skills_alias_patch_path: str | None = "data/skills_alignment/custom_alias_patch.csv"
 
     # GeoNames
     geonames_data_dir: str = "data/geonames"
@@ -62,6 +67,20 @@ class Settings(BaseSettings):
     def validate_embedding_refresh_batch_size(cls, value: int) -> int:
         if value <= 0:
             raise ValueError("embedding_refresh_batch_size must be > 0")
+        return value
+
+    @field_validator("jd_parse_batch_size")
+    @classmethod
+    def validate_jd_parse_batch_size(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("jd_parse_batch_size must be > 0")
+        return value
+
+    @field_validator("jd_parse_concurrency")
+    @classmethod
+    def validate_jd_parse_concurrency(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("jd_parse_concurrency must be > 0")
         return value
 
 

@@ -1,12 +1,13 @@
 """Unit tests for JobService."""
 
+from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
 
 from app.models import Job
 from app.schemas.job import JobCreate, JobUpdate
-from app.schemas.structured_jd import BatchStructuredJDItem
+from app.schemas.structured_jd import BatchStructuredJD, BatchStructuredJDItem
 from app.services.application.job_service import (
     JobNotFoundError,
     JobService,
@@ -248,3 +249,92 @@ async def test_list_pending_jobs_for_parse_passes_filters() -> None:
         version_only=True,
         exclude_job_ids={"job-2", "job-3"},
     )
+
+
+@pytest.mark.asyncio
+async def test_parse_jobs_uses_chunked_parallel_extraction(monkeypatch: pytest.MonkeyPatch) -> None:
+    """parse_jobs should split by batch size and merge parsed chunks in input order."""
+    repository = AsyncMock()
+    service = JDService(repository=repository)
+    jobs = [_build_job(f"job-{idx}") for idx in range(1, 6)]
+    for job in jobs:
+        job.description_plain = f"description for {job.id}"
+
+    monkeypatch.setattr(
+        "app.services.application.jd_parsing.jd_service.get_settings",
+        lambda: SimpleNamespace(jd_parse_batch_size=2, jd_parse_concurrency=5),
+    )
+
+    calls: list[list[str]] = []
+
+    async def fake_extract_structured_jd(
+        input_data: list[dict[str, str]],
+        is_html: bool = False,
+    ) -> BatchStructuredJD:
+        assert is_html is False
+        call_ids = [item["job_id"] for item in input_data]
+        calls.append(call_ids)
+        return BatchStructuredJD(
+            jobs=[
+                BatchStructuredJDItem(
+                    job_id=job_id,
+                    required_skills=[job_id],
+                )
+                for job_id in call_ids
+            ]
+        )
+
+    monkeypatch.setattr(
+        "app.services.application.jd_parsing.jd_service.extract_structured_jd",
+        fake_extract_structured_jd,
+    )
+
+    result = await service.parse_jobs(jobs, persist=False)
+
+    assert len(calls) == 3
+    assert sorted(calls) == [
+        ["job-1", "job-2"],
+        ["job-3", "job-4"],
+        ["job-5"],
+    ]
+    assert [item.job_id for item in result.jobs] == ["job-1", "job-2", "job-3", "job-4", "job-5"]
+    repository.save_all.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_parse_jobs_persist_still_saves_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    """parse_jobs with persist=True should save parsed batch once after chunk merge."""
+    repository = AsyncMock()
+    service = JDService(repository=repository)
+    jobs = [_build_job(f"job-{idx}") for idx in range(1, 4)]
+    for job in jobs:
+        job.description_plain = f"description for {job.id}"
+
+    monkeypatch.setattr(
+        "app.services.application.jd_parsing.jd_service.get_settings",
+        lambda: SimpleNamespace(jd_parse_batch_size=2, jd_parse_concurrency=5),
+    )
+
+    async def fake_extract_structured_jd(
+        input_data: list[dict[str, str]],
+        is_html: bool = False,
+    ) -> BatchStructuredJD:
+        _ = is_html
+        return BatchStructuredJD(
+            jobs=[
+                BatchStructuredJDItem(
+                    job_id=item["job_id"],
+                    required_skills=["Python"],
+                )
+                for item in input_data
+            ]
+        )
+
+    monkeypatch.setattr(
+        "app.services.application.jd_parsing.jd_service.extract_structured_jd",
+        fake_extract_structured_jd,
+    )
+
+    await service.parse_jobs(jobs, persist=True)
+
+    repository.save_all.assert_awaited_once()

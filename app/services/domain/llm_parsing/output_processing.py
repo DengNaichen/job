@@ -2,11 +2,92 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
+import logging
 from collections.abc import Mapping, Sequence
+from pathlib import Path
 from typing import Any
 
+from app.core.config import get_settings
 from app.schemas.structured_jd import StructuredJD
 from app.services.domain.rule_parsing import extract_rule_based_fields
+from app.services.domain.skills_alignment import load_alias_table, normalize_skill_text
+
+logger = logging.getLogger(__name__)
+
+
+def _normalize_skill_list(value: object) -> list[str]:
+    """Normalize list-like input into deduped list[str]."""
+    if value is None:
+        return []
+    if isinstance(value, list):
+        normalized = [str(item).strip() for item in value if str(item).strip()]
+    else:
+        text = str(value).strip()
+        normalized = [text] if text else []
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for item in normalized:
+        key = item.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(item)
+    return deduped
+
+
+@lru_cache(maxsize=8)
+def _load_alignment_alias_map(
+    alias_table_path: str,
+    alias_patch_path: str | None,
+) -> dict[str, tuple[str, str]]:
+    table_path = Path(alias_table_path)
+    if not table_path.exists():
+        logger.warning("skills alignment alias table not found: %s", table_path)
+        return {}
+
+    alias_map = load_alias_table(table_path)
+    if alias_patch_path:
+        patch_path = Path(alias_patch_path)
+        if patch_path.exists():
+            alias_map.update(load_alias_table(patch_path))
+        else:
+            logger.warning("skills alignment alias patch not found: %s", patch_path)
+    return alias_map
+
+
+def _align_required_skills(value: object) -> list[str]:
+    """Map required_skills to canonical labels when alias mapping is enabled."""
+    raw_skills = _normalize_skill_list(value)
+    if not raw_skills:
+        return []
+
+    settings = get_settings()
+    if not settings.skills_alignment_enabled:
+        return raw_skills
+
+    alias_map = _load_alignment_alias_map(
+        settings.skills_alias_table_path,
+        settings.skills_alias_patch_path,
+    )
+    if not alias_map:
+        return raw_skills
+
+    aligned: list[str] = []
+    seen: set[str] = set()
+    for raw in raw_skills:
+        normalized = normalize_skill_text(raw)
+        if not normalized:
+            continue
+        entry = alias_map.get(normalized)
+        mapped_value = (entry[1].strip() if entry else normalized) or normalized
+        key = mapped_value.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        aligned.append(mapped_value)
+    return aligned
 
 
 def parse_llm_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
@@ -17,12 +98,12 @@ def parse_llm_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
         from the LLM parsing contract.
     """
     if "required_skills" in payload or "job_domain_normalized" in payload:
-        required_skills = payload.get("required_skills", [])
-        preferred_skills = payload.get("preferred_skills", [])
+        required_skills = _align_required_skills(payload.get("required_skills", []))
+        preferred_skills = _normalize_skill_list(payload.get("preferred_skills", []))
         job_domain_raw = payload.get("job_domain_raw")
         job_domain_normalized = payload.get("job_domain_normalized", "unknown")
     else:
-        required_skills = payload.get("s", [])
+        required_skills = _align_required_skills(payload.get("s", []))
         preferred_skills = []
         job_domain_raw = None
         job_domain_normalized = payload.get("d", "unknown")

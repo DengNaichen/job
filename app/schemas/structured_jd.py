@@ -512,7 +512,7 @@ class CompactStructuredJD(BaseModel):
                 continue
             seen.add(lowered)
             deduped.append(item)
-        return deduped[:6]
+        return deduped[:12]
 
 
 class CompactBatchStructuredJDItem(CompactStructuredJD):

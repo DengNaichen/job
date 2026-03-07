@@ -28,20 +28,22 @@ As a platform owner, I need core screening fields to be extracted deterministica
 
 ---
 
-### User Story 2 - Compact LLM Extraction for Non-Deterministic Fields (Priority: P1)
+### User Story 2 - Compact LLM Extraction and Required Skills Normalization (Priority: P1)
 
-As a matching pipeline owner, I need LLM extraction for role/domain and required skills so semantic quality improves beyond regex-only extraction.
+As a matching pipeline owner, I need LLM extraction for role/domain and required skills, and I need required skills normalized into stable canonical outputs so downstream matching can use consistent semantics.
 
-**Why this priority**: Rule-only extraction underperforms for nuanced domain classification and required skill signals.
+**Why this priority**: Rule-only extraction underperforms for nuanced domain classification and required skill signals, and raw skill strings are too noisy for stable matching quality.
 
-**Independent Test**: Mock LLM responses for single and batch inputs and verify normalized structured outputs are produced and validated.
+**Independent Test**: Mock LLM responses for single and batch inputs and verify normalized structured outputs are produced, validated, and mapped into canonical-or-unknown skill results.
 
 **Acceptance Scenarios**:
 
-1. **Given** a JD input, **When** compact LLM extraction runs, **Then** normalized `job_domain_normalized` and required skill fields are produced.
-2. **Given** a batch of JDs, **When** batch extraction runs, **Then** all input `job_id`s are returned exactly once or the batch fails explicitly.
-3. **Given** malformed or incomplete LLM output, **When** parsing/validation runs, **Then** extraction fails clearly (or preserves `unknown` where deterministic fallback is not defined).
-4. **Given** LLM output with `job_domain_normalized = unknown`, **When** merge runs, **Then** domain remains `unknown` (no rule-based domain fallback is applied).
+1. **Given** a JD input, **When** compact LLM extraction runs, **Then** normalized `job_domain_normalized` and `required_skills` fields are produced.
+2. **Given** `required_skills` containing aliases/synonyms, **When** skills normalization runs, **Then** canonical skill labels are produced for mappable items.
+3. **Given** `required_skills` items that cannot be mapped reliably, **When** skills normalization runs, **Then** those items are explicitly marked unknown and not force-mapped.
+4. **Given** a batch of JDs, **When** batch extraction runs, **Then** all input `job_id`s are returned exactly once or the batch fails explicitly.
+5. **Given** malformed or incomplete LLM output, **When** parsing/validation runs, **Then** extraction fails clearly (or preserves `unknown` where deterministic fallback is not defined).
+6. **Given** LLM output with `job_domain_normalized = unknown`, **When** merge runs, **Then** domain remains `unknown` (no rule-based domain fallback is applied).
 
 ---
 
@@ -86,12 +88,12 @@ As an application engineer, I need extracted results persisted in a shape compat
 - Introducing a new dedicated structured JD persistence table.
 - Building a full parse-run audit subsystem.
 - Redesigning matching/retrieval beyond current structured JD compatibility contracts.
-- Implementing ontology-level normalization for skill/domain semantics (synonym dictionaries, alias canonicalization, lemmatization/stemming, and cross-source taxonomy alignment).
+- Implementing full ontology-level normalization for domain semantics and cross-taxonomy alignment beyond required-skills canonical mapping (for example: domain ontology expansion, cross-source taxonomy reconciliation, and advanced semantic harmonization).
 
 ### Planned Follow-Up (Post-002)
 
-- Define and ship a dedicated normalization pipeline for `required_skills`, `preferred_skills`, and `job_domain_*` semantic aliases.
-- Add evaluation fixtures/metrics for normalization quality (precision/recall on canonical labels) before enabling in production extraction.
+- Extend normalization coverage to `preferred_skills` and `job_domain_*` semantic aliases with explicit quality gates.
+- Add richer evaluation fixtures/metrics for normalization quality (precision/recall on canonical labels) and drift monitoring after production rollout.
 
 ### Key Entities *(include if feature involves data)*
 
