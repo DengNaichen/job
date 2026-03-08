@@ -61,7 +61,25 @@ class SyncService:
         if dry_run or sync_run.status != SyncRunStatus.success:
             return
         if self._use_firestore:
-            # Embedding refresh not yet ported to Firestore — skip for now
+            from app.infrastructure.firestore_client import get_firestore_client
+            from app.repositories.firestore import (
+                FirestoreJobEmbeddingRepository,
+                FirestoreJobRepository,
+            )
+
+            db = get_firestore_client()
+            refresh_service = EmbeddingRefreshService(
+                session=None,
+                job_repository=FirestoreJobRepository(db),
+                job_embedding_repository=FirestoreJobEmbeddingRepository(db),
+            )
+            try:
+                await refresh_service.refresh_for_source(
+                    source_id=source_id,
+                    snapshot_run_id=str(sync_run.id),
+                )
+            except Exception:  # noqa: BLE001
+                pass  # embedding failure should not fail the sync
             return
         async with AsyncSession(self.engine) as refresh_session:
             refresh_service = self._build_embedding_refresh_service(refresh_session)

@@ -179,23 +179,32 @@ class FirestoreJobEmbeddingRepository(FirestoreBaseRepository):
             existing["embedding"] = embedding
             existing["content_fingerprint"] = content_fingerprint
             existing["updated_at"] = now
-            return existing
+        else:
+            doc_id = new_id()
+            doc_data = _embedding_to_doc(
+                job_id=job_id,
+                embedding=embedding,
+                content_fingerprint=content_fingerprint,
+                embedding_kind=embedding_kind,
+                embedding_target_revision=embedding_target_revision,
+                embedding_model=embedding_model,
+                embedding_dim=embedding_dim,
+                created_at=now,
+                updated_at=now,
+            )
+            await self.collection.document(doc_id).set(doc_data)
+            doc_data["id"] = doc_id
+            existing = doc_data
 
-        doc_id = new_id()
-        doc_data = _embedding_to_doc(
-            job_id=job_id,
-            embedding=embedding,
-            content_fingerprint=content_fingerprint,
-            embedding_kind=embedding_kind,
-            embedding_target_revision=embedding_target_revision,
-            embedding_model=embedding_model,
-            embedding_dim=embedding_dim,
-            created_at=now,
-            updated_at=now,
-        )
-        await self.collection.document(doc_id).set(doc_data)
-        doc_data["id"] = doc_id
-        return doc_data
+        # Also write the vector to the job document for find_nearest queries
+        jobs_ref = self._db.collection("jobs").document(job_id)
+        await jobs_ref.update({
+            "embedding": Vector(embedding),
+            "embedding_model": embedding_model,
+            "embedding_updated_at": now,
+        })
+
+        return existing
 
     async def upsert_many_for_target(
         self,
